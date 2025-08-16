@@ -8,6 +8,7 @@ interface Contact {
   personId: number;
   name: string;
   email?: string;
+  phone?: string;
   mineGroup?: string;
   mineName?: string;
 }
@@ -147,18 +148,44 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             className="bg-blue-50 border border-blue-200 rounded-lg p-3"
             data-testid="sh-request-contact-display"
           >
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2 mb-2">
               <User className="h-4 w-4 text-blue-600 mt-1" />
               <div className="flex-1">
-                <p className="font-medium text-blue-900">{request.contact.name}</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-blue-900">{request.contact.name}</p>
+                  {!isSubmitted && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onAddContact?.(request.id)}
+                      className="text-blue-700 hover:text-blue-900 p-1"
+                      data-testid="sh-request-change-contact"
+                    >
+                      Change
+                    </Button>
+                  )}
+                </div>
+                
                 {request.contact.mineGroup && request.contact.mineName && (
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-blue-700 mb-1">
                     {request.contact.mineGroup} → {request.contact.mineName}
                   </p>
                 )}
-                {request.contact.email && (
-                  <p className="text-xs text-blue-600">{request.contact.email}</p>
-                )}
+                
+                <div className="space-y-1">
+                  {request.contact.email && (
+                    <p className="text-xs text-blue-600 flex items-center gap-1">
+                      <span>📧</span>
+                      <span>{request.contact.email}</span>
+                    </p>
+                  )}
+                  {request.contact.phone && (
+                    <p className="text-xs text-blue-600 flex items-center gap-1">
+                      <span>📞</span>
+                      <span>{request.contact.phone}</span>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

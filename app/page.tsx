@@ -83,6 +83,15 @@ export default function MainPage() {
     fetchRequests();
   }, [selectedSalesperson]);
 
+  // Handle returning from contact/line items pages
+  useEffect(() => {
+    const shouldRefresh = sessionStorage.getItem('shouldRefreshRequests');
+    if (shouldRefresh) {
+      sessionStorage.removeItem('shouldRefreshRequests');
+      fetchRequests();
+    }
+  }, []);
+
   // Debug logging for state changes
   useEffect(() => {
     console.log('Selected salesperson changed to:', selectedSalesperson);
