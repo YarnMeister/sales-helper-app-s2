@@ -16,6 +16,9 @@ vi.mock('../../lib/cache', () => ({
   }
 }));
 
+// Import the mocked modules
+import { cache, transformContactsHierarchy, transformProductsHierarchy } from '../../lib/cache';
+
 // Mock the pipedrive module
 vi.mock('../../lib/pipedrive', () => ({
   fetchContacts: vi.fn(),
@@ -31,21 +34,23 @@ vi.mock('../../lib/errors', () => ({
   }
 }));
 
+// Import the mocked modules
+import { fetchContacts, fetchProducts } from '../../lib/pipedrive';
+import { errorToResponse } from '../../lib/errors';
+
 describe('Contacts API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should serve fresh data from cache when available', async () => {
-    const mockCache = require('../../lib/cache');
-    const mockErrorToResponse = require('../../lib/errors').errorToResponse;
     
     const mockCachedData = {
       data: { 'Group 1': { 'Mine A': [] } },
       stale: false
     };
     
-    mockCache.cache.get.mockResolvedValue(mockCachedData);
+    vi.mocked(cache.get).mockResolvedValue(mockCachedData);
     
     const request = new Request('http://localhost:3000/api/contacts');
     const response = await getContacts(request);
@@ -54,26 +59,23 @@ describe('Contacts API', () => {
     expect(data.ok).toBe(true);
     expect(data.source).toBe('cache');
     expect(data.stale).toBe(false);
-    expect(mockCache.cache.get).toHaveBeenCalledWith('contacts:hierarchical:v1');
+    expect(cache.get).toHaveBeenCalledWith('contacts:hierarchical:v1');
   });
 
   it('should fetch from Pipedrive and cache when no fresh cache available', async () => {
-    const mockCache = require('../../lib/cache');
-    const mockPipedrive = require('../../lib/pipedrive');
-    
     // No cache available
-    mockCache.cache.get.mockResolvedValue(null);
+    vi.mocked(cache.get).mockResolvedValue(null);
     
     // Mock Pipedrive response
     const mockPipedriveData = {
       persons: [{ id: 1, name: 'Test Person' }],
       organizations: [{ id: 1, name: 'Test Org' }]
     };
-    mockPipedrive.fetchContacts.mockResolvedValue(mockPipedriveData);
+    vi.mocked(fetchContacts).mockResolvedValue(mockPipedriveData);
     
     // Mock transformation
     const mockTransformedData = { 'Group 1': { 'Mine A': [] } };
-    mockCache.transformContactsHierarchy.mockReturnValue(mockTransformedData);
+    vi.mocked(transformContactsHierarchy).mockReturnValue(mockTransformedData);
     
     const request = new Request('http://localhost:3000/api/contacts');
     const response = await getContacts(request);
@@ -82,24 +84,20 @@ describe('Contacts API', () => {
     expect(data.ok).toBe(true);
     expect(data.source).toBe('pipedrive');
     expect(data.stale).toBe(false);
-    expect(mockPipedrive.fetchContacts).toHaveBeenCalled();
-    expect(mockCache.cache.set).toHaveBeenCalledWith('contacts:hierarchical:v1', mockTransformedData);
+    expect(fetchContacts).toHaveBeenCalled();
+    expect(cache.set).toHaveBeenCalledWith('contacts:hierarchical:v1', mockTransformedData);
   });
 
   it('should serve stale cache when Pipedrive fails', async () => {
-    const mockCache = require('../../lib/cache');
-    const mockPipedrive = require('../../lib/pipedrive');
-    const mockErrorToResponse = require('../../lib/errors').errorToResponse;
-    
     // Stale cache available
     const mockStaleData = {
       data: { 'Group 1': { 'Mine A': [] } },
       stale: true
     };
-    mockCache.cache.get.mockResolvedValue(mockStaleData);
+    vi.mocked(cache.get).mockResolvedValue(mockStaleData);
     
     // Pipedrive fails
-    mockPipedrive.fetchContacts.mockRejectedValue(new Error('API Error'));
+    vi.mocked(fetchContacts).mockRejectedValue(new Error('API Error'));
     
     const request = new Request('http://localhost:3000/api/contacts');
     const response = await getContacts(request);
@@ -118,14 +116,12 @@ describe('Products API', () => {
   });
 
   it('should serve fresh data from cache when available', async () => {
-    const mockCache = require('../../lib/cache');
-    
     const mockCachedData = {
       data: { 'Safety Equipment': [] },
       stale: false
     };
     
-    mockCache.cache.get.mockResolvedValue(mockCachedData);
+    vi.mocked(cache.get).mockResolvedValue(mockCachedData);
     
     const request = new Request('http://localhost:3000/api/products');
     const response = await getProducts(request);
@@ -134,23 +130,20 @@ describe('Products API', () => {
     expect(data.ok).toBe(true);
     expect(data.source).toBe('cache');
     expect(data.stale).toBe(false);
-    expect(mockCache.cache.get).toHaveBeenCalledWith('products:categorized:v1');
+    expect(cache.get).toHaveBeenCalledWith('products:categorized:v1');
   });
 
   it('should fetch from Pipedrive and cache when no fresh cache available', async () => {
-    const mockCache = require('../../lib/cache');
-    const mockPipedrive = require('../../lib/pipedrive');
-    
     // No cache available
-    mockCache.cache.get.mockResolvedValue(null);
+    vi.mocked(cache.get).mockResolvedValue(null);
     
     // Mock Pipedrive response
     const mockPipedriveData = [{ id: 1, name: 'Test Product', category: '1' }];
-    mockPipedrive.fetchProducts.mockResolvedValue(mockPipedriveData);
+    vi.mocked(fetchProducts).mockResolvedValue(mockPipedriveData);
     
     // Mock transformation
     const mockTransformedData = { 'Safety Equipment': [] };
-    mockCache.transformProductsHierarchy.mockReturnValue(mockTransformedData);
+    vi.mocked(transformProductsHierarchy).mockReturnValue(mockTransformedData);
     
     const request = new Request('http://localhost:3000/api/products');
     const response = await getProducts(request);
@@ -159,23 +152,20 @@ describe('Products API', () => {
     expect(data.ok).toBe(true);
     expect(data.source).toBe('pipedrive');
     expect(data.stale).toBe(false);
-    expect(mockPipedrive.fetchProducts).toHaveBeenCalled();
-    expect(mockCache.cache.set).toHaveBeenCalledWith('products:categorized:v1', mockTransformedData);
+    expect(fetchProducts).toHaveBeenCalled();
+    expect(cache.set).toHaveBeenCalledWith('products:categorized:v1', mockTransformedData);
   });
 
   it('should serve stale cache when Pipedrive fails', async () => {
-    const mockCache = require('../../lib/cache');
-    const mockPipedrive = require('../../lib/pipedrive');
-    
     // Stale cache available
     const mockStaleData = {
       data: { 'Safety Equipment': [] },
       stale: true
     };
-    mockCache.cache.get.mockResolvedValue(mockStaleData);
+    vi.mocked(cache.get).mockResolvedValue(mockStaleData);
     
     // Pipedrive fails
-    mockPipedrive.fetchProducts.mockRejectedValue(new Error('API Error'));
+    vi.mocked(fetchProducts).mockRejectedValue(new Error('API Error'));
     
     const request = new Request('http://localhost:3000/api/products');
     const response = await getProducts(request);
