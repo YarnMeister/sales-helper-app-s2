@@ -15,7 +15,8 @@
     "db:setup-preview": "./scripts/setup-env.sh preview/pr-123",
     "db:migrate-dev": "./scripts/migrate-env.sh dev",
     "db:migrate-preview": "./scripts/migrate-env.sh preview/pr-123",
-    "db:migrate-prod": "./scripts/migrate-env.sh main"
+    "db:migrate-prod": "./scripts/migrate-env.sh main",
+    "workflow:update": "./scripts/update-workflow-state.sh"
   },
   "dependencies": {
     "@types/pg": "^8.15.5",
