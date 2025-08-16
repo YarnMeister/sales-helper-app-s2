@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-01-27 11:30  
+**Last Updated:** 2025-01-27 12:15  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `main`
+**Current Branch:** `fix/caching-issues`
 
 ---
 
@@ -13,16 +13,16 @@
 | No Feature Branch       |                       |                      |
 | In Progress / Local     |                       |                      |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  | `main` | ✅ Contacts & Products API with Caching + Data Display Tables |
+| Deployed to Production  | `fix/caching-issues` | ✅ Redis Caching Implementation + Cache-Only Fallback Tested |
 
 ---
 
 ## 📝 Recent Commits
-37ff0b6 Add data display tables to main page - Create DataDisplay component showing contacts and products - Display hierarchical contact structure (Mine Group > Mine Name > Persons) - Show categorized products with pricing - Include summary statistics and data source indicators - Responsive design with loading states and error handling
-971a2a6 Implement contacts and products APIs with caching - Add hierarchical transformation functions - Create /api/contacts route with cache fallback - Create /api/products route with cache fallback - Add unit tests for transformation functions - Update environment configuration
-fa9ed0b Add comprehensive Neon CLI utilities for optimized database management
-186c693 Replace Supabase patterns with centralized Neon SQL queries
-673a35f Fix dynamic UPDATE query in requests API
+981a6ce revert: restore Pipedrive API functionality after cache testing
+013e003 test: temporarily disable Pipedrive APIs to test cache-only functionality
+ab61b16 fix: resolve port conflicts and cache health blocking issues
+6b483b6 feat: enhance main page to show all contacts and products from cache
+da8b582 feat: implement Redis caching with Upstash
 
 ---
 
