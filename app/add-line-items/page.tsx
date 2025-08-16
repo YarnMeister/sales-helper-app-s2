@@ -18,10 +18,14 @@ export default function AddLineItemsPage() {
   useEffect(() => {
     // Get the request ID from sessionStorage
     const requestId = sessionStorage.getItem('editingRequestId');
+    console.log('add-line-items page loaded, editingRequestId from sessionStorage:', requestId);
+    
     if (requestId) {
       setEditingRequestId(requestId);
+      console.log('Set editingRequestId state to:', requestId);
       loadExistingLineItems(requestId);
     } else {
+      console.error('No editingRequestId found in sessionStorage, redirecting to main page');
       // No request to edit, redirect back to main page
       router.push('/');
     }
@@ -42,7 +46,13 @@ export default function AddLineItemsPage() {
   };
 
   const handleProductSelect = async (product: LineItem) => {
-    if (!editingRequestId) return;
+    console.log('handleProductSelect called with:', { product, editingRequestId, existingItems });
+    
+    if (!editingRequestId) {
+      console.error('No editingRequestId found');
+      setError('No request ID found. Please go back and try again.');
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -50,30 +60,38 @@ export default function AddLineItemsPage() {
     try {
       // Add the new product to existing items
       const updatedLineItems = [...existingItems, product];
+      console.log('Updated line items:', updatedLineItems);
+
+      const requestBody = {
+        id: editingRequestId,
+        line_items: updatedLineItems
+      };
+      console.log('Sending API request with body:', requestBody);
 
       const response = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: editingRequestId,
-          line_items: updatedLineItems
-        })
+        body: JSON.stringify(requestBody)
       });
 
+      console.log('API response status:', response.status);
       const data = await response.json();
+      console.log('API response data:', data);
 
       if (data.ok) {
+        console.log('Line item saved successfully');
         // Mark for refresh on main page
         sessionStorage.setItem('shouldRefreshRequests', 'true');
         sessionStorage.removeItem('editingRequestId');
         router.push('/');
       } else {
+        console.error('API returned error:', data);
         setError(data.message || 'Failed to save line item');
         setSaving(false);
       }
     } catch (err) {
-      setError('Unable to save line item. Please try again.');
       console.error('Error saving line item:', err);
+      setError('Unable to save line item. Please try again.');
       setSaving(false);
     }
   };

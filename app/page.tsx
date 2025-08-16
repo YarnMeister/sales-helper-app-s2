@@ -151,7 +151,9 @@ export default function MainPage() {
   };
 
   const handleAddLineItems = (requestId: string) => {
+    console.log('handleAddLineItems called with requestId:', requestId);
     sessionStorage.setItem('editingRequestId', requestId);
+    console.log('Set editingRequestId in sessionStorage:', requestId);
     router.push('/add-line-items');
   };
 
