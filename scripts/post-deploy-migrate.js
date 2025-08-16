@@ -5,12 +5,11 @@ const fs = require('fs');
 const path = require('path');
 const { config } = require('dotenv');
 
-// Load environment variables from .env.local first, then .env
+// Load environment variables
 config({ path: path.resolve(process.cwd(), '.env.local') });
 config({ path: path.resolve(process.cwd(), '.env') });
 
-async function runMigrations() {
-  // Use unpooled connection for migrations to avoid pgbouncer limitations
+async function postDeployMigrate() {
   const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
   
   if (!connectionString) {
@@ -21,7 +20,7 @@ async function runMigrations() {
   const sql = neon(connectionString);
 
   try {
-    console.log('🔄 Running database migrations...\n');
+    console.log('🔄 Running post-deployment migrations...\n');
 
     // Ensure migrations table exists
     await sql`
@@ -57,7 +56,6 @@ async function runMigrations() {
 
       const migrationSql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
       
-      // Execute migration in a transaction
       try {
         await sql`BEGIN`;
         await sql.unsafe(migrationSql);
@@ -69,6 +67,7 @@ async function runMigrations() {
         
       } catch (error) {
         await sql`ROLLBACK`;
+        console.error(`❌ Migration ${version} failed:`, error.message);
         throw error;
       }
     }
@@ -80,9 +79,14 @@ async function runMigrations() {
     }
 
   } catch (error) {
-    console.error('❌ Migration failed:', error.message);
+    console.error('❌ Post-deployment migration failed:', error.message);
     process.exit(1);
   }
 }
 
-runMigrations();
+// Only run if called directly
+if (require.main === module) {
+  postDeployMigrate();
+}
+
+module.exports = { postDeployMigrate };

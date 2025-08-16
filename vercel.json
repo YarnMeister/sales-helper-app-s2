@@ -1,0 +1,18 @@
+{
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "DATABASE_URL_UNPOOLED": "@database_url_unpooled",
+    "REDIS_URL": "@redis_url",
+    "PIPEDRIVE_API_TOKEN": "@pipedrive_api_token",
+    "PIPEDRIVE_BASE_URL": "@pipedrive_base_url",
+    "PIPEDRIVE_SUBMIT_MODE": "@pipedrive_submit_mode"
+  }
+}
