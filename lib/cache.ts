@@ -176,11 +176,18 @@ export const transformContactsHierarchy = (persons: any[], organizations: any[])
 
 // PRD-specific hierarchical transformation for products
 export const transformProductsHierarchy = (products: any[]) => {
+  // Updated category mapping based on current Pipedrive category IDs
   const categoryMap: Record<string, string> = {
-    '1': 'Safety Equipment',
-    '2': 'Mining Tools',
-    '3': 'Personal Protective Equipment',
-    '4': 'Machinery Parts'
+    '28': 'Electrical Equipment',
+    '29': 'Control Systems',
+    '30': 'Automation & Control',
+    '31': 'Components',
+    '32': 'Software',
+    '33': 'Power & Control',
+    '34': 'Services & Equipment',
+    '35': 'Safety Equipment',
+    '36': 'Services',
+    '37': 'Parts & Supplies'
   };
   
   return products.reduce((acc, product) => {

@@ -83,6 +83,6 @@ export const fetchContacts = async () => {
 };
 
 export const fetchProducts = async () => {
-  const response = await callPipedriveAPI('/products?limit=500');
+  const response = await callPipedriveAPI('/products?limit=500&custom_fields=1');
   return response.data || [];
 };

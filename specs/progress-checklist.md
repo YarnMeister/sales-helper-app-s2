@@ -237,8 +237,8 @@ Skipped
 ## Section 6: UI Updates & Integration
 
 ### 6.1 Main Page Redesign with Flat Schema Integration
-- [ ] Implement streamlined UI leveraging flat JSONB schema
-  - [ ] Create `/app/components/RequestCard.tsx`
+- [x] Implement streamlined UI leveraging flat JSONB schema
+  - [x] Create `/app/components/RequestCard.tsx`
   - [ ] Update `/app/page.tsx` to use new flat schema API
   - [ ] Manual validation: Test main page loads with optimized database queries
   - [ ] Verify filtering uses generated columns for performance
@@ -279,6 +279,13 @@ Skipped
   - [ ] Test error boundary catches and displays errors gracefully
   - [ ] Run unit tests and verify all pass with `npm test`
 
+Todo on UI
+[ ] Add contact not saving, no way to select and save yet
+[ ] Search top of Add Contact not working
+[ ] Moce telephone inline with email to make contact row less tall
+[ ] Deal Management title on main page
+[ ] bring back sales person picker
+ 
 ---
 
 ## Section 7: Final Integration & Testing

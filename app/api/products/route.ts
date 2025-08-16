@@ -6,11 +6,14 @@ import { logInfo, logWarn, logError, withPerformanceLogging, generateCorrelation
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId();
+  const { searchParams } = new URL(request.url);
+  const forceRefresh = searchParams.get('forceRefresh') === 'true';
   
   return withPerformanceLogging('GET /api/products', 'api', async () => {
     logInfo('Products API request started', { 
       correlationId,
-      userAgent: request.headers.get('user-agent')
+      userAgent: request.headers.get('user-agent'),
+      forceRefresh
     });
     
     // Try cache first (but don't fail if cache is unavailable)
@@ -18,7 +21,7 @@ export async function GET(request: NextRequest) {
     try {
       cached = await cache.get(CACHE_KEYS.PRODUCTS);
       
-      if (cached && !cached.stale) {
+      if (cached && !cached.stale && !forceRefresh) {
         logInfo('Serving fresh products from cache', { correlationId });
         return Response.json({ 
           ok: true, 
