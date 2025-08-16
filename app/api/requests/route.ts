@@ -11,8 +11,11 @@ import {
 } from '@/lib/queries/requests';
 import { RequestUpsert } from '@/lib/schema';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
+import { logInfo, logError, generateCorrelationId } from '@/lib/log';
 
 export async function GET(request: NextRequest) {
+  const correlationId = generateCorrelationId();
+  
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -22,6 +25,12 @@ export async function GET(request: NextRequest) {
     const salesperson = searchParams.get('salesperson'); // PRD: Luyanda, James, Stefan
     const showAll = searchParams.get('showAll') === 'true'; // PRD: Toggle for showing all requests
     const limit = parseInt(searchParams.get('limit') || '50');
+    
+    logInfo('Requests API GET request started', { 
+      correlationId,
+      filters: { status, mineGroup, mineName, personId, salesperson, showAll, limit },
+      userAgent: request.headers.get('user-agent')
+    });
     
     return await withTiming('GET /api/requests', async () => {
       const result = await getRequests({
@@ -34,7 +43,8 @@ export async function GET(request: NextRequest) {
         limit
       });
       
-      console.log('Requests fetched successfully', { 
+      logInfo('Requests fetched successfully', { 
+        correlationId,
         count: result.length, 
         filters: { status, mineGroup, mineName, personId, salesperson, showAll } 
       });
@@ -51,14 +61,28 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (e) {
+    logError('Error fetching requests', { 
+      correlationId,
+      error: e instanceof Error ? e.message : String(e),
+      filters: { status, mineGroup, mineName, personId, salesperson, showAll } 
+    });
     return errorToResponse(e);
   }
 }
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId();
+  
   try {
     const body = await request.json();
     const parsed = RequestUpsert.parse(body);
+    
+    logInfo('Requests API POST request started', { 
+      correlationId,
+      operation: parsed.id ? 'update' : 'create',
+      requestId: parsed.id,
+      userAgent: request.headers.get('user-agent')
+    });
     
     return await withTiming('POST /api/requests', async () => {
       // PRD: Support inline updates for contact, line_items, comment
@@ -97,7 +121,8 @@ export async function POST(request: NextRequest) {
           throw new NotFoundError('Request not found');
         }
         
-        console.log('Request updated successfully', { 
+        logInfo('Request updated successfully', { 
+          correlationId,
           request_id: result.request_id, 
           inline_update: true 
         });
@@ -118,7 +143,8 @@ export async function POST(request: NextRequest) {
           comment: parsed.comment
         });
         
-        console.log('Request created successfully', { 
+        logInfo('Request created successfully', { 
+          correlationId,
           request_id: result.request_id, 
           inline_update: false 
         });
@@ -128,11 +154,18 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (e) {
+    logError('Error saving request', { 
+      correlationId,
+      error: e instanceof Error ? e.message : String(e),
+      data: parsed 
+    });
     return errorToResponse(e);
   }
 }
 
 export async function DELETE(request: NextRequest) {
+  const correlationId = generateCorrelationId();
+  
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -141,6 +174,12 @@ export async function DELETE(request: NextRequest) {
       throw new ValidationError('Missing request ID');
     }
     
+    logInfo('Requests API DELETE request started', { 
+      correlationId,
+      requestId: id,
+      userAgent: request.headers.get('user-agent')
+    });
+    
     return await withTiming('DELETE /api/requests', async () => {
       const result = await deleteRequest(id);
       
@@ -148,11 +187,16 @@ export async function DELETE(request: NextRequest) {
         throw new NotFoundError('Request not found');
       }
       
-      console.log('Request deleted successfully', { id });
+      logInfo('Request deleted successfully', { correlationId, id });
       return Response.json({ ok: true });
     });
     
   } catch (e) {
+    logError('Error deleting request', { 
+      correlationId,
+      error: e instanceof Error ? e.message : String(e),
+      requestId: id 
+    });
     return errorToResponse(e);
   }
 }

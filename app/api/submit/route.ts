@@ -4,6 +4,7 @@ import { getRequestById, getRequestByRequestId, updateRequestSubmission } from '
 import { createMockSubmission } from '@/lib/queries/mock-submissions';
 import { createDeal, addProductsToDeal } from '@/lib/pipedrive';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
+import { logInfo, logError, generateCorrelationId } from '@/lib/log';
 import { z } from 'zod';
 
 const SubmitRequest = z.object({
@@ -12,6 +13,8 @@ const SubmitRequest = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const correlationId = generateCorrelationId();
+  
   try {
     const body = await req.json();
     const { id, requestId } = SubmitRequest.parse(body);
@@ -19,6 +22,13 @@ export async function POST(req: NextRequest) {
     if (!id && !requestId) {
       throw new ValidationError('Must provide either id or requestId');
     }
+    
+    logInfo('Submit API request started', { 
+      correlationId,
+      id,
+      requestId,
+      userAgent: req.headers.get('user-agent')
+    });
     
     return await withTiming('POST /api/submit', async () => {
       // Find the request
@@ -49,6 +59,12 @@ export async function POST(req: NextRequest) {
         // Mock submission
         const mockDealId = Math.floor(100000 + Math.random() * 900000);
         
+        logInfo('Processing mock submission', { 
+          correlationId,
+          requestId: requestData.request_id,
+          mockDealId 
+        });
+        
         // Insert mock submission record
         await createMockSubmission({
           requestId: requestData.request_id,
@@ -63,6 +79,12 @@ export async function POST(req: NextRequest) {
         // Update request status
         await updateRequestSubmission(requestData.id, mockDealId);
         
+        logInfo('Mock submission successful', { 
+          correlationId,
+          request_id: requestData.request_id, 
+          mock_deal_id: mockDealId 
+        });
+        
         return Response.json({ 
           ok: true, 
           dealId: mockDealId, 
@@ -72,6 +94,11 @@ export async function POST(req: NextRequest) {
         
       } else {
         // Real Pipedrive submission
+        logInfo('Processing real Pipedrive submission', { 
+          correlationId,
+          requestId: requestData.request_id
+        });
+        
         const dealTitle = `[${requestData.request_id}] - [${requestData.contact.mineGroup || 'Unknown'}] - [${requestData.contact.mineName || 'Unknown'}]`;
         
         const dealData = {
@@ -97,6 +124,12 @@ export async function POST(req: NextRequest) {
         // Update request status
         await updateRequestSubmission(requestData.id, deal.id);
         
+        logInfo('Real submission successful', { 
+          correlationId,
+          request_id: requestData.request_id, 
+          deal_id: deal.id 
+        });
+        
         return Response.json({ 
           ok: true, 
           dealId: deal.id, 
@@ -107,6 +140,11 @@ export async function POST(req: NextRequest) {
     });
     
   } catch (e) {
+    logError('Submission failed', { 
+      correlationId,
+      error: e instanceof Error ? e.message : String(e)
+    });
+    
     if (e instanceof z.ZodError) {
       return errorToResponse(new ValidationError('Invalid submission data'));
     }

@@ -2,16 +2,24 @@ import { NextRequest } from 'next/server';
 import { cache, transformProductsHierarchy, CACHE_KEYS } from '@/lib/cache';
 import { fetchProducts } from '@/lib/pipedrive';
 import { errorToResponse, ExternalError } from '@/lib/errors';
+import { logInfo, logWarn, logError, withPerformanceLogging, generateCorrelationId } from '@/lib/log';
 
 export async function GET(request: NextRequest) {
-  try {
+  const correlationId = generateCorrelationId();
+  
+  return withPerformanceLogging('GET /api/products', 'api', async () => {
+    logInfo('Products API request started', { 
+      correlationId,
+      userAgent: request.headers.get('user-agent')
+    });
+    
     // Try cache first (but don't fail if cache is unavailable)
     let cached = null;
     try {
       cached = await cache.get(CACHE_KEYS.PRODUCTS);
       
       if (cached && !cached.stale) {
-        console.log('Serving fresh products from cache');
+        logInfo('Serving fresh products from cache', { correlationId });
         return Response.json({ 
           ok: true, 
           data: cached.data, 
@@ -20,12 +28,15 @@ export async function GET(request: NextRequest) {
         });
       }
     } catch (cacheError) {
-      console.log('Cache unavailable, proceeding to Pipedrive:', (cacheError as Error).message);
+      logWarn('Cache unavailable, proceeding to Pipedrive', { 
+        correlationId, 
+        error: (cacheError as Error).message 
+      });
     }
     
     try {
       // Fetch fresh data from Pipedrive
-      console.log('Fetching fresh products from Pipedrive');
+      logInfo('Fetching fresh products from Pipedrive', { correlationId });
       const products = await fetchProducts();
       
       // PRD requirement: Transform to categorized structure
@@ -35,8 +46,17 @@ export async function GET(request: NextRequest) {
       try {
         await cache.set(CACHE_KEYS.PRODUCTS, categorizedData);
       } catch (cacheError) {
-        console.log('Failed to update cache:', (cacheError as Error).message);
+        logWarn('Failed to update cache', { 
+          correlationId, 
+          error: (cacheError as Error).message 
+        });
       }
+      
+      logInfo('Products API request completed successfully', { 
+        correlationId, 
+        source: 'pipedrive',
+        productsCount: products.length
+      });
       
       return Response.json({ 
         ok: true, 
@@ -46,11 +66,14 @@ export async function GET(request: NextRequest) {
       });
       
     } catch (pipedriveError) {
-      console.error('Pipedrive fetch failed, checking for stale cache', { error: pipedriveError });
+      logError('Pipedrive fetch failed, checking for stale cache', { 
+        correlationId, 
+        error: pipedriveError 
+      });
       
       // Fallback to stale cache if available
       if (cached) {
-        console.log('Serving stale products from cache due to Pipedrive failure');
+        logWarn('Serving stale products from cache due to Pipedrive failure', { correlationId });
         return Response.json({ 
           ok: true, 
           data: cached.data, 
@@ -63,8 +86,5 @@ export async function GET(request: NextRequest) {
       // No cache available, return error
       throw new ExternalError('Unable to fetch products and no cached data available');
     }
-    
-  } catch (e) {
-    return errorToResponse(e);
-  }
+  }, { correlationId });
 }

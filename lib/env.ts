@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logInfo, logError } from './log';
 
 // Simplified environment schema for Neon + Upstash
 const EnvSchema = z.object({
@@ -59,7 +60,7 @@ export const validateEnvironment = () => {
     const dbConfig = getDatabaseConfig();
     const cacheConfig = getCacheConfig();
     
-    console.log(`Environment validated successfully`, { 
+    logInfo(`Environment validated successfully`, { 
       environment: env.APP_ENV,
       pipedriveMode: env.PIPEDRIVE_SUBMIT_MODE,
       hasDatabase: !!dbConfig.url,
@@ -67,7 +68,7 @@ export const validateEnvironment = () => {
     });
     return true;
   } catch (error) {
-    console.error(`Environment validation failed`, { error: (error as Error).message });
+    logError(`Environment validation failed`, { error: (error as Error).message });
     throw error;
   }
 };

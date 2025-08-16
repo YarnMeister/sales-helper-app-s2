@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server'
 import { validateEnvironment } from '@/lib/env'
 import { checkDbHealth } from '@/lib/db-utils'
 import { cache } from '@/lib/cache'
+import { logInfo, logError, generateCorrelationId } from '@/lib/log'
 
 export async function GET() {
+  const correlationId = generateCorrelationId();
+  
   try {
+    logInfo('Health check started', { correlationId });
+    
     // Validate environment
     validateEnvironment()
     
@@ -13,6 +18,12 @@ export async function GET() {
     
     // Test cache connection
     const cacheStats = await cache.getStats()
+    
+    logInfo('Health check completed successfully', { 
+      correlationId,
+      status: 'healthy',
+      environment: process.env.APP_ENV || 'development'
+    });
     
     return NextResponse.json({
       status: 'healthy',
@@ -36,6 +47,11 @@ export async function GET() {
       }
     })
   } catch (error) {
+    logError('Health check failed', { 
+      correlationId,
+      error: (error as Error).message 
+    });
+    
     return NextResponse.json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),

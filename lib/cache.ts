@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis';
 import { getCacheConfig } from './env';
+import { logInfo, logWarn, logError, withPerformanceLogging } from './log';
 
 // Create Redis client
 let redis: Redis | null = null;
@@ -13,7 +14,9 @@ export const getRedisClient = (): Redis => {
       token: config.token,
     });
     
-    console.log(`Redis client created for ${config.environment} environment`);
+    logInfo(`Redis client created for ${config.environment} environment`, {
+      environment: config.environment
+    });
   }
   
   return redis;
@@ -35,9 +38,7 @@ export class KVCache {
   private redis = getRedisClient();
   
   async get<T = any>(key: string): Promise<CacheEntry<T> | null> {
-    try {
-      const startTime = Date.now();
-      
+    return withPerformanceLogging('cache.get', 'cache', async () => {
       // Get data and TTL in a pipeline for efficiency
       const pipeline = this.redis.pipeline();
       pipeline.get(key);
@@ -45,10 +46,8 @@ export class KVCache {
       
       const [data, ttl] = await pipeline.exec() as [T | null, number];
       
-      const latency = Date.now() - startTime;
-      
       if (data === null) {
-        console.log(`Cache miss`, { key, latency: `${latency}ms` });
+        logInfo(`Cache miss`, { key });
         return null;
       }
       
@@ -57,11 +56,11 @@ export class KVCache {
       const age = now - timestamp;
       const isStale = ttl < 0 || age > CACHE_MAX_AGE_SECONDS * 1000;
       
-      console.log(`Cache ${isStale ? 'stale hit' : 'hit'}`, { 
+      logInfo(`Cache ${isStale ? 'stale hit' : 'hit'}`, { 
         key, 
-        latency: `${latency}ms`,
         age_hours: age / (1000 * 60 * 60),
-        ttl_seconds: ttl
+        ttl_seconds: ttl,
+        stale: isStale
       });
       
       return {
@@ -71,14 +70,11 @@ export class KVCache {
         stale: isStale,
         source: 'redis'
       };
-    } catch (error) {
-      console.error('Cache get error', { key, error: (error as Error).message });
-      return null;
-    }
+    }, { key });
   }
   
   async set<T = any>(key: string, value: T, ttlSeconds?: number): Promise<void> {
-    try {
+    return withPerformanceLogging('cache.set', 'cache', async () => {
       const cacheValue = {
         data: value,
         timestamp: Date.now()
@@ -88,29 +84,24 @@ export class KVCache {
       
       await this.redis.setex(key, ttl, cacheValue);
       
-      console.log('Cache set', { 
+      logInfo('Cache set', { 
         key, 
         ttl_seconds: ttl,
         size_estimate: JSON.stringify(cacheValue).length 
       });
-    } catch (error) {
-      console.error('Cache set error', { key, error: (error as Error).message });
-      throw error;
-    }
+    }, { key, ttl_seconds: ttlSeconds || CACHE_MAX_AGE_SECONDS });
   }
   
   async bust(key: string): Promise<void> {
-    try {
+    return withPerformanceLogging('cache.bust', 'cache', async () => {
       const result = await this.redis.del(key);
       
-      console.log('Cache busted', { key, existed: result > 0 });
-    } catch (error) {
-      console.error('Cache bust error', { key, error: (error as Error).message });
-    }
+      logInfo('Cache busted', { key, existed: result > 0 });
+    }, { key });
   }
   
   async bustPattern(pattern: string): Promise<number> {
-    try {
+    return withPerformanceLogging('cache.bustPattern', 'cache', async () => {
       // Use scan to find keys matching pattern
       const keys: string[] = [];
       let cursor = 0;
@@ -125,12 +116,9 @@ export class KVCache {
         await this.redis.del(...keys);
       }
       
-      console.log('Cache pattern busted', { pattern, count: keys.length });
+      logInfo('Cache pattern busted', { pattern, count: keys.length });
       return keys.length;
-    } catch (error) {
-      console.error('Cache pattern bust error', { pattern, error: (error as Error).message });
-      return 0;
-    }
+    }, { pattern });
   }
   
   async getStats(): Promise<{
