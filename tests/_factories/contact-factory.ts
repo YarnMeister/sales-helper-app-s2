@@ -41,7 +41,7 @@ export class ContactFactory extends BaseFactory<TContactJSON> {
       this.randomFromArray(ContactFactory.MINE_GROUPS);
     
     const availableMines = ContactFactory.MINE_NAMES[mineGroup as keyof typeof ContactFactory.MINE_NAMES] || 
-      ContactFactory.MINE_NAMES[ContactFactory.MINE_GROUPS[0]];
+      ContactFactory.MINE_NAMES[ContactFactory.MINE_GROUPS[0] as keyof typeof ContactFactory.MINE_NAMES];
     
     const mineName = overrides.mineName || 
       this.randomFromArray(availableMines);
