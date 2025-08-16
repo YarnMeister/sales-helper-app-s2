@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    appDir: true,
+    // Remove deprecated appDir option
   },
   env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
+    // Remove CUSTOM_KEY reference
+  }
 }
 
 module.exports = nextConfig

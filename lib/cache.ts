@@ -8,9 +8,13 @@ export const getRedisClient = (): Redis => {
   if (!redis) {
     const config = getCacheConfig();
     
+    // Parse the Redis URL to extract token
+    const url = new URL(config.url);
+    const token = url.username || url.password || '';
+    
     redis = new Redis({
       url: config.url,
-      automaticDeserialization: true, // Automatically parse JSON
+      token: token,
     });
     
     console.log(`Redis client created for ${config.environment} environment`);
@@ -117,8 +121,8 @@ export class KVCache {
       
       do {
         const result = await this.redis.scan(cursor, { match: pattern, count: 100 });
-        cursor = result[0];
-        keys.push(...result[1]);
+        cursor = parseInt(result[0] as string);
+        keys.push(...(result[1] as string[]));
       } while (cursor !== 0);
       
       if (keys.length > 0) {
@@ -138,38 +142,12 @@ export class KVCache {
     connected_clients: number;
     total_commands_processed: number;
   }> {
-    try {
-      const info = await this.redis.info();
-      
-      // Parse Redis INFO response
-      const stats = {
-        memory_usage: 'Unknown',
-        connected_clients: 0,
-        total_commands_processed: 0
-      };
-      
-      if (typeof info === 'string') {
-        const lines = info.split('\r\n');
-        for (const line of lines) {
-          if (line.startsWith('used_memory_human:')) {
-            stats.memory_usage = line.split(':')[1];
-          } else if (line.startsWith('connected_clients:')) {
-            stats.connected_clients = parseInt(line.split(':')[1], 10);
-          } else if (line.startsWith('total_commands_processed:')) {
-            stats.total_commands_processed = parseInt(line.split(':')[1], 10);
-          }
-        }
-      }
-      
-      return stats;
-    } catch (error) {
-      console.error('Cache stats error', { error: (error as Error).message });
-      return {
-        memory_usage: 'Error',
-        connected_clients: 0,
-        total_commands_processed: 0
-      };
-    }
+    // Upstash Redis doesn't support INFO command
+    return {
+      memory_usage: 'Not available',
+      connected_clients: 0,
+      total_commands_processed: 0
+    };
   }
 }
 
@@ -208,7 +186,7 @@ export const transformContactsHierarchy = (persons: any[], organizations: any[])
 
 // PRD-specific hierarchical transformation for products
 export const transformProductsHierarchy = (products: any[]) => {
-  const categoryMap = {
+  const categoryMap: Record<string, string> = {
     '1': 'Safety Equipment',
     '2': 'Mining Tools',
     '3': 'Personal Protective Equipment',
@@ -216,7 +194,7 @@ export const transformProductsHierarchy = (products: any[]) => {
   };
   
   return products.reduce((acc, product) => {
-    const category = categoryMap[product.category] || 'Other';
+    const category = categoryMap[product.category as string] || 'Other';
     
     if (!acc[category]) acc[category] = [];
     

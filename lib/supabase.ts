@@ -93,8 +93,7 @@ export const checkDbHealth = async (): Promise<{
     console.error('Database health check failed', { error: (error as Error).message });
     return { 
       healthy: false, 
-      environment: 'unknown',
-      error: (error as Error).message
+      environment: 'unknown'
     };
   }
 };

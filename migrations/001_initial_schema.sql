@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS requests (
 
 -- Request ID generation function with proper sequential logic
 CREATE OR REPLACE FUNCTION generate_request_id()
-RETURNS TEXT AS $$
+RETURNS TRIGGER AS $$
 DECLARE
     next_num INTEGER;
 BEGIN
@@ -32,7 +32,8 @@ BEGIN
     FROM requests
     WHERE request_id ~ '^QR-[0-9]+$';
     
-    RETURN 'QR-' || LPAD(next_num::TEXT, 3, '0');
+    NEW.request_id := 'QR-' || LPAD(next_num::TEXT, 3, '0');
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 

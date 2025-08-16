@@ -3,7 +3,11 @@
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
+const { config } = require('dotenv');
+
+// Load environment variables from .env.local first, then .env
+config({ path: path.resolve(process.cwd(), '.env.local') });
+config({ path: path.resolve(process.cwd(), '.env') });
 
 async function runMigrations() {
   // Use unpooled connection for migrations to avoid pgbouncer limitations

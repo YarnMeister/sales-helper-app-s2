@@ -3,35 +3,63 @@
 const path = require('path');
 const { config } = require('dotenv');
 
-// Load environment variables
+// Load environment variables from .env.local first, then .env
+config({ path: path.resolve(process.cwd(), '.env.local') });
 config({ path: path.resolve(process.cwd(), '.env') });
 
 async function checkEnvironment() {
   console.log('🔍 Validating environment configuration...\n');
   
   try {
-    // Import and validate environment
-    const { validateEnvironment, env, getDatabaseConfig, getCacheConfig } = require('../lib/env.ts');
+    // Check if required environment variables exist
+    const requiredVars = [
+      'DATABASE_URL',
+      'REDIS_URL', 
+      'PIPEDRIVE_API_TOKEN'
+    ];
     
-    validateEnvironment();
+    const missingVars = [];
+    for (const varName of requiredVars) {
+      if (!process.env[varName]) {
+        missingVars.push(varName);
+      }
+    }
     
-    const dbConfig = getDatabaseConfig();
-    const cacheConfig = getCacheConfig();
+    if (missingVars.length > 0) {
+      throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+    }
+    
+    // Check if URLs are valid
+    try {
+      new URL(process.env.DATABASE_URL);
+    } catch {
+      throw new Error('Invalid DATABASE_URL format');
+    }
+    
+    try {
+      new URL(process.env.REDIS_URL);
+    } catch {
+      throw new Error('Invalid REDIS_URL format');
+    }
     
     console.log('✅ Environment validation successful!');
     console.log('\n📋 Configuration Summary:');
-    console.log(`   Environment: ${env.APP_ENV}`);
-    console.log(`   Pipedrive Mode: ${env.PIPEDRIVE_SUBMIT_MODE}`);
-    console.log(`   Database: ${maskUrl(dbConfig.url)}`);
-    console.log(`   Cache: ${maskUrl(cacheConfig.url)}`);
-    console.log(`   Slack Alerts: ${env.SLACK_ALERT_WEBHOOK ? 'Enabled' : 'Disabled'}`);
+    console.log(`   Environment: ${process.env.APP_ENV || 'development'}`);
+    console.log(`   Pipedrive Mode: ${process.env.PIPEDRIVE_SUBMIT_MODE || 'mock'}`);
+    console.log(`   Database: ${maskUrl(process.env.DATABASE_URL)}`);
+    console.log(`   Cache: ${maskUrl(process.env.REDIS_URL)}`);
+    console.log(`   Slack Alerts: ${process.env.SLACK_ALERT_WEBHOOK ? 'Enabled' : 'Disabled'}`);
     
     process.exit(0);
     
   } catch (error) {
     console.error('❌ Environment validation failed:');
     console.error(error.message);
-    console.log('\n💡 Check your .env file against .env.example');
+    console.log('\n💡 Check your .env.local file against .env.example');
+    console.log('   Make sure you have:');
+    console.log('   - DATABASE_URL (Neon connection string)');
+    console.log('   - REDIS_URL (Upstash Redis connection string)');
+    console.log('   - PIPEDRIVE_API_TOKEN (your Pipedrive API token)');
     process.exit(1);
   }
 }
