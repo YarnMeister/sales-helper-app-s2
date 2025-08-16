@@ -6,6 +6,7 @@ import { ArrowLeft, User } from 'lucide-react';
 import { ContactAccordion } from '../components/ContactAccordion';
 import { Contact } from '../types/contact';
 import { useRouter } from 'next/navigation';
+import { BottomNavigation } from '../components/BottomNavigation';
 
 export default function AddContactPage() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -176,8 +177,8 @@ export default function AddContactPage() {
         </div>
       </div>
 
-      {/* Bottom Padding for Fixed Actions */}
-      <div className="h-20"></div>
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 }

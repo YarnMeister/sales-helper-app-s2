@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
 import { RequestCard } from './components/RequestCard';
+import { BottomNavigation } from './components/BottomNavigation';
 import { useRouter } from 'next/navigation';
+import { useToast } from './hooks/use-toast';
+import { Search, Filter } from 'lucide-react';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
 
 interface Contact {
   personId: number;
@@ -40,7 +44,10 @@ export default function MainPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const router = useRouter();
+  const { toast } = useToast();
 
   // Fetch requests based on selected salesperson
   const fetchRequests = async () => {
@@ -163,10 +170,24 @@ export default function MainPage() {
       const data = await response.json();
       
       if (data.ok) {
+        // Show success toast
+        toast({
+          title: "Deal Submitted Successfully",
+          description: `Deal ${requestId} has been submitted to Pipedrive.`,
+        });
+        
         // Refresh requests to get updated status
         await fetchRequests();
       } else {
         console.error('Failed to submit request:', data.message);
+        
+        // Show error toast
+        toast({
+          title: "Submission Failed",
+          description: data.message || "Failed to submit deal to Pipedrive.",
+          variant: "destructive",
+        });
+        
         // Update status to failed
         setRequests(prev => prev.map(req => 
           req.id === requestId ? { ...req, status: 'failed' } : req
@@ -174,6 +195,14 @@ export default function MainPage() {
       }
     } catch (error) {
       console.error('Error submitting request:', error);
+      
+      // Show error toast
+      toast({
+        title: "Submission Failed",
+        description: "Network error occurred while submitting deal.",
+        variant: "destructive",
+      });
+      
       setRequests(prev => prev.map(req => 
         req.id === requestId ? { ...req, status: 'failed' } : req
       ));
@@ -186,6 +215,18 @@ export default function MainPage() {
     window.open(`https://yourcompany.pipedrive.com/deal/${dealId}`, '_blank');
   };
 
+  // Filter requests based on search and status
+  const filteredRequests = requests.filter((request) => {
+    const matchesSearch =
+      request.request_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.contact?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.salesperson_first_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   const getPageTitle = () => {
     if (selectedSalesperson === 'all') {
       return 'All Requests';
@@ -195,16 +236,49 @@ export default function MainPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-        pageTitle={getPageTitle()}
-        selectedSalesperson={selectedSalesperson}
-        onSalespersonChange={handleSalespersonChange}
-        showNewButton={selectedSalesperson !== 'all'}
-        onNewRequest={handleNewRequest}
-        isCreating={isCreating}
-      />
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+        <div className="px-4 py-4">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Deal Management</h1>
 
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
+          {/* Search and Filters */}
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search deals, contacts, or IDs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => setStatusFilter(statusFilter === 'all' ? 'draft' : 'all')}
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                {statusFilter === 'all' ? 'All Status' : 'Draft Only'}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => handleSalespersonChange(selectedSalesperson === 'all' ? 'James' : 'all')}
+              >
+                {selectedSalesperson === 'all' ? 'All Reps' : selectedSalesperson}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="px-4 py-4 pb-24">
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
             <p className="text-red-800">{error}</p>
@@ -216,15 +290,17 @@ export default function MainPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading requests...</p>
           </div>
-        ) : requests.length === 0 ? (
+        ) : filteredRequests.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg mb-4">
-              {selectedSalesperson === 'all' 
-                ? 'No requests found' 
-                : `No requests found for ${selectedSalesperson}`
+              {searchTerm || statusFilter !== 'all'
+                ? 'No requests match your search criteria'
+                : selectedSalesperson === 'all' 
+                  ? 'No requests found' 
+                  : `No requests found for ${selectedSalesperson}`
               }
             </p>
-            {selectedSalesperson !== 'all' && (
+            {selectedSalesperson !== 'all' && !searchTerm && statusFilter === 'all' && (
               <p className="text-sm text-gray-400">
                 Create your first request using the button above
               </p>
@@ -232,7 +308,7 @@ export default function MainPage() {
           </div>
         ) : (
           <div className="space-y-4" data-testid="sh-requests-list">
-            {requests.map(request => (
+            {filteredRequests.map(request => (
               <RequestCard
                 key={request.id}
                 request={request}
@@ -246,6 +322,9 @@ export default function MainPage() {
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation onNewRequest={handleNewRequest} />
     </div>
   );
 }
