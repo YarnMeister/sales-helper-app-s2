@@ -25,6 +25,13 @@ For each new prompt, before making changes, review the instructions below and co
 - **Files:** supabase/migrations/*.sql, lib/types/database.ts, lib/database-utils.ts, supabase/README.md
 - **Status:** ✅ Complete
 - **Production Notes:** Migrations ready, requires Supabase project setup and CLI installation
+
+### Neon + Upstash Direct Implementation
+- **Commit:** `bf9b075` - Migrate from Supabase to Neon + Upstash direct implementation
+- **Branch:** `neon-upstash-direct`
+- **Files:** lib/env.ts, lib/supabase.ts → lib/db.ts, lib/cache.ts, lib/database-utils.ts, migrations/*.sql, scripts/*.js, package.json, README.md
+- **Status:** ✅ Complete
+- **Production Notes:** Direct Neon Postgres + Upstash Redis setup, 7 simplified environment variables, migration system ready
 - **Vercel URLs:** 
   - Production: https://sales-helper-app-s2-uqms-jan-jr-2762s-projects.vercel.app/
   - Main Branch: https://sales-helper-app-s2-uqms-git-main-jan-jr-2762s-projects.vercel.app/
