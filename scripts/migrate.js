@@ -6,9 +6,12 @@ const path = require('path');
 require('dotenv').config();
 
 async function runMigrations() {
+  // Use unpooled connection for migrations to avoid pgbouncer limitations
+  const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+  
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+    connectionString: connectionString,
+    ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false }
   });
 
   try {
