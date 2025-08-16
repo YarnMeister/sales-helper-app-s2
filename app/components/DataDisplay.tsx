@@ -46,14 +46,18 @@ export default function DataDisplay() {
         setLoading(true);
         setError(null);
 
-        // Fetch contacts and products in parallel
-        const [contactsResponse, productsResponse] = await Promise.all([
-          fetch('/api/contacts'),
-          fetch('/api/products')
-        ]);
-
+        // Fetch contacts and products sequentially for debugging
+        console.log('Fetching contacts...');
+        const contactsResponse = await fetch('/api/contacts');
+        console.log('Contacts response status:', contactsResponse.status);
         const contactsData = await contactsResponse.json();
+        console.log('Contacts data received:', contactsData.ok);
+        
+        console.log('Fetching products...');
+        const productsResponse = await fetch('/api/products');
+        console.log('Products response status:', productsResponse.status);
         const productsData = await productsResponse.json();
+        console.log('Products data received:', productsData.ok);
 
         if (contactsData.ok && productsData.ok) {
           setContacts(contactsData.data);
@@ -72,8 +76,8 @@ export default function DataDisplay() {
 
     fetchData();
     
-    // Check cache health on component mount (non-blocking)
-    checkCacheHealthNonBlocking();
+    // Temporarily disable cache health check to debug
+    // checkCacheHealthNonBlocking();
   }, []);
   
   const checkCacheHealth = async () => {
