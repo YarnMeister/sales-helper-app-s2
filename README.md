@@ -48,3 +48,4 @@ The app uses a flat JSONB structure:
 - `npm run lint` - Run ESLint
 - `npm run db:migrate` - Run database migrations
 - `npm run env:check` - Validate environment configuration
+# Trigger deployment
