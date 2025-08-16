@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-01-27 12:15  
+**Last Updated:** 2025-01-27 12:20  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `fix/caching-issues`
+**Current Branch:** `main`
 
 ---
 
@@ -13,16 +13,16 @@
 | No Feature Branch       |                       |                      |
 | In Progress / Local     |                       |                      |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  | `fix/caching-issues` | ✅ Redis Caching Implementation + Cache-Only Fallback Tested |
+| Deployed to Production  | `main` | ✅ Redis Caching Implementation + Cache-Only Fallback Tested |
 
 ---
 
 ## 📝 Recent Commits
+9c17bba docs: update workflow state for Redis caching production deployment
 981a6ce revert: restore Pipedrive API functionality after cache testing
 013e003 test: temporarily disable Pipedrive APIs to test cache-only functionality
 ab61b16 fix: resolve port conflicts and cache health blocking issues
 6b483b6 feat: enhance main page to show all contacts and products from cache
-da8b582 feat: implement Redis caching with Upstash
 
 ---
 
