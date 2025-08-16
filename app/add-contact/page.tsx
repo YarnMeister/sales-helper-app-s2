@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 import { ArrowLeft, User } from 'lucide-react';
-import { ContactAccordion } from '@/components/ContactAccordion';
-import { Contact } from '@/types/contact';
+import { ContactAccordion } from '../components/ContactAccordion';
+import { Contact } from '../types/contact';
 import { useRouter } from 'next/navigation';
 
 export default function AddContactPage() {

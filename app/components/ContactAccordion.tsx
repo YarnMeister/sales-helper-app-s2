@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Card } from './ui/card';
+import { Badge } from './ui/badge';
 import { ChevronDown, ChevronRight, Search, Mail, Phone, Check, AlertCircle } from 'lucide-react';
-import { Contact, ContactsHierarchy, ContactSelectionState } from '@/types/contact';
-import { useDebounce } from '@/hooks/useDebounce';
+import { Contact, ContactsHierarchy, ContactSelectionState } from '../types/contact';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface ContactAccordionProps {
   onSelectContact: (contact: Contact) => void;
