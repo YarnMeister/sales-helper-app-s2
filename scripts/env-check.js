@@ -14,7 +14,8 @@ async function checkEnvironment() {
     // Check if required environment variables exist
     const requiredVars = [
       'DATABASE_URL',
-      'REDIS_URL', 
+      'UPSTASH_REDIS_REST_URL',
+      'UPSTASH_REDIS_REST_TOKEN',
       'PIPEDRIVE_API_TOKEN'
     ];
     
@@ -37,9 +38,9 @@ async function checkEnvironment() {
     }
     
     try {
-      new URL(process.env.REDIS_URL);
+      new URL(process.env.UPSTASH_REDIS_REST_URL);
     } catch {
-      throw new Error('Invalid REDIS_URL format');
+      throw new Error('Invalid UPSTASH_REDIS_REST_URL format');
     }
     
     console.log('✅ Environment validation successful!');
@@ -47,7 +48,7 @@ async function checkEnvironment() {
     console.log(`   Environment: ${process.env.APP_ENV || 'development'}`);
     console.log(`   Pipedrive Mode: ${process.env.PIPEDRIVE_SUBMIT_MODE || 'mock'}`);
     console.log(`   Database: ${maskUrl(process.env.DATABASE_URL)}`);
-    console.log(`   Cache: ${maskUrl(process.env.REDIS_URL)}`);
+    console.log(`   Cache: ${maskUrl(process.env.UPSTASH_REDIS_REST_URL)}`);
     console.log(`   Slack Bot: ${process.env.SLACK_BOT_TOKEN ? 'Enabled' : 'Disabled'}`);
     
     process.exit(0);
@@ -58,7 +59,8 @@ async function checkEnvironment() {
     console.log('\n💡 Check your .env.local file against .env.example');
     console.log('   Make sure you have:');
     console.log('   - DATABASE_URL (Neon connection string)');
-    console.log('   - REDIS_URL (Upstash Redis connection string)');
+    console.log('   - UPSTASH_REDIS_REST_URL (Upstash Redis REST URL)');
+    console.log('   - UPSTASH_REDIS_REST_TOKEN (Upstash Redis REST token)');
     console.log('   - PIPEDRIVE_API_TOKEN (your Pipedrive API token)');
     process.exit(1);
   }

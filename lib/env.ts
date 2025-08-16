@@ -8,7 +8,8 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().url('Invalid DATABASE_URL'),
   
   // Upstash Redis
-  REDIS_URL: z.string().url('Invalid REDIS_URL'),
+  UPSTASH_REDIS_REST_URL: z.string().url('Invalid UPSTASH_REDIS_REST_URL'),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1, 'UPSTASH_REDIS_REST_TOKEN is required'),
   
   // Pipedrive Configuration (unchanged)
   PIPEDRIVE_API_TOKEN: z.string().min(1),
@@ -46,7 +47,8 @@ export const getDatabaseConfig = () => {
 // Cache configuration helper
 export const getCacheConfig = () => {
   return {
-    url: env.REDIS_URL,
+    url: env.UPSTASH_REDIS_REST_URL,
+    token: env.UPSTASH_REDIS_REST_TOKEN,
     environment: env.APP_ENV
   };
 };
