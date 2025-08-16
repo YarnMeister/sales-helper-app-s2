@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-08-16 17:05  
+**Last Updated:** 2025-08-16 17:10  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `feature/database-client-utilities`
+**Current Branch:** `main`
 
 ---
 
@@ -12,8 +12,8 @@
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
 | In Progress / Local     |                       |                      |
-| Deployed to Preview     | `feature/database-client-utilities` | Database client utilities deployed |
-| Deployed to Production  |                       |                      |
+| Deployed to Preview     |                       |                      |
+| Deployed to Production  | `main`                | Database client utilities live in production |
 
 ---
 
@@ -28,6 +28,8 @@
 ---
 
 ## 📝 Recent Commits
+936924d Update project config: clarify production deployment notes instructions
+4bb3d7d Update workflow state: database client utilities deployed to preview
 d51bd15 Update workflow state: database client utilities complete
 99eb0e4 Implement enhanced database client utilities with Neon PostgreSQL support
 e6c4a75 Add product-req-spec-new.md to tracking
