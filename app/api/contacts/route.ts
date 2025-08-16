@@ -27,26 +27,19 @@ export async function GET(request: NextRequest) {
     }
     
     try {
-      // Fetch fresh data from Pipedrive
-      console.log('Fetching fresh contacts from Pipedrive');
-      const { persons, organizations } = await fetchContacts();
+      // TEMPORARILY DISABLED: Fetch fresh data from Pipedrive
+      console.log('PIPEDRIVE API TEMPORARILY DISABLED - Testing cache only');
+      throw new Error('Pipedrive API temporarily disabled for testing');
       
-      // PRD requirement: Transform to hierarchical Mine Group > Mine Name structure
-      const hierarchicalData = transformContactsHierarchy(persons, organizations);
-      
-      // Try to update cache (but don't fail if cache is unavailable)
-      try {
-        await cache.set(CACHE_KEYS.CONTACTS, hierarchicalData);
-      } catch (cacheError) {
-        console.log('Failed to update cache:', (cacheError as Error).message);
-      }
-      
-      return Response.json({ 
-        ok: true, 
-        data: hierarchicalData, 
-        stale: false,
-        source: 'pipedrive'
-      });
+      // const { persons, organizations } = await fetchContacts();
+      // const hierarchicalData = transformContactsHierarchy(persons, organizations);
+      // await cache.set(CACHE_KEYS.CONTACTS, hierarchicalData);
+      // return Response.json({ 
+      //   ok: true, 
+      //   data: hierarchicalData, 
+      //   stale: false,
+      //   source: 'pipedrive'
+      // });
       
     } catch (pipedriveError) {
       console.error('Pipedrive fetch failed, checking for stale cache', { error: pipedriveError });
