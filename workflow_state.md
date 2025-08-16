@@ -1,6 +1,6 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-08-16 17:55  
+**Last Updated:** 2025-08-16 18:00  
 **Project:** sales-helper-app-s2  
 **Current Branch:** `feature/core-request-management-api`
 
@@ -11,32 +11,19 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     | `feature/core-request-management-api` | Core request management API complete |
-| Deployed to Preview     |                       |                      |
+| In Progress / Local     |                       |                      |
+| Deployed to Preview     | `feature/core-request-management-api` | Core request management API deployed |
 | Deployed to Production  |                       |                      |
 
 ---
 
-## Production Deployment Notes for current feature branch
+## Last Preview URL: 
 
-**Schema Validation Feature (Previous):**
-- ✅ Core schema validation system implemented with Zod
-- ✅ Standardized error handling classes created
-- ✅ Unit tests passing (9/9)
-- ✅ Production deployment successful with authentication enabled
-
-**Database Client Utilities Feature (Previous):**
-- ✅ Environment-aware database client with Neon PostgreSQL support
-- ✅ RPC functions: generate_request_id() and validate_contact_jsonb()
-- ✅ Database health check with latency monitoring
-- ✅ Comprehensive error handling with withDbErrorHandling utility
-- ✅ Upstash Redis caching (no database KV cache duplication)
-- ✅ All tests passing (19/19)
-- ✅ Production deployment successful
 
 ---
 
 ## 📝 Recent Commits
+35bd803 Update workflow state and progress checklist: core request management API complete
 5e69323 Implement core request management API with Neon PostgreSQL support
 2633cc7 Update workflow state: cleaned database client utilities deployed to production
 9f8b23d Remove database-based KV cache utilities, use only Upstash Redis
@@ -58,6 +45,7 @@ e6c4a75 Add product-req-spec-new.md to tracking
 **IMPORTANT: Dashboard Structure Rules**
 
 1. **Never change the layout** - Keep the exact same structure and formatting
+
 2. **Only update these fields:**
    - Date in "Last Updated" 
    - Branch name in "Current Branch"
@@ -73,6 +61,10 @@ e6c4a75 Add product-req-spec-new.md to tracking
    - "No Feature Branch" → "In Progress / Local" → "Deployed to Preview" → "Deployed to Production"
    - Only one branch should be active at a time
    - Move branch name between rows as it progresses
+
+5. **Preview Deployemnts:**
+   - Update the "Last Preview URL:" section with latest URL from Vercel
+
 
 **Example update pattern:**
 - Update date: `2025-08-16 14:54` → `2025-08-16 15:30`
