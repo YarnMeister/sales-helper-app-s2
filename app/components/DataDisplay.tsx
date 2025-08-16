@@ -37,6 +37,8 @@ export default function DataDisplay() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<string>('');
+  const [cacheHealth, setCacheHealth] = useState<string>('unknown');
+  const [checkingCache, setCheckingCache] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,7 +71,52 @@ export default function DataDisplay() {
     };
 
     fetchData();
+    
+    // Check cache health on component mount
+    checkCacheHealth();
   }, []);
+  
+  const checkCacheHealth = async () => {
+    try {
+      setCheckingCache(true);
+      const response = await fetch('/api/cache/health');
+      const data = await response.json();
+      setCacheHealth(data.ok ? 'healthy' : 'unhealthy');
+    } catch (err) {
+      setCacheHealth('unavailable');
+    } finally {
+      setCheckingCache(false);
+    }
+  };
+  
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch fresh data from Pipedrive (this will update the cache)
+      const [contactsResponse, productsResponse] = await Promise.all([
+        fetch('/api/contacts'),
+        fetch('/api/products')
+      ]);
+
+      const contactsData = await contactsResponse.json();
+      const productsData = await productsResponse.json();
+
+      if (contactsData.ok && productsData.ok) {
+        setContacts(contactsData.data);
+        setProducts(productsData.data);
+        setSource(`${contactsData.source} / ${productsData.source}`);
+      } else {
+        setError('Failed to refresh data');
+      }
+    } catch (err) {
+      setError('Error refreshing data');
+      console.error('Error refreshing data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -116,6 +163,37 @@ export default function DataDisplay() {
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
           ✅ Data loaded successfully from: {source}
         </div>
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">Cache Status:</span> Data is served from Redis cache when available, with fallback to Pipedrive API
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className={`px-2 py-1 rounded text-xs font-medium ${
+              cacheHealth === 'healthy' ? 'bg-green-100 text-green-800' :
+              cacheHealth === 'unhealthy' ? 'bg-red-100 text-red-800' :
+              'bg-yellow-100 text-yellow-800'
+            }`}>
+              {checkingCache ? 'Checking...' : 
+               cacheHealth === 'healthy' ? '✅ Cache Healthy' :
+               cacheHealth === 'unhealthy' ? '❌ Cache Unhealthy' :
+               '⚠️ Cache Unavailable'}
+            </div>
+            <button
+              onClick={checkCacheHealth}
+              disabled={checkingCache}
+              className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:opacity-50"
+            >
+              {checkingCache ? 'Checking...' : 'Test Cache'}
+            </button>
+            <button
+              onClick={refreshData}
+              disabled={loading}
+              className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50"
+            >
+              {loading ? 'Refreshing...' : 'Refresh Data'}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -145,7 +223,7 @@ export default function DataDisplay() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {allContacts.slice(0, 10).map((contact, index) => (
+                {allContacts.map((contact, index) => (
                   <tr key={contact.personId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {contact.name}
@@ -166,11 +244,9 @@ export default function DataDisplay() {
                 ))}
               </tbody>
             </table>
-            {allContacts.length > 10 && (
-              <div className="px-6 py-3 bg-gray-50 text-sm text-gray-600">
-                Showing first 10 of {allContacts.length} contacts
-              </div>
-            )}
+            <div className="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+              Showing all {allContacts.length} contacts from cache
+            </div>
           </div>
         </div>
 
@@ -200,7 +276,7 @@ export default function DataDisplay() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {allProducts.slice(0, 10).map((product, index) => (
+                {allProducts.map((product, index) => (
                   <tr key={product.pipedriveProductId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {product.name}
@@ -215,11 +291,9 @@ export default function DataDisplay() {
                 ))}
               </tbody>
             </table>
-            {allProducts.length > 10 && (
-              <div className="px-6 py-3 bg-gray-50 text-sm text-gray-600">
-                Showing first 10 of {allProducts.length} products
-              </div>
-            )}
+            <div className="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+              Showing all {allProducts.length} products from cache
+            </div>
           </div>
         </div>
       </div>
