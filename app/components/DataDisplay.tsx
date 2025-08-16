@@ -72,8 +72,8 @@ export default function DataDisplay() {
 
     fetchData();
     
-    // Check cache health on component mount
-    checkCacheHealth();
+    // Check cache health on component mount (non-blocking)
+    checkCacheHealthNonBlocking();
   }, []);
   
   const checkCacheHealth = async () => {
@@ -86,6 +86,24 @@ export default function DataDisplay() {
       setCacheHealth('unavailable');
     } finally {
       setCheckingCache(false);
+    }
+  };
+  
+  // Don't block the main data loading on cache health check
+  const checkCacheHealthNonBlocking = async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const response = await fetch('/api/cache/health', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      const data = await response.json();
+      setCacheHealth(data.ok ? 'healthy' : 'unhealthy');
+    } catch (err) {
+      setCacheHealth('unavailable');
     }
   };
   
