@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-01-27 19:20  
+**Last Updated:** 2025-08-16 10:15  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `feature/submit-pipedrive-integration`
+**Current Branch:** `main`
 
 ---
 
@@ -11,9 +11,9 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     | `feature/submit-pipedrive-integration` | Submit & Pipedrive Integration API |
+| In Progress / Local     |                       |                      |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  |                 |  |
+| Deployed to Production  | `main` | Submit & Pipedrive Integration API |
 
 ---
 
@@ -21,11 +21,11 @@
 ---
 
 ## 📝 Recent Commits
+fa9ed0b Add comprehensive Neon CLI utilities for optimized database management
 186c693 Replace Supabase patterns with centralized Neon SQL queries
 673a35f Fix dynamic UPDATE query in requests API
 7e2f13d Migrate to Neon serverless HTTP driver
 dcb6faf Fix submit endpoint to use correct Neon PostgreSQL pattern
-e186d16 Implement Submit & Pipedrive Integration API
 f458d51 Update workflow state: database client utilities deployed to production
 936924d Update project config: clarify production deployment notes instructions
 4bb3d7d Update workflow state: database client utilities deployed to preview
