@@ -91,19 +91,23 @@ export async function POST(request: NextRequest) {
           updates.comment = parsed.comment;
         }
         
-        const result = await sql`
-          UPDATE requests 
-          SET ${sql.unsafe(Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', '))}
-          WHERE id = ${parsed.id}
-          RETURNING *
-        `;
+        // Build dynamic update query safely
+        const updateFields = Object.keys(updates);
+        const updateValues = Object.values(updates);
         
-        if (result.length === 0) {
+        // Create a simple string-based query for dynamic updates
+        const setClause = updateFields.map((field, index) => `${field} = $${index + 2}`).join(', ');
+        const query = `UPDATE requests SET ${setClause} WHERE id = $1 RETURNING *`;
+        const params = [parsed.id, ...updateValues];
+        
+        const result = await sql.unsafe(query, ...params);
+        
+        if (!result || result.length === 0) {
           throw new NotFoundError('Request not found');
         }
         
         console.log('Request updated successfully', { 
-          request_id: result[0].request_id, 
+          request_id: result[0]?.request_id, 
           inline_update: true 
         });
         
