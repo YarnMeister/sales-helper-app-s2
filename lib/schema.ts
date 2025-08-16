@@ -62,7 +62,11 @@ export const RequestUpsert = z.object({
 ).refine(
   (data) => {
     // For mobile-first workflow, require either salespersonSelection or salespersonFirstName
-    return data.salespersonSelection || data.salespersonFirstName;
+    // ONLY when creating new requests (no id provided)
+    if (!data.id) {
+      return data.salespersonSelection || data.salespersonFirstName;
+    }
+    return true;
   },
   { message: "Either salesperson selection or salesperson first name is required", path: ["salespersonSelection"] }
 );
