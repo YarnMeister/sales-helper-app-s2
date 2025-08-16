@@ -8,12 +8,17 @@ export const getRedisClient = (): Redis => {
   if (!redis) {
     const config = getCacheConfig();
     
-    // Parse the Redis URL to extract token
+    // Parse the Redis URL to extract components
     const url = new URL(config.url);
     const token = url.username || url.password || '';
+    const host = url.hostname;
+    const port = url.port || '443';
+    
+    // Construct the proper Upstash Redis URL
+    const httpsUrl = `https://${host}:${port}`;
     
     redis = new Redis({
-      url: config.url,
+      url: httpsUrl,
       token: token,
     });
     

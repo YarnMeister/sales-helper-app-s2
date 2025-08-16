@@ -16,7 +16,7 @@ const EnvSchema = z.object({
   PIPEDRIVE_SUBMIT_MODE: z.enum(['live', 'mock']).default('mock'),
   
   // Optional: Slack alerting
-  SLACK_ALERT_WEBHOOK: z.string().url().optional(),
+  SLACK_BOT_TOKEN: z.string().optional(),
 });
 
 // Validate and parse environment variables

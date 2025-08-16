@@ -39,6 +39,7 @@ This checklist covers the complete rewrite of the Sales Helper App from a comple
   - [ ] Test automatic request ID generation via trigger
   - [ ] Verify contact JSONB validation function
   - [ ] Test salesperson_selection constraint with valid/invalid values
+  - [ ] Add Upstash "QStash/Workflow" for background processing Pipedrive deals/retries (maybe)
 
   De-scoped due to green approach
 

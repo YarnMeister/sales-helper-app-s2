@@ -34,12 +34,12 @@ PIPEDRIVE_BASE_URL=https://api.pipedrive.com/v1
 PIPEDRIVE_SUBMIT_MODE=mock  # Change to 'live' for production
 ```
 
-### 4. Optional: Slack Alerts
+### 4. Optional: Slack Bot Token
 
 If you want Slack notifications:
 
 ```bash
-SLACK_ALERT_WEBHOOK=https://hooks.slack.com/services/your/webhook/url
+SLACK_BOT_TOKEN=xoxb-your-bot-token-here
 ```
 
 ## Complete .env.local Example
@@ -60,8 +60,8 @@ PIPEDRIVE_API_TOKEN=your_pipedrive_api_token
 PIPEDRIVE_BASE_URL=https://api.pipedrive.com/v1
 PIPEDRIVE_SUBMIT_MODE=mock
 
-# Optional: Slack Alerts
-SLACK_ALERT_WEBHOOK=https://hooks.slack.com/services/your/webhook/url
+# Optional: Slack Bot Token
+SLACK_BOT_TOKEN=xoxb-your-bot-token-here
 ```
 
 ## Testing Your Setup
@@ -92,4 +92,4 @@ Add these environment variables to your Vercel project:
 - `PIPEDRIVE_API_TOKEN`
 - `PIPEDRIVE_BASE_URL`
 - `PIPEDRIVE_SUBMIT_MODE`
-- `SLACK_ALERT_WEBHOOK` (optional)
+- `SLACK_BOT_TOKEN` (optional)

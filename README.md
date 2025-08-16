@@ -32,7 +32,7 @@ A Next.js application for managing sales contacts, line items, and check-ins usi
 - `PIPEDRIVE_API_TOKEN` - Pipedrive API token
 - `PIPEDRIVE_BASE_URL` - Pipedrive API base URL
 - `PIPEDRIVE_SUBMIT_MODE` - 'mock' or 'live' (defaults to 'mock')
-- `SLACK_ALERT_WEBHOOK` - Optional Slack webhook for alerts
+- `SLACK_BOT_TOKEN` - Optional Slack bot token for alerts
 
 ## Database Schema
 

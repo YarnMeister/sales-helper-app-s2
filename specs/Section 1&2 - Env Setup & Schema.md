@@ -316,8 +316,8 @@ const EnvSchema = z.object({
   PIPEDRIVE_BASE_URL: z.string().url().default('https://api.pipedrive.com/v1'),
   PIPEDRIVE_SUBMIT_MODE: z.enum(['live', 'mock']).default('mock'),
   
-  // Optional: Slack alerting
-  SLACK_ALERT_WEBHOOK: z.string().url().optional(),
+  // Optional: Slack bot token
+  SLACK_BOT_TOKEN: z.string().optional(),
 });
 
 // Validate and parse environment variables
@@ -387,8 +387,8 @@ PIPEDRIVE_API_TOKEN=your_pipedrive_api_token
 PIPEDRIVE_BASE_URL=https://api.pipedrive.com/v1
 PIPEDRIVE_SUBMIT_MODE=mock
 
-# Optional: Slack Alerts
-SLACK_ALERT_WEBHOOK=https://hooks.slack.com/services/your/webhook/url
+# Optional: Slack Bot Token
+SLACK_BOT_TOKEN=xoxb-your-bot-token-here
 
 Update `/scripts/env-check.js` for new environment structure:
 
@@ -418,7 +418,7 @@ async function checkEnvironment() {
     console.log(`   Pipedrive Mode: ${env.PIPEDRIVE_SUBMIT_MODE}`);
     console.log(`   Database: ${maskUrl(dbConfig.url)}`);
     console.log(`   Cache: ${maskUrl(cacheConfig.url)}`);
-    console.log(`   Slack Alerts: ${env.SLACK_ALERT_WEBHOOK ? 'Enabled' : 'Disabled'}`);
+    console.log(`   Slack Bot: ${env.SLACK_BOT_TOKEN ? 'Enabled' : 'Disabled'}`);
     
     process.exit(0);
     
@@ -2045,7 +2045,7 @@ Create `vercel.json` for deployment configuration:
     "PIPEDRIVE_API_TOKEN": "@pipedrive_api_token",
     "PIPEDRIVE_BASE_URL": "@pipedrive_base_url",
     "PIPEDRIVE_SUBMIT_MODE": "@pipedrive_submit_mode",
-    "SLACK_ALERT_WEBHOOK": "@slack_alert_webhook"
+    "SLACK_BOT_TOKEN": "@slack_bot_token"
   },
   "build": {
     "env": {
@@ -2319,7 +2319,7 @@ REDIS_URL=rediss://:<token>@<host>:<port>
 PIPEDRIVE_API_TOKEN=your_real_token
 PIPEDRIVE_BASE_URL=https://api.pipedrive.com/v1
 PIPEDRIVE_SUBMIT_MODE=real
-SLACK_ALERT_WEBHOOK=https://hooks.slack.com/services/your/webhook
+SLACK_BOT_TOKEN=xoxb-your-bot-token-here
 
 **Preview Environment:**
 APP_ENV=test

@@ -48,7 +48,7 @@ async function checkEnvironment() {
     console.log(`   Pipedrive Mode: ${process.env.PIPEDRIVE_SUBMIT_MODE || 'mock'}`);
     console.log(`   Database: ${maskUrl(process.env.DATABASE_URL)}`);
     console.log(`   Cache: ${maskUrl(process.env.REDIS_URL)}`);
-    console.log(`   Slack Alerts: ${process.env.SLACK_ALERT_WEBHOOK ? 'Enabled' : 'Disabled'}`);
+    console.log(`   Slack Bot: ${process.env.SLACK_BOT_TOKEN ? 'Enabled' : 'Disabled'}`);
     
     process.exit(0);
     
