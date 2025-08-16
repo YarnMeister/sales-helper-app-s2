@@ -73,11 +73,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId();
-  
-  const body = await request.json();
-  const parsed = RequestUpsert.parse(body);
+  let body: any;
   
   try {
+    body = await request.json();
+    console.log('Request body:', JSON.stringify(body, null, 2));
+    
+    const parsed = RequestUpsert.parse(body);
+    console.log('Parsed data:', JSON.stringify(parsed, null, 2));
+    
     logInfo('Requests API POST request started', { 
       correlationId,
       operation: parsed.id ? 'update' : 'create',
@@ -88,39 +92,35 @@ export async function POST(request: NextRequest) {
     return await withTiming('POST /api/requests', async () => {
       // PRD: Support inline updates for contact, line_items, comment
       if (parsed.id) {
+        console.log('Updating request with ID:', parsed.id);
         // Update existing request
-        const updates: any = {
-          updated_at: new Date().toISOString()
-        };
-        
-        if (parsed.contact !== undefined) {
-          updates.contact = parsed.contact;
-        }
-        if (parsed.line_items !== undefined) {
-          updates.line_items = parsed.line_items;
-        }
-        if (parsed.comment !== undefined) {
-          updates.comment = parsed.comment;
-        }
-        
-        // Update fields individually to avoid dynamic query issues
         let result;
         
+        // Update fields individually to avoid dynamic query issues
         if (parsed.contact !== undefined) {
+          console.log('Updating contact:', JSON.stringify(parsed.contact, null, 2));
           result = await updateRequestContact(parsed.id, parsed.contact);
+          console.log('Contact update result:', result ? 'success' : 'failed');
         }
         
         if (parsed.line_items !== undefined) {
+          console.log('Updating line items:', JSON.stringify(parsed.line_items, null, 2));
           result = await updateRequestLineItems(parsed.id, parsed.line_items);
+          console.log('Line items update result:', result ? 'success' : 'failed');
         }
         
         if (parsed.comment !== undefined) {
+          console.log('Updating comment:', parsed.comment);
           result = await updateRequestComment(parsed.id, parsed.comment);
+          console.log('Comment update result:', result ? 'success' : 'failed');
         }
         
         if (!result) {
+          console.log('No result returned from update operations');
           throw new NotFoundError('Request not found');
         }
+        
+        console.log('Final result:', JSON.stringify(result, null, 2));
         
         logInfo('Request updated successfully', { 
           correlationId,
@@ -131,8 +131,10 @@ export async function POST(request: NextRequest) {
         return Response.json({ ok: true, data: result });
         
       } else {
+        console.log('Creating new request');
         // Create new request
         const requestId = await generateRequestId();
+        console.log('Generated request ID:', requestId);
         
         const result = await createRequest({
           requestId,
@@ -143,6 +145,8 @@ export async function POST(request: NextRequest) {
           lineItems: parsed.line_items,
           comment: parsed.comment
         });
+        
+        console.log('Create result:', JSON.stringify(result, null, 2));
         
         logInfo('Request created successfully', { 
           correlationId,
@@ -155,10 +159,12 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (e) {
+    console.error('Error in POST /api/requests:', e);
     logError('Error saving request', { 
       correlationId,
       error: e instanceof Error ? e.message : String(e),
-      data: parsed 
+      stack: e instanceof Error ? e.stack : undefined,
+      data: body 
     });
     return errorToResponse(e);
   }

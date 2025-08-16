@@ -18,7 +18,7 @@
 ---
 
 ## 📝 Recent Commits
-(No commits yet - new feature branch)
+ac3aeca feat: streamline contact and line-item selection flow - remove interim visual feedback and save buttons - make clicking immediately save to DB and navigate back - update ContactAccordion to remove selection highlighting - update ProductAccordion to remove Add buttons and selection summary - add loading overlays during save operations
 
 ---
 
