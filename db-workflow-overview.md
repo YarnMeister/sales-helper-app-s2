@@ -288,24 +288,4 @@ elif [ "$VERCEL_ENV" = "preview" ]; then
 fi
 ```
 
----
 
-## Best Practices
-
-### Development
-- ✅ Always start from `main` branch
-- ✅ Test migrations locally before pushing
-- ✅ Use descriptive migration names
-- ✅ Include rollback SQL in comments
-
-### Deployment
-- ✅ Apply migrations in order: local → preview → production
-- ✅ Test thoroughly in preview environment
-- ✅ Monitor migration execution in Neon console
-- ✅ Keep backup branches for critical changes
-
-### Monitoring
-- ✅ Check Neon console for branch status
-- ✅ Monitor Vercel deployment logs
-- ✅ Verify schema changes in each environment
-- ✅ Test application functionality after migrations
