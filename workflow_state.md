@@ -1,6 +1,6 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-08-16 16:20  
+**Last Updated:** 2025-08-16 16:25  
 **Project:** sales-helper-app-s2  
 **Current Branch:** `feature/schema-validation`
 
@@ -11,8 +11,8 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     | `feature/schema-validation` | Core schema validation complete |
-| Deployed to Preview     |                       |                      |
+| In Progress / Local     |                       |                      |
+| Deployed to Preview     | `feature/schema-validation` | Schema validation deployed with auth |
 | Deployed to Production  |                       |                      |
 
 👉 Move the branch name as it progresses.
@@ -20,11 +20,11 @@
 ---
 
 ## 📝 Recent Commits
+915da6d Mark schema validation steps as complete in progress checklist
 7a273c8 Implement core schema validation system with Zod
 3fecc94 Remove section 1.3 from spec document and prepare for schema validation feature
 a323862 Remove actual Slack token from spec file, replace with placeholder
 1faf67a Update SLACK_ALERT_WEBHOOK to SLACK_BOT_TOKEN for better Slack integration
-d9694fa Add preview deployment test with health check API
 
 ---
 
