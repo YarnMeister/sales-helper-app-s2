@@ -10,32 +10,36 @@ export async function GET(request: NextRequest) {
   return withPerformanceLogging('GET /api/contacts', 'api', async () => {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q'); // Optional text filter
+    const forceRefresh = searchParams.get('refresh') === 'true'; // Force refresh parameter
     
     logInfo('Contacts API request started', { 
       correlationId, 
       query: q,
+      forceRefresh,
       userAgent: request.headers.get('user-agent')
     });
     
     // Try cache first (but don't fail if cache is unavailable)
     let cached = null;
-    try {
-      cached = await cache.get(CACHE_KEYS.CONTACTS);
-      
-      if (cached && !cached.stale) {
-        logInfo('Serving fresh contacts from cache', { correlationId });
-        return Response.json({ 
-          ok: true, 
-          data: cached.data, 
-          stale: false,
-          source: 'cache'
+    if (!forceRefresh) {
+      try {
+        cached = await cache.get(CACHE_KEYS.CONTACTS);
+        
+        if (cached && !cached.stale) {
+          logInfo('Serving fresh contacts from cache', { correlationId });
+          return Response.json({ 
+            ok: true, 
+            data: cached.data, 
+            stale: false,
+            source: 'cache'
+          });
+        }
+      } catch (cacheError) {
+        logWarn('Cache unavailable, proceeding to Pipedrive', { 
+          correlationId, 
+          error: (cacheError as Error).message 
         });
       }
-    } catch (cacheError) {
-      logWarn('Cache unavailable, proceeding to Pipedrive', { 
-        correlationId, 
-        error: (cacheError as Error).message 
-      });
     }
     
     try {

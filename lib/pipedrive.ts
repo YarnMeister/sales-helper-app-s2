@@ -72,8 +72,8 @@ export const addProductsToDeal = async (dealId: number, products: PipedriveProdu
 
 export const fetchContacts = async () => {
   const [personsResponse, orgsResponse] = await Promise.all([
-    callPipedriveAPI('/persons?limit=500'),
-    callPipedriveAPI('/organizations?limit=500')
+    callPipedriveAPI('/persons?limit=500&custom_fields=1'),
+    callPipedriveAPI('/organizations?limit=500&custom_fields=1')
   ]);
   
   return {
