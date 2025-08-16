@@ -1,7 +1,10 @@
 import { ExternalError } from './errors';
 
-const PIPEDRIVE_API_TOKEN = process.env.PIPEDRIVE_API_TOKEN;
-const PIPEDRIVE_BASE_URL = process.env.PIPEDRIVE_BASE_URL || 'https://api.pipedrive.com/v1';
+// Read environment variables at runtime to ensure they're available
+const getPipedriveConfig = () => ({
+  token: process.env.PIPEDRIVE_API_TOKEN,
+  baseUrl: process.env.PIPEDRIVE_BASE_URL || 'https://api.pipedrive.com/v1'
+});
 
 export interface PipedriveDeal {
   title: string;
@@ -19,7 +22,14 @@ export interface PipedriveProduct {
 }
 
 const callPipedriveAPI = async (endpoint: string, method: string = 'GET', data?: any) => {
-  const url = `${PIPEDRIVE_BASE_URL}${endpoint}?api_token=${PIPEDRIVE_API_TOKEN}`;
+  const config = getPipedriveConfig();
+  
+  // Fix: Use & instead of ? if endpoint already has query parameters
+  const separator = endpoint.includes('?') ? '&' : '?';
+  const url = `${config.baseUrl}${endpoint}${separator}api_token=${config.token}`;
+  
+  console.log('callPipedriveAPI called with:', { endpoint, method, url: url.substring(0, 50) + '...' });
+  console.log('Token preview:', config.token ? `${config.token.substring(0, 8)}...` : 'NOT_SET');
   
   try {
     const response = await fetch(url, {
@@ -31,12 +41,17 @@ const callPipedriveAPI = async (endpoint: string, method: string = 'GET', data?:
       signal: AbortSignal.timeout(30000), // 30 second timeout
     });
     
+    console.log('Pipedrive API response status:', response.status);
+    
     if (!response.ok) {
+      const errorText = await response.text();
+      console.log('Pipedrive API error response:', errorText);
       throw new ExternalError(`Pipedrive API error: ${response.status} ${response.statusText}`);
     }
     
     return await response.json();
   } catch (error) {
+    console.log('Pipedrive API call failed:', error.message);
     throw new ExternalError(`Failed to call Pipedrive API: ${error.message}`);
   }
 };

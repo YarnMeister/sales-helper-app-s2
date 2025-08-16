@@ -5,17 +5,22 @@ import { errorToResponse, ExternalError } from '@/lib/errors';
 
 export async function GET(request: NextRequest) {
   try {
-    // Try cache first
-    const cached = await cache.get(CACHE_KEYS.PRODUCTS);
-    
-    if (cached && !cached.stale) {
-      console.log('Serving fresh products from cache');
-      return Response.json({ 
-        ok: true, 
-        data: cached.data, 
-        stale: false,
-        source: 'cache'
-      });
+    // Try cache first (but don't fail if cache is unavailable)
+    let cached = null;
+    try {
+      cached = await cache.get(CACHE_KEYS.PRODUCTS);
+      
+      if (cached && !cached.stale) {
+        console.log('Serving fresh products from cache');
+        return Response.json({ 
+          ok: true, 
+          data: cached.data, 
+          stale: false,
+          source: 'cache'
+        });
+      }
+    } catch (cacheError) {
+      console.log('Cache unavailable, proceeding to Pipedrive:', (cacheError as Error).message);
     }
     
     try {
@@ -26,8 +31,12 @@ export async function GET(request: NextRequest) {
       // PRD requirement: Transform to categorized structure
       const categorizedData = transformProductsHierarchy(products);
       
-      // Update cache
-      await cache.set(CACHE_KEYS.PRODUCTS, categorizedData);
+      // Try to update cache (but don't fail if cache is unavailable)
+      try {
+        await cache.set(CACHE_KEYS.PRODUCTS, categorizedData);
+      } catch (cacheError) {
+        console.log('Failed to update cache:', (cacheError as Error).message);
+      }
       
       return Response.json({ 
         ok: true, 
