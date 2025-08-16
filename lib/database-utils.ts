@@ -1,4 +1,4 @@
-import { query } from './supabase';
+import { query } from './db';
 import { 
   Request, 
   RequestInsert, 

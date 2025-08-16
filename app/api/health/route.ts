@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { validateEnvironment } from '@/lib/env'
-import { checkDbHealth } from '@/lib/supabase'
+import { checkDbHealth } from '@/lib/db'
 import { cache } from '@/lib/cache'
 
 export async function GET() {
