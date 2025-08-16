@@ -7,15 +7,19 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` as cont
 ## Process for each new feature branch
 1. Check that git is clean and ready to start 
 2. Create new branch and update workflow_state.md using instructions in that doc
+3. Update workflow_state.md using instructions in that doc
 
-## Process for each new prompt
-1. Update workflow_state.md using instructions in that doc
-2. Update the Notes section in workfow_state.md if any production config is needed (like db migration or env config) for the previous change we just completed (if relevant)
+
+## Key questions for each new major prompt
 For each new prompt, before making changes, review the instructions below and confirm:
 1. Are they clear?
 2. Any gaps?  
 3. Call out any parts we can skip
+4. Replace all mention of Supabase with our new Neon Postgres Db and Upstash cahcing 
 4. Keep in mind this is a 2nd generation rewrite, Greenfield but based on learning from original app.
+
+## Instuctions for interim prompts (not new feature branch)
+5. Update the "Production Deployment Notes for current feature branch" section in workfow_state.md if any production config is needed (like db migration or env config) for the previous change we just completed (if relevant)
 
 
 ## Process for each deployment to prod
