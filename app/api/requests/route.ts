@@ -12,20 +12,21 @@ import {
 import { RequestUpsert } from '@/lib/schema';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 import { logInfo, logError, generateCorrelationId } from '@/lib/log';
+import { RequestStatus, SalespersonSelection } from '@/lib/types/database';
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId();
   
+  const { searchParams } = new URL(request.url);
+  const status = searchParams.get('status');
+  const mineGroup = searchParams.get('mineGroup');
+  const mineName = searchParams.get('mineName');
+  const personId = searchParams.get('personId');
+  const salesperson = searchParams.get('salesperson'); // PRD: Luyanda, James, Stefan
+  const showAll = searchParams.get('showAll') === 'true'; // PRD: Toggle for showing all requests
+  const limit = parseInt(searchParams.get('limit') || '50');
+  
   try {
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const mineGroup = searchParams.get('mineGroup');
-    const mineName = searchParams.get('mineName');
-    const personId = searchParams.get('personId');
-    const salesperson = searchParams.get('salesperson'); // PRD: Luyanda, James, Stefan
-    const showAll = searchParams.get('showAll') === 'true'; // PRD: Toggle for showing all requests
-    const limit = parseInt(searchParams.get('limit') || '50');
-    
     logInfo('Requests API GET request started', { 
       correlationId,
       filters: { status, mineGroup, mineName, personId, salesperson, showAll, limit },
@@ -34,11 +35,11 @@ export async function GET(request: NextRequest) {
     
     return await withTiming('GET /api/requests', async () => {
       const result = await getRequests({
-        status,
-        mineGroup,
-        mineName,
-        personId,
-        salesperson,
+        status: (status as RequestStatus) || undefined,
+        mineGroup: mineGroup || undefined,
+        mineName: mineName || undefined,
+        personId: personId || undefined,
+        salesperson: (salesperson as SalespersonSelection | 'all') || undefined,
         showAll,
         limit
       });
@@ -73,10 +74,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId();
   
+  const body = await request.json();
+  const parsed = RequestUpsert.parse(body);
+  
   try {
-    const body = await request.json();
-    const parsed = RequestUpsert.parse(body);
-    
     logInfo('Requests API POST request started', { 
       correlationId,
       operation: parsed.id ? 'update' : 'create',
@@ -166,14 +167,14 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const correlationId = generateCorrelationId();
   
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  
+  if (!id) {
+    throw new ValidationError('Missing request ID');
+  }
+  
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    
-    if (!id) {
-      throw new ValidationError('Missing request ID');
-    }
-    
     logInfo('Requests API DELETE request started', { 
       correlationId,
       requestId: id,

@@ -51,8 +51,9 @@ const callPipedriveAPI = async (endpoint: string, method: string = 'GET', data?:
     
     return await response.json();
   } catch (error) {
-    console.log('Pipedrive API call failed:', error.message);
-    throw new ExternalError(`Failed to call Pipedrive API: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log('Pipedrive API call failed:', errorMessage);
+    throw new ExternalError(`Failed to call Pipedrive API: ${errorMessage}`);
   }
 };
 

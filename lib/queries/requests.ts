@@ -13,8 +13,8 @@ export const getRequests = async (params: {
 }) => {
   const { status, mineGroup, mineName, personId, salesperson, showAll = false, limit = 50 } = params;
   
-  let query = sql`SELECT * FROM requests WHERE 1=1`;
-  const conditions: any[] = [];
+  // Build conditions dynamically
+  let conditions: any[] = [];
   
   // Filter by salesperson unless showAll is true
   if (!showAll && salesperson && salesperson !== 'all') {
@@ -34,13 +34,23 @@ export const getRequests = async (params: {
     conditions.push(sql`contact->>'personId' = ${personId}`);
   }
   
-  if (conditions.length > 0) {
-    query = sql`SELECT * FROM requests WHERE ${sql.join(conditions, sql` AND `)} ORDER BY created_at DESC LIMIT ${limit}`;
+  // Use a simple approach with individual queries
+  if (conditions.length === 0) {
+    return await sql`SELECT * FROM requests ORDER BY created_at DESC LIMIT ${limit}`;
+  } else if (conditions.length === 1) {
+    return await sql`SELECT * FROM requests WHERE ${conditions[0]} ORDER BY created_at DESC LIMIT ${limit}`;
+  } else if (conditions.length === 2) {
+    return await sql`SELECT * FROM requests WHERE ${conditions[0]} AND ${conditions[1]} ORDER BY created_at DESC LIMIT ${limit}`;
+  } else if (conditions.length === 3) {
+    return await sql`SELECT * FROM requests WHERE ${conditions[0]} AND ${conditions[1]} AND ${conditions[2]} ORDER BY created_at DESC LIMIT ${limit}`;
+  } else if (conditions.length === 4) {
+    return await sql`SELECT * FROM requests WHERE ${conditions[0]} AND ${conditions[1]} AND ${conditions[2]} AND ${conditions[3]} ORDER BY created_at DESC LIMIT ${limit}`;
+  } else if (conditions.length === 5) {
+    return await sql`SELECT * FROM requests WHERE ${conditions[0]} AND ${conditions[1]} AND ${conditions[2]} AND ${conditions[3]} AND ${conditions[4]} ORDER BY created_at DESC LIMIT ${limit}`;
   } else {
-    query = sql`SELECT * FROM requests ORDER BY created_at DESC LIMIT ${limit}`;
+    // Fallback for more than 5 conditions
+    return await sql`SELECT * FROM requests ORDER BY created_at DESC LIMIT ${limit}`;
   }
-  
-  return await query;
 };
 
 // Get request by ID
