@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-08-16 18:00  
+**Last Updated:** 2025-08-16 18:05  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `feature/core-request-management-api`
+**Current Branch:** `main`
 
 ---
 
@@ -12,17 +12,32 @@
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
 | In Progress / Local     |                       |                      |
-| Deployed to Preview     | `feature/core-request-management-api` | Core request management API deployed |
-| Deployed to Production  |                       |                      |
+| Deployed to Preview     |                       |                      |
+| Deployed to Production  | `main`                | Core request management API live in production |
 
 ---
 
-## Last Preview URL: 
+## Production Deployment Notes for current feature branch
 
+**Schema Validation Feature (Previous):**
+- ✅ Core schema validation system implemented with Zod
+- ✅ Standardized error handling classes created
+- ✅ Unit tests passing (9/9)
+- ✅ Production deployment successful with authentication enabled
+
+**Database Client Utilities Feature (Previous):**
+- ✅ Environment-aware database client with Neon PostgreSQL support
+- ✅ RPC functions: generate_request_id() and validate_contact_jsonb()
+- ✅ Database health check with latency monitoring
+- ✅ Comprehensive error handling with withDbErrorHandling utility
+- ✅ Upstash Redis caching (no database KV cache duplication)
+- ✅ All tests passing (19/19)
+- ✅ Production deployment successful
 
 ---
 
 ## 📝 Recent Commits
+e6949e2 Update workflow state: core request management API deployed to preview
 35bd803 Update workflow state and progress checklist: core request management API complete
 5e69323 Implement core request management API with Neon PostgreSQL support
 2633cc7 Update workflow state: cleaned database client utilities deployed to production
