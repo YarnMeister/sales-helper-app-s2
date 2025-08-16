@@ -21,11 +21,11 @@
 ---
 
 ## 📝 Recent Commits
+186c693 Replace Supabase patterns with centralized Neon SQL queries
 673a35f Fix dynamic UPDATE query in requests API
 7e2f13d Migrate to Neon serverless HTTP driver
 dcb6faf Fix submit endpoint to use correct Neon PostgreSQL pattern
 e186d16 Implement Submit & Pipedrive Integration API
-83872f9 Update project config and clear workflow state for new feature
 f458d51 Update workflow state: database client utilities deployed to production
 936924d Update project config: clarify production deployment notes instructions
 4bb3d7d Update workflow state: database client utilities deployed to preview
