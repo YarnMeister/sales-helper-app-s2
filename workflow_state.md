@@ -1,6 +1,6 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-08-16 17:10  
+**Last Updated:** 2025-08-16 17:30  
 **Project:** sales-helper-app-s2  
 **Current Branch:** `main`
 
@@ -13,7 +13,7 @@
 | No Feature Branch       |                       |                      |
 | In Progress / Local     |                       |                      |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  | `main`                | Database client utilities live in production |
+| Deployed to Production  | `main`                | Database client utilities (cleaned) live in production |
 
 ---
 
@@ -28,6 +28,8 @@
 ---
 
 ## 📝 Recent Commits
+9f8b23d Remove database-based KV cache utilities, use only Upstash Redis
+f458d51 Update workflow state: database client utilities deployed to production
 936924d Update project config: clarify production deployment notes instructions
 4bb3d7d Update workflow state: database client utilities deployed to preview
 d51bd15 Update workflow state: database client utilities complete
