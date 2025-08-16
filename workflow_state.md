@@ -18,6 +18,7 @@
 ---
 
 ## 📝 Recent Commits
+60e0472 feat: implement inline comment functionality - add comment types and interfaces - create CommentInput component with auto-save on blur - create CommentDisplay component for viewing comments - create CommentControl component for state management - integrate CommentControl into RequestCard - update main page to handle inline comment updates - add recently updated indicator for comment changes - remove old comment handling code
 f52a4d9 fix: resolve API validation error for contact/line-item updates - fix RequestUpsert schema to only require salesperson info for new requests - remove debugging console.log statements - API now properly handles contact and line-item updates
 ac3aeca feat: streamline contact and line-item selection flow - remove interim visual feedback and save buttons - make clicking immediately save to DB and navigate back - update ContactAccordion to remove selection highlighting - update ProductAccordion to remove Add buttons and selection summary - add loading overlays during save operations
 

@@ -1,4 +1,5 @@
 import { vi, beforeAll, afterAll, afterEach } from 'vitest';
+import '@testing-library/jest-dom';
 import { setupTestDatabase, teardownTestDatabase } from './_setup/setup-test-db';
 import { testDataManager } from './_utils/test-helpers';
 
