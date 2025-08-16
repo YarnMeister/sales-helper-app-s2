@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
-import { User, Package, MessageSquare, ExternalLink, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Package, ExternalLink, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { CommentControl } from './CommentControl';
 
 interface Contact {
   personId: number;
@@ -37,8 +38,8 @@ interface RequestCardProps {
   request: Request;
   onAddContact?: (requestId: string) => void;
   onAddLineItems?: (requestId: string) => void;
-  onAddComment?: (requestId: string) => void;
   onSubmit?: (requestId: string) => Promise<void>;
+  onUpdateInline?: (requestId: string, field: string, value: any) => Promise<void>;
   onViewDeal?: (dealId: number) => void;
 }
 
@@ -46,8 +47,8 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   request,
   onAddContact,
   onAddLineItems,
-  onAddComment,
   onSubmit,
+  onUpdateInline,
   onViewDeal
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -246,30 +247,18 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         )}
       </div>
 
-      {/* Comment Section */}
+      {/* Enhanced Comment Section with Inline Editing */}
       <div className="p-4 border-b border-gray-100">
-        {request.comment ? (
-          <div 
-            className="bg-gray-50 border border-gray-200 rounded-lg p-3"
-            data-testid="sh-request-comment-display"
-          >
-            <div className="flex items-start gap-2">
-              <MessageSquare className="h-4 w-4 text-gray-600 mt-1" />
-              <p className="text-sm text-gray-800 flex-1">{request.comment}</p>
-            </div>
-          </div>
-        ) : (
-          <Button
-            variant="outline"
-            className="w-full border-gray-200 text-gray-700 hover:bg-gray-50"
-            onClick={() => onAddComment?.(request.id)}
-            disabled={isSubmitted}
-            data-testid="sh-request-add-comment"
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Add Comment
-          </Button>
-        )}
+        <CommentControl
+          comment={request.comment}
+          onCommentChange={async (newComment) => {
+            if (onUpdateInline) {
+              await onUpdateInline(request.id, 'comment', newComment);
+            }
+          }}
+          disabled={isSubmitted}
+          requestId={request.request_id}
+        />
       </div>
 
       {/* Action Buttons */}

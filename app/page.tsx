@@ -46,6 +46,7 @@ export default function MainPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [recentlyUpdated, setRecentlyUpdated] = useState<Set<string>>(new Set());
   const router = useRouter();
   const { toast } = useToast();
 
@@ -154,9 +155,53 @@ export default function MainPage() {
     router.push('/add-line-items');
   };
 
-  const handleAddComment = (requestId: string) => {
-    // TODO: Implement comment modal/page
-    console.log('Add comment for request:', requestId);
+  const handleInlineUpdate = async (requestId: string, field: string, value: any) => {
+    try {
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: requestId, 
+          [field]: value 
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.ok) {
+        // Update the specific request in state
+        setRequests(prev => prev.map(req => 
+          req.id === requestId 
+            ? { ...req, [field]: value, updated_at: new Date().toISOString() }
+            : req
+        ));
+        
+        // Mark as recently updated
+        setRecentlyUpdated(prev => new Set(prev).add(requestId));
+        
+        // Remove the indicator after 3 seconds
+        setTimeout(() => {
+          setRecentlyUpdated(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(requestId);
+            return newSet;
+          });
+        }, 3000);
+        
+      } else {
+        console.error('Failed to update request:', data.message);
+        // For comments, we might want to show a more specific error
+        if (field === 'comment') {
+          throw new Error(data.message || 'Failed to save comment');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating request:', error);
+      // Re-throw for comment-specific error handling
+      if (field === 'comment') {
+        throw error;
+      }
+    }
   };
 
   const handleSubmitRequest = async (requestId: string) => {
@@ -309,15 +354,23 @@ export default function MainPage() {
         ) : (
           <div className="space-y-4" data-testid="sh-requests-list">
             {filteredRequests.map(request => (
-              <RequestCard
-                key={request.id}
-                request={request}
-                onAddContact={handleAddContact}
-                onAddLineItems={handleAddLineItems}
-                onAddComment={handleAddComment}
-                onSubmit={handleSubmitRequest}
-                onViewDeal={handleViewDeal}
-              />
+              <div key={request.id} className="relative">
+                {recentlyUpdated.has(request.id) && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <div className="bg-green-500 text-white text-xs px-2 py-1 rounded animate-pulse">
+                      Updated
+                    </div>
+                  </div>
+                )}
+                <RequestCard
+                  request={request}
+                  onAddContact={handleAddContact}
+                  onAddLineItems={handleAddLineItems}
+                  onSubmit={handleSubmitRequest}
+                  onUpdateInline={handleInlineUpdate}
+                  onViewDeal={handleViewDeal}
+                />
+              </div>
             ))}
           </div>
         )}
