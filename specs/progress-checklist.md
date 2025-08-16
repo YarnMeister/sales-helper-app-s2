@@ -121,15 +121,15 @@ Skipped
   - [x] Verify all database queries use proper indexes (generated columns)
 
 ### 3.2 Submit & Pipedrive Integration API
-- [ ] Implement submission logic with mock/real mode support
-  - [ ] Create `/lib/pipedrive.ts` for Pipedrive integration
-  - [ ] Create `/app/api/submit/route.ts`
-  - [ ] Manual validation: Test mock submission creates entry in mock_pipedrive_submissions
-  - [ ] Test mock submission updates request status to 'submitted'
-  - [ ] Test validation errors for requests without contact or line items
-  - [ ] Test submission fails gracefully with invalid request ID
-  - [ ] Test environment variable PIPEDRIVE_SUBMIT_MODE switches behavior
-  - [ ] Verify Pipedrive API timeout handling
+- [x] Implement submission logic with mock/real mode support
+  - [x] Create `/lib/pipedrive.ts` for Pipedrive integration
+  - [x] Create `/app/api/submit/route.ts`
+  - [x] Manual validation: Test mock submission creates entry in mock_pipedrive_submissions
+  - [x] Test mock submission updates request status to 'submitted'
+  - [x] Test validation errors for requests without contact or line items
+  - [x] Test submission fails gracefully with invalid request ID
+  - [x] Test environment variable PIPEDRIVE_SUBMIT_MODE switches behavior
+  - [x] Verify Pipedrive API timeout handling
 
 ### 3.3 Contacts & Products API with Caching
 - [ ] Implement data fetching APIs with intelligent caching
