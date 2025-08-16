@@ -1,4 +1,5 @@
 import { validateEnvironment } from '@/lib/env'
+import DataDisplay from './components/DataDisplay'
 
 export default async function Home() {
   // Validate environment on page load
@@ -16,10 +17,13 @@ export default async function Home() {
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
           ✅ Environment and Database Setup Complete
         </div>
-        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-8">
           🚀 Preview Deployment Test - Production Pipeline Active
         </div>
       </div>
+      
+      {/* Data Display Component */}
+      <DataDisplay />
     </main>
   )
 }
