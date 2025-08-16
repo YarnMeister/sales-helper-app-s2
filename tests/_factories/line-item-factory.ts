@@ -48,7 +48,7 @@ export class LineItemFactory extends BaseFactory<TLineItem> {
       this.randomFromArray(LineItemFactory.CATEGORIES);
     
     const products = LineItemFactory.PRODUCTS[category as keyof typeof LineItemFactory.PRODUCTS] || 
-      LineItemFactory.PRODUCTS[LineItemFactory.CATEGORIES[0]];
+      LineItemFactory.PRODUCTS[LineItemFactory.CATEGORIES[0] as keyof typeof LineItemFactory.PRODUCTS];
     
     const product = this.randomFromArray(products);
     
