@@ -121,7 +121,7 @@ Additional comments: Testing the Slack integration
 
 ```bash
 # Slack Bot Token (required)
-SLACK_BOT_TOKEN=xoxb-5198202789702-9297780708132-pIcEj4ghYpckgac1sv8ouYxq
+SLACK_BOT_TOKEN=xoxb-your-bot-token-here
 
 # Slack Channel (optional, defaults to #out-of-office)
 SLACK_CHANNEL=#sales-helper-test
