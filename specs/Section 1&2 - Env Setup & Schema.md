@@ -623,21 +623,9 @@ describe('Schema validation', () => {
     });
   });
 });
-Manual Validation Steps:
 
- Import schemas in a test file and verify TypeScript types work
- Test Zod validation with valid/invalid data samples
- Verify error classes extend properly and have correct status codes
- Test errorToResponse returns proper JSON format with all fields
- Confirm logging works with structured metadata and environment info
- Run unit tests and verify all schema validations pass
- Test validation helper functions with both valid and invalid data
- Verify custom validation messages are clear and helpful
- Test mobile-first ContactJSON requirements (mineGroup, mineName)
- Verify SalespersonSelection enum validation works correctly
- Test RequestUpsert validation for mobile-first salesperson requirements
 
-Checkbox: - [ ] 2.1 Schema Contracts & Validation Complete
+Checkbox: - [x] 2.1 Schema Contracts & Validation Complete
 
 2.2 Database Client & Utilities
 Goal: Create environment-aware database client with integrated configuration and robust utilities

@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         
         const result = await createRequest({
           requestId,
-          salespersonSelection: parsed.salespersonSelection,
+          salespersonSelection: parsed.salespersonSelection || (parsed.salespersonFirstName as any),
           mineGroup: parsed.mineGroup,
           mineName: parsed.mineName,
           contact: parsed.contact,

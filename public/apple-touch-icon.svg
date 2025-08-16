@@ -1,0 +1,9 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Circular background -->
+  <circle cx="90" cy="90" r="90" fill="#ED1C24"/>
+  
+  <!-- RTSE text in yellow -->
+  <text x="90" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#FFD700">R</text>
+  <text x="90" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#FFD700">T</text>
+  <text x="90" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#FFD700">SE</text>
+</svg>

@@ -577,7 +577,7 @@ export default function MainPage() {
 }
 Manual Validation:
 
- Page loads with "James" selected by default (not "all")
+ Page loads with "All Requests" selected by default 
  New Request button appears for specific salesperson, hidden for "all"
  Page title updates based on selected salesperson
  Creates new request inline on main page (no separate edit draft page)

@@ -18,11 +18,12 @@ For each new prompt, before making changes, review the instructions below and co
 2. Any gaps?  
 3. Call out any parts we can skip
 
- 
+ ## Process for each deployment to preview
+1. Update workflow_state.md using instructions in that doc
+2. Update "Update the "Last Preview URL:" with latest URL from Vercel
 
 
 ## Process for each deployment to prod
-1. Always deploy to preview in Vercel first
 2. Do the deployment
 3. Update workflow_state.md using instructions in that doc
 
