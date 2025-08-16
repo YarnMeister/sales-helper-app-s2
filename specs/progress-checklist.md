@@ -11,14 +11,13 @@ This checklist covers the complete rewrite of the Sales Helper App from a comple
   - [x] Create `.env.example` with all required variables
   - [x] Create `/lib/env.ts` with complete environment validation
   - [x] Install required dependencies: `zod @supabase/supabase-js dotenv`
-  
+  - [x] Create `/scripts/env-check.js` for environment validation
+  - [x] Make env-check script executable: `chmod +x scripts/env-check.js`
+  - [x] Manual validation: Run `npm run env:check` and verify success
+  - [x] Test with missing env vars to ensure proper error messages
+  - [x] Verify APP_ENV=test vs APP_ENV=prod selects different DB credentials
   Skipped till later:
-- [ ] Create `/scripts/env-check.js` for environment validation
-  - [ ] Install dev dependencies: `vitest @playwright/test @types/node`
-  - [ ] Make env-check script executable: `chmod +x scripts/env-check.js`
-  - [ ] Manual validation: Run `npm run env:check` and verify success
-  - [ ] Test with missing env vars to ensure proper error messages
-  - [ ] Verify APP_ENV=test vs APP_ENV=prod selects different DB credentials
+ - [ ] Install dev dependencies: `vitest @playwright/test @types/node`
   
   De-scoped due to green approach
   - [ ] Update `package.json` scripts section (not needed for new build)
@@ -30,87 +29,46 @@ This checklist covers the complete rewrite of the Sales Helper App from a comple
   - [x] Create `/supabase/migrations/20250815000002_support_tables.sql`
 
   Skipped
-    - [ ] Apply migrations to both test and prod databases (manual)
-  - [ ] Manual validation: Run `supabase migration up` with no errors
-  - [ ] Check all tables exist: requests, kv_cache, mock_pipedrive_submissions
-  - [ ] Verify all indexes created correctly, including salesperson index
-  - [ ] Test generated columns with sample JSONB data
-  - [ ] Confirm trigger updates updated_at on row updates
-  - [ ] Test automatic request ID generation via trigger
-  - [ ] Verify contact JSONB validation function
-  - [ ] Test salesperson_selection constraint with valid/invalid values
+  - [x] Check all tables exist: requests, kv_cache (Redis), mock_pipedrive_submissions
+  - [x] Verify all indexes created correctly, including salesperson index
+  - [x] Test generated columns with sample JSONB data
+  - [x] Confirm trigger updates updated_at on row updates
+  - [x] Test automatic request ID generation via trigger
+  - [x] Verify contact JSONB validation function
+  - [x] Test salesperson_selection constraint with valid/invalid values
   - [ ] Add Upstash "QStash/Workflow" for background processing Pipedrive deals/retries (maybe)
 
   De-scoped due to green approach
+ - [ ] Apply migrations to both test and prod databases (manual)
+ - [ ] Manual validation: Run `supabase migration up` with no errors
 
 ## Section 1.3 Convert to Neon (Postgres) and Upstash Redis (contacts/products KV)
 
 ### Updated Environment Configuration
 
-- [ ] **Update environment configuration for Neon + Upstash**
-  - [ ] Update `/lib/env.ts` with new simplified schema (7 variables)
-  - [ ] Update `.env.example` with new structure
-  - [ ] Update `/scripts/env-check.js` for new environment variables
-  - [ ] Install new dependencies: `npm install pg @types/pg @upstash/redis`
-  - [ ] Remove Supabase dependency: `npm uninstall @supabase/supabase-js`
-  - [ ] Manual validation: Run `npm run env:check` with new variables
-  - [ ] Test URL masking in env-check script
-  - [ ] Verify DATABASE_URL and REDIS_URL validation works
+- [x] **Update environment configuration for Neon + Upstash**
+  - [x] Update `/lib/env.ts` with new simplified schema (7 variables)
+  - [x] Update `.env.example` with new structure
+  - [x] Update `/scripts/env-check.js` for new environment variables
+  - [x] Install new dependencies: `npm install pg @types/pg @upstash/redis`
+  - [x] Remove Supabase dependency: `npm uninstall @supabase/supabase-js`
+  - [x] Manual validation: Run `npm run env:check` with new variables
+  - [x] Test URL masking in env-check script
+  - [x] Verify DATABASE_URL and REDIS_URL validation works
 
-### Database Migration from Supabase to Neon
 
-#### Database Connection Layer
-
-- [ ] **Replace Supabase client with native Postgres connection**
-  - [ ] Create `/lib/db.ts` with pg connection pool
-  - [ ] Implement query function with parameter binding
-  - [ ] Add database health check function
-  - [ ] Add error handling wrapper function
-  - [ ] Test connection pool with Neon DATABASE_URL
-  - [ ] Manual validation: Connection pool creates successfully
-  - [ ] Test query execution with sample SQL
-  - [ ] Verify SSL configuration works for Neon
-
-#### Database Schema Migration
-
-- [ ] **Create explicit SQL migration system**
-  - [ ] Create `/migrations/001_initial_schema.sql` with exact same schema
-  - [ ] Create `/migrations/002_support_tables.sql` with cache and mock tables
-  - [ ] Create `/scripts/migrate.js` migration runner
-  - [ ] Create `/scripts/migration-status.js` status checker
-  - [ ] Create `/scripts/reset-db.js` for development
-  - [ ] Update package.json scripts for new migration system
-  - [ ] Make migration scripts executable: `chmod +x scripts/*.js`
-  - [ ] Manual validation: Run `npm run db:migrate` on dev branch
-  - [ ] Verify all tables, functions, and indexes created
-  - [ ] Test request ID generation function
-  - [ ] Test JSONB validation function
-  - [ ] Test generated columns extract JSONB values correctly
-
-### Cache Layer Migration from Supabase to Redis
-
-#### Redis Cache Implementation
-
-- [ ] **Replace Supabase cache with Upstash Redis**
-  - [ ] Create `/lib/cache.ts` with Upstash Redis client
-  - [ ] Implement KVCache class with get/set/bust operations
-  - [ ] Add cache statistics and monitoring functions
-  - [ ] Preserve existing hierarchy transformation functions
-  - [ ] Test Redis connection with Upstash URL
-  - [ ] Manual validation: Cache get/set operations work
-  - [ ] Test TTL and stale data detection
-  - [ ] Test pattern-based cache busting
-  - [ ] Verify cache statistics return properly
 
 #### Cache Key Management
 
 - [ ] **Update cache key strategy for Redis**
-  - [ ] Define cache key constants in `/lib/cache.ts`
+  - [x] Define cache key constants in `/lib/cache.ts`
+  - [x] Verify cache busting works with patterns
+  
+  Skipped
   - [ ] Implement cache warming for critical data
   - [ ] Add cache versioning for schema changes
   - [ ] Test cache key naming conventions
   - [ ] Manual validation: Cache keys are properly namespaced
-  - [ ] Verify cache busting works with patterns
 
 ---
 

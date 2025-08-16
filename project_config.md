@@ -3,42 +3,24 @@
 ## Context
 Before each new change, read `specs/Archive/original-product-req-doc.md` as context only to get an overall idea of the app. For actual changes focus only on the current prompt details.
 
-## Process for Each New Prompt
+
+## Process for each new feature branch
+1. Check that git is clean and ready to start 
+2. Create new branch and update workflow_state.md using instructions in that doc
+
+## Process for each new prompt
+1. Update workflow_state.md using instructions in that doc
+2. Update the Notes section in workfow_state.md if any production config is needed (like db migration or env config) for the previous change we just completed (if relevant)
 For each new prompt, before making changes, review the instructions below and confirm:
-1. are they clear
-2. any gaps  
-3. call out any parts we can skip
-4. Keep in mind this is a 2nd generation rewrite, Greenfield's but based on learning from original app.
+1. Are they clear?
+2. Any gaps?  
+3. Call out any parts we can skip
+4. Keep in mind this is a 2nd generation rewrite, Greenfield but based on learning from original app.
 
-## Development Journal
 
-### Environment Setup
-- **Commit:** `90577db` - Setup simplified greenfield environment configuration
-- **Branch:** `setup-environment`
-- **Files:** package.json, env.example, lib/env.ts, lib/supabase.ts, lib/database.ts, tsconfig.json, next.config.js, README.md, .gitignore
-- **Status:** ✅ Complete
-- **Production Notes:** Basic Next.js + Supabase setup ready
+## Process for each deployment to prod
+1. Always deploy to preview in Vercel first
+2. Do the deployment
+3. Update workflow_state.md using instructions in that doc
 
-### Database Schema Implementation  
-- **Commit:** `eac900d` - Implement comprehensive database schema with full validation
-- **Branch:** `setup-database-schema`
-- **Files:** supabase/migrations/*.sql, lib/types/database.ts, lib/database-utils.ts, supabase/README.md
-- **Status:** ✅ Complete
-- **Production Notes:** Migrations ready, requires Supabase project setup and CLI installation
 
-### Neon + Upstash Direct Implementation
-- **Commit:** `bf9b075` - Migrate from Supabase to Neon + Upstash direct implementation
-- **Branch:** `neon-upstash-direct`
-- **Files:** lib/env.ts, lib/supabase.ts → lib/db.ts, lib/cache.ts, lib/database-utils.ts, migrations/*.sql, scripts/*.js, package.json, README.md
-- **Status:** ✅ Complete
-- **Production Notes:** Direct Neon Postgres + Upstash Redis setup, 7 simplified environment variables, migration system ready
-
-### Database Workflow Documentation
-- **Commit:** `bbe1aa0` - Update environment configuration with actual Neon credentials and setup guide
-- **Branch:** `neon-upstash-direct`
-- **Files:** DATABASE_WORKFLOW.md, scripts/setup-env.sh, scripts/migrate-env.sh, package.json, env.example, SETUP.md
-- **Status:** ✅ Complete
-- **Production Notes:** Comprehensive workflow for Neon branches (dev → preview → main), automation scripts, troubleshooting guide
-- **Vercel URLs:** 
-  - Production: https://sales-helper-app-s2-uqms-jan-jr-2762s-projects.vercel.app/
-  - Main Branch: https://sales-helper-app-s2-uqms-git-main-jan-jr-2762s-projects.vercel.app/
