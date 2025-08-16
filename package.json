@@ -10,7 +10,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "node scripts/migrate.js",
-    "env:check": "node scripts/env-check.js"
+    "env:check": "node scripts/env-check.js",
+    "db:setup-dev": "./scripts/setup-env.sh dev",
+    "db:setup-preview": "./scripts/setup-env.sh preview/pr-123",
+    "db:migrate-dev": "./scripts/migrate-env.sh dev",
+    "db:migrate-preview": "./scripts/migrate-env.sh preview/pr-123",
+    "db:migrate-prod": "./scripts/migrate-env.sh main"
   },
   "dependencies": {
     "@types/pg": "^8.15.5",

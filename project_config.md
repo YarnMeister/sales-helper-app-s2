@@ -32,6 +32,13 @@ For each new prompt, before making changes, review the instructions below and co
 - **Files:** lib/env.ts, lib/supabase.ts → lib/db.ts, lib/cache.ts, lib/database-utils.ts, migrations/*.sql, scripts/*.js, package.json, README.md
 - **Status:** ✅ Complete
 - **Production Notes:** Direct Neon Postgres + Upstash Redis setup, 7 simplified environment variables, migration system ready
+
+### Database Workflow Documentation
+- **Commit:** `bbe1aa0` - Update environment configuration with actual Neon credentials and setup guide
+- **Branch:** `neon-upstash-direct`
+- **Files:** DATABASE_WORKFLOW.md, scripts/setup-env.sh, scripts/migrate-env.sh, package.json, env.example, SETUP.md
+- **Status:** ✅ Complete
+- **Production Notes:** Comprehensive workflow for Neon branches (dev → preview → main), automation scripts, troubleshooting guide
 - **Vercel URLs:** 
   - Production: https://sales-helper-app-s2-uqms-jan-jr-2762s-projects.vercel.app/
   - Main Branch: https://sales-helper-app-s2-uqms-git-main-jan-jr-2762s-projects.vercel.app/
