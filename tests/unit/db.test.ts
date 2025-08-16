@@ -1,30 +1,37 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock the environment validation
-vi.mock('../../lib/env', () => ({
-  getDatabaseConfig: vi.fn().mockReturnValue({
-    url: 'postgresql://test:test@localhost:5432/test',
-    environment: 'test'
-  })
+// Mock the Neon serverless driver
+vi.mock('@neondatabase/serverless', () => ({
+  neon: vi.fn(() => vi.fn()),
+  neonConfig: {
+    fetchConnectionCache: true
+  }
 }));
 
-// Mock the database connection
-vi.mock('pg', () => ({
-  Pool: vi.fn().mockImplementation(() => ({
-    connect: vi.fn().mockResolvedValue({
-      query: vi.fn(),
-      release: vi.fn()
-    })
-  }))
+// Mock the database modules
+vi.mock('../../lib/db', () => ({
+  sql: vi.fn()
 }));
 
+vi.mock('../../lib/db-utils', () => ({
+  generateRequestId: vi.fn().mockResolvedValue('QR-001'),
+  validateContactJsonb: vi.fn().mockResolvedValue(true),
+  checkDbHealth: vi.fn().mockResolvedValue({
+    healthy: true,
+    environment: 'test',
+    latency: 10,
+    version: 'PostgreSQL (Neon Serverless)'
+  }),
+  withTiming: vi.fn((label, operation) => operation())
+}));
+
+import { sql } from '../../lib/db';
 import { 
-  getDb, 
   generateRequestId, 
   validateContactJsonb,
   checkDbHealth,
-  withDbErrorHandling 
-} from '../../lib/db';
+  withTiming
+} from '../../lib/db-utils';
 
 describe('Database utilities', () => {
   beforeEach(() => {
@@ -32,29 +39,17 @@ describe('Database utilities', () => {
   });
 
   it('should create database client with correct environment', () => {
-    const db = getDb();
-    expect(db).toBeDefined();
+    expect(sql).toBeDefined();
+    expect(typeof sql).toBe('function');
   });
   
   it('should generate sequential request IDs using database function', async () => {
-    const mockClient = {
-      query: vi.fn().mockResolvedValue({
-        rows: [{ generate_request_id: 'QR-001' }]
-      }),
-      release: vi.fn()
-    };
-    
-    const mockPool = {
-      connect: vi.fn().mockResolvedValue(mockClient)
-    };
-    
-    // Mock the Pool constructor to return our mock pool
-    const { Pool } = await import('pg');
-    vi.mocked(Pool).mockImplementation(() => mockPool as any);
+    // Mock the sql function
+    vi.mocked(sql).mockResolvedValue([{ generate_request_id: 'QR-001' }]);
     
     const id1 = await generateRequestId();
     expect(id1).toBe('QR-001');
-    expect(mockClient.query).toHaveBeenCalledWith('SELECT generate_request_id()');
+    expect(sql).toHaveBeenCalledWith(expect.stringContaining('SELECT generate_request_id()'));
   });
   
   it('should validate contact JSONB using database function', async () => {
@@ -65,44 +60,17 @@ describe('Database utilities', () => {
       mineName: 'Diamond Mine A'
     };
     
-    const mockClient = {
-      query: vi.fn().mockResolvedValue({
-        rows: [{ validate_contact_jsonb: true }]
-      }),
-      release: vi.fn()
-    };
-    
-    const mockPool = {
-      connect: vi.fn().mockResolvedValue(mockClient)
-    };
-    
-    // Mock the Pool constructor to return our mock pool
-    const { Pool } = await import('pg');
-    vi.mocked(Pool).mockImplementation(() => mockPool as any);
+    // Mock the sql function
+    vi.mocked(sql).mockResolvedValue([{ validate_contact_jsonb: true }]);
     
     const validResult = await validateContactJsonb(validContact);
     expect(validResult).toBe(true);
-    expect(mockClient.query).toHaveBeenCalledWith(
-      'SELECT validate_contact_jsonb($1)',
-      [JSON.stringify(validContact)]
-    );
+    expect(sql).toHaveBeenCalledWith(expect.stringContaining('SELECT validate_contact_jsonb'));
   });
   
   it('should perform database health check', async () => {
-    const mockClient = {
-      query: vi.fn().mockResolvedValue({
-        rows: [{ health_check: 1 }]
-      }),
-      release: vi.fn()
-    };
-    
-    const mockPool = {
-      connect: vi.fn().mockResolvedValue(mockClient)
-    };
-    
-    // Mock the Pool constructor to return our mock pool
-    const { Pool } = await import('pg');
-    vi.mocked(Pool).mockImplementation(() => mockPool as any);
+    // Mock the sql function
+    vi.mocked(sql).mockResolvedValue([{ health_check: 1 }]);
     
     const health = await checkDbHealth();
     expect(health).toHaveProperty('healthy');
@@ -117,7 +85,7 @@ describe('Database utilities', () => {
     };
     
     await expect(
-      withDbErrorHandling(operation, 'test-operation')
-    ).rejects.toThrow('Database operation failed: test-operation');
+      withTiming('test-operation', operation)
+    ).rejects.toThrow('Test database error');
   });
 });

@@ -1,6 +1,6 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-01-27 18:55  
+**Last Updated:** 2025-01-27 19:05  
 **Project:** sales-helper-app-s2  
 **Current Branch:** `feature/submit-pipedrive-integration`
 
@@ -21,6 +21,7 @@
 ---
 
 ## 📝 Recent Commits
+dcb6faf Fix submit endpoint to use correct Neon PostgreSQL pattern
 e186d16 Implement Submit & Pipedrive Integration API
 83872f9 Update project config and clear workflow state for new feature
 f458d51 Update workflow state: database client utilities deployed to production

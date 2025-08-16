@@ -3,9 +3,12 @@ import { RequestUpsert } from '../../lib/schema';
 
 // Mock the database client
 vi.mock('../../lib/db', () => ({
-  getDb: vi.fn(),
+  sql: vi.fn()
+}));
+
+vi.mock('../../lib/db-utils', () => ({
   generateRequestId: vi.fn().mockResolvedValue('QR-001'),
-  withDbErrorHandling: vi.fn((operation) => operation())
+  withTiming: vi.fn((label, operation) => operation())
 }));
 
 // Mock the error handling

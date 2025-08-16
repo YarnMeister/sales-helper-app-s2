@@ -20,6 +20,7 @@
     "test:clean-build": "./scripts/test-clean-build.sh"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
     "@types/pg": "^8.15.5",
     "@upstash/redis": "^1.35.3",
     "dotenv": "^17.2.1",
