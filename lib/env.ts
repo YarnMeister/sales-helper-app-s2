@@ -1,13 +1,22 @@
 import { z } from 'zod';
 
-// Environment schema validation
+// Simplified environment schema for Neon + Upstash
 const EnvSchema = z.object({
-  NEXT_PUBLIC_APP_ENV: z.enum(['development', 'production']).default('development'),
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  APP_ENV: z.enum(['development', 'production']).default('development'),
+  
+  // Neon Postgres - single DATABASE_URL for both environments
+  DATABASE_URL: z.string().url('Invalid DATABASE_URL'),
+  
+  // Upstash Redis
+  REDIS_URL: z.string().url('Invalid REDIS_URL'),
+  
+  // Pipedrive Configuration (unchanged)
   PIPEDRIVE_API_TOKEN: z.string().min(1),
+  PIPEDRIVE_BASE_URL: z.string().url().default('https://api.pipedrive.com/v1'),
   PIPEDRIVE_SUBMIT_MODE: z.enum(['live', 'mock']).default('mock'),
+  
+  // Optional: Slack alerting
+  SLACK_ALERT_WEBHOOK: z.string().url().optional(),
 });
 
 // Validate and parse environment variables
@@ -17,8 +26,7 @@ const validateEnv = () => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.errors.map(err => `${err.path.join('.')}: ${err.message}`);
-      console.error('Environment validation failed:', missingVars.join('\n'));
-      throw new Error(`Missing or invalid environment variables:\n${missingVars.join('\n')}`);
+      throw new Error(`Environment validation failed:\n${missingVars.join('\n')}`);
     }
     throw error;
   }
@@ -27,15 +35,37 @@ const validateEnv = () => {
 // Export validated environment configuration
 export const env = validateEnv();
 
-// Supabase configuration
-export const supabaseConfig = {
-  url: env.NEXT_PUBLIC_SUPABASE_URL,
-  anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY,
+// Database configuration helper
+export const getDatabaseConfig = () => {
+  return {
+    url: env.DATABASE_URL,
+    environment: env.APP_ENV
+  };
 };
 
-// Pipedrive configuration
-export const pipedriveConfig = {
-  apiToken: env.PIPEDRIVE_API_TOKEN,
-  submitMode: env.PIPEDRIVE_SUBMIT_MODE,
+// Cache configuration helper
+export const getCacheConfig = () => {
+  return {
+    url: env.REDIS_URL,
+    environment: env.APP_ENV
+  };
+};
+
+// Validate environment on module load
+export const validateEnvironment = () => {
+  try {
+    const dbConfig = getDatabaseConfig();
+    const cacheConfig = getCacheConfig();
+    
+    console.log(`Environment validated successfully`, { 
+      environment: env.APP_ENV,
+      pipedriveMode: env.PIPEDRIVE_SUBMIT_MODE,
+      hasDatabase: !!dbConfig.url,
+      hasCache: !!cacheConfig.url
+    });
+    return true;
+  } catch (error) {
+    console.error(`Environment validation failed`, { error: (error as Error).message });
+    throw error;
+  }
 };

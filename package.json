@@ -3,27 +3,31 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "npm run env:check && npm run db:migrate && next dev",
+    "build": "npm run env:check && npm run db:migrate && next build",
+    "start": "npm run env:check && next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate": "node scripts/migrate.js",
+    "env:check": "node scripts/env-check.js"
   },
   "dependencies": {
+    "@types/pg": "^8.15.5",
+    "@upstash/redis": "^1.35.3",
     "next": "14.0.0",
+    "pg": "^8.16.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@supabase/supabase-js": "^2.38.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "typescript": "^5.0.0",
     "eslint": "^8.0.0",
     "eslint-config-next": "14.0.0",
+    "typescript": "^5.0.0",
     "vitest": "^1.0.0"
   }
 }

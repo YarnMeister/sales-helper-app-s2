@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from './supabase';
+import { query } from './supabase';
 import { 
   Request, 
   RequestInsert, 
@@ -15,73 +15,133 @@ import {
 
 // Request operations
 export const createRequest = async (data: RequestInsert): Promise<Request> => {
-  const { data: request, error } = await supabase
-    .from(TABLES.REQUESTS)
-    .insert(data)
-    .select()
-    .single();
+  const sql = `
+    INSERT INTO requests (
+      salesperson_first_name, 
+      salesperson_selection,
+      mine_group, 
+      mine_name, 
+      contact, 
+      line_items, 
+      comment,
+      status
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    RETURNING *
+  `;
+  
+  const params = [
+    data.salesperson_first_name,
+    data.salesperson_selection,
+    data.mine_group,
+    data.mine_name,
+    JSON.stringify(data.contact),
+    JSON.stringify(data.line_items || []),
+    data.comment,
+    data.status || 'draft'
+  ];
 
-  if (error) throw error;
+  const result = await query(sql, params);
+  
+  if (result.rows.length === 0) {
+    throw new Error('Failed to create request');
+  }
+  
+  const request = result.rows[0];
   if (!validateRequest(request)) throw new Error('Invalid request data returned');
   
   return request;
 };
 
 export const getRequest = async (id: string): Promise<Request | null> => {
-  const { data: request, error } = await supabase
-    .from(TABLES.REQUESTS)
-    .select('*')
-    .eq('id', id)
-    .single();
+  const result = await query(
+    'SELECT * FROM requests WHERE id = $1',
+    [id]
+  );
 
-  if (error) {
-    if (error.code === 'PGRST116') return null; // Not found
-    throw error;
+  if (result.rows.length === 0) {
+    return null; // Not found
   }
   
+  const request = result.rows[0];
   if (!validateRequest(request)) throw new Error('Invalid request data returned');
   
   return request;
 };
 
 export const getRequestByRequestId = async (requestId: string): Promise<Request | null> => {
-  const { data: request, error } = await supabase
-    .from(TABLES.REQUESTS)
-    .select('*')
-    .eq('request_id', requestId)
-    .single();
+  const result = await query(
+    'SELECT * FROM requests WHERE request_id = $1',
+    [requestId]
+  );
 
-  if (error) {
-    if (error.code === 'PGRST116') return null; // Not found
-    throw error;
+  if (result.rows.length === 0) {
+    return null; // Not found
   }
   
+  const request = result.rows[0];
   if (!validateRequest(request)) throw new Error('Invalid request data returned');
   
   return request;
 };
 
 export const updateRequest = async (id: string, data: RequestUpdate): Promise<Request> => {
-  const { data: request, error } = await supabase
-    .from(TABLES.REQUESTS)
-    .update(data)
-    .eq('id', id)
-    .select()
-    .single();
+  const updates: string[] = [];
+  const params: any[] = [];
+  let paramIndex = 1;
 
-  if (error) throw error;
+  if (data.contact !== undefined) {
+    updates.push(`contact = $${paramIndex}`);
+    params.push(JSON.stringify(data.contact));
+    paramIndex++;
+  }
+  
+  if (data.line_items !== undefined) {
+    updates.push(`line_items = $${paramIndex}`);
+    params.push(JSON.stringify(data.line_items));
+    paramIndex++;
+  }
+  
+  if (data.comment !== undefined) {
+    updates.push(`comment = $${paramIndex}`);
+    params.push(data.comment);
+    paramIndex++;
+  }
+
+  if (updates.length === 0) {
+    throw new Error('No fields to update');
+  }
+
+  updates.push(`updated_at = now()`);
+  
+  const sql = `
+    UPDATE requests 
+    SET ${updates.join(', ')}
+    WHERE id = $${paramIndex}
+    RETURNING *
+  `;
+  params.push(id);
+
+  const result = await query(sql, params);
+  
+  if (result.rows.length === 0) {
+    throw new Error('Request not found');
+  }
+
+  const request = result.rows[0];
   if (!validateRequest(request)) throw new Error('Invalid request data returned');
   
   return request;
 };
 
 export const deleteRequest = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from(TABLES.REQUESTS)
-    .delete()
-    .eq('id', id);
+  const result = await query(
+    'DELETE FROM requests WHERE id = $1',
+    [id]
+  );
 
-  if (error) throw error;
+  if (result.rowCount === 0) {
+    throw new Error('Request not found');
+  }
 };
 
 export const listRequests = async (options?: {
@@ -91,38 +151,49 @@ export const listRequests = async (options?: {
   limit?: number;
   offset?: number;
 }): Promise<Request[]> => {
-  let query = supabase
-    .from(TABLES.REQUESTS)
-    .select('*')
-    .order('created_at', { ascending: false });
+  let sql = `
+    SELECT * FROM requests 
+    WHERE 1=1
+  `;
+  const params: any[] = [];
+  let paramIndex = 1;
 
   if (options?.status) {
-    query = query.eq('status', options.status);
+    sql += ` AND status = $${paramIndex}`;
+    params.push(options.status);
+    paramIndex++;
   }
   
   if (options?.salesperson) {
-    query = query.eq('salesperson_selection', options.salesperson);
+    sql += ` AND salesperson_selection = $${paramIndex}`;
+    params.push(options.salesperson);
+    paramIndex++;
   }
   
   if (options?.mineGroup) {
-    query = query.eq('contact_mine_group', options.mineGroup);
+    sql += ` AND contact_mine_group = $${paramIndex}`;
+    params.push(options.mineGroup);
+    paramIndex++;
   }
   
+  sql += ` ORDER BY created_at DESC`;
+  
   if (options?.limit) {
-    query = query.limit(options.limit);
+    sql += ` LIMIT $${paramIndex}`;
+    params.push(options.limit);
+    paramIndex++;
   }
   
   if (options?.offset) {
-    query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
+    sql += ` OFFSET $${paramIndex}`;
+    params.push(options.offset);
   }
 
-  const { data: requests, error } = await query;
+  const result = await query(sql, params);
 
-  if (error) throw error;
-  
   // Validate all requests
-  const validRequests = requests.filter(validateRequest);
-  if (validRequests.length !== requests.length) {
+  const validRequests = result.rows.filter(validateRequest);
+  if (validRequests.length !== result.rows.length) {
     console.warn('Some requests failed validation');
   }
   
@@ -171,37 +242,21 @@ export const removeLineItemFromRequest = async (requestId: string, lineItemIndex
   return updateRequest(requestId, { line_items: updatedLineItems });
 };
 
-// KV Cache operations
+// KV Cache operations - Now using Redis instead of database
 export const getCacheValue = async (key: string): Promise<any | null> => {
-  const { data, error } = await supabase
-    .from(TABLES.KV_CACHE)
-    .select('value')
-    .eq('key', key)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null; // Not found
-    throw error;
-  }
-
-  return data.value;
+  const { cache } = await import('./cache');
+  const result = await cache.get(key);
+  return result?.data || null;
 };
 
 export const setCacheValue = async (key: string, value: any): Promise<void> => {
-  const { error } = await supabase
-    .from(TABLES.KV_CACHE)
-    .upsert({ key, value }, { onConflict: 'key' });
-
-  if (error) throw error;
+  const { cache } = await import('./cache');
+  await cache.set(key, value);
 };
 
 export const deleteCacheValue = async (key: string): Promise<void> => {
-  const { error } = await supabase
-    .from(TABLES.KV_CACHE)
-    .delete()
-    .eq('key', key);
-
-  if (error) throw error;
+  const { cache } = await import('./cache');
+  await cache.bust(key);
 };
 
 // Mock submissions operations
@@ -211,30 +266,40 @@ export const createMockSubmission = async (data: {
   simulated_deal_id: number;
   status?: string;
 }): Promise<void> => {
-  const { error } = await supabase
-    .from(TABLES.MOCK_PIPEDRIVE_SUBMISSIONS)
-    .insert({
-      ...data,
-      status: data.status || 'Submitted'
-    });
+  const sql = `
+    INSERT INTO mock_pipedrive_submissions (
+      request_id, payload, simulated_deal_id, status
+    ) VALUES ($1, $2, $3, $4)
+  `;
+  
+  const params = [
+    data.request_id,
+    JSON.stringify(data.payload),
+    data.simulated_deal_id,
+    data.status || 'Submitted'
+  ];
 
-  if (error) throw error;
+  await query(sql, params);
 };
 
 export const getMockSubmissions = async (requestId?: string): Promise<any[]> => {
-  let query = supabase
-    .from(TABLES.MOCK_PIPEDRIVE_SUBMISSIONS)
-    .select('*')
-    .order('created_at', { ascending: false });
+  let sql = `
+    SELECT * FROM mock_pipedrive_submissions 
+    ORDER BY created_at DESC
+  `;
+  const params: any[] = [];
 
   if (requestId) {
-    query = query.eq('request_id', requestId);
+    sql = `
+      SELECT * FROM mock_pipedrive_submissions 
+      WHERE request_id = $1
+      ORDER BY created_at DESC
+    `;
+    params.push(requestId);
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
-
-  return data || [];
+  const result = await query(sql, params);
+  return result.rows || [];
 };
 
 // Validation helpers

@@ -2,200 +2,35 @@
 
 ## Overview
 This checklist covers the complete rewrite of the Sales Helper App from a complex relational schema to an optimized flat JSONB architecture. Each section contains multiple implementation prompts that should be executed in order.
----
-# Sales Helper App - Step-by-Step Cutover Plan
 
-## 📋 Pre-Cutover Preparation
-
-### 0) Prep & Guardrails
-**Goal:** Establish safe development environment with proper isolation
-
-**Actions:**
-- ✅ Create feature branch for rewrite work
-- ✅ Keep mock submit mode ON by default
-- ✅ Verify environment variables are loaded correctly
-- ✅ Ensure mock mode is visible in health/ops scripts
-
-**Success Criteria:**
-- App boots locally without errors
-- Environment variables load successfully
-- Mock mode is active and visible in health endpoints
-
----
-
-## 🔄 Phase 1: Foundation & Schema
-
-### 1) Apply New Flat Schema (Sections 1 & 2)
-**Goal:** Create the foundation with flat JSONB structure
-
-**Actions:**
-- Create/verify the flat `requests` table with JSONB fields (`contact`, `line_items`)
-- Implement helper/generated columns for performance
-- Set up proper indexing strategy
-- Enable "one JSON in, one JSON stored" architecture
-
-**Success Criteria:**
-- Can insert a single row with JSON structure (contact + at least one line item)
-- Can read the data back with identical structure
-- Generated columns work correctly for filtering
-
----
-
-## 🔌 Phase 2: Core API Implementation
-
-### 2) Stand Up Core Requests API (Section 3.1)
-**Goal:** Implement the primary data ingress point
-
-**Actions:**
-- Implement `/api/requests` for GET/POST operations
-- POST path upserts "draft" records from single JSON body
-- GET supports simple filters (mine group, status, etc.)
-- Establish "single ingress" for JSON-structured data
-
-**Success Criteria:**
-- `POST /api/requests` with full JSON returns row with verbatim contact and line_items
-- `GET /api/requests` shows the record in the list
-- All data matches what was sent
-
-### 3) Implement Submit Flow (Section 3.2)
-**Goal:** Wire submission to Pipedrive integration
-
-**Actions:**
-- Wire `/api/submit` to read saved JSON and perform Pipedrive call
-- Keep mock mode ON for safe testing
-- Implement status updates (draft → submitted)
-- Handle both mock and real Pipedrive modes
-
-**Success Criteria:**
-- Calling submit on draft updates status to "submitted"
-- Mock mode records in mock table without Pipedrive calls
-- Returns `pipedrive_deal_id` when in real mode
-
-### 4) Add Contacts/Products Endpoints (Section 3.3)
-**Goal:** Implement lightweight caching for external data
-
-**Actions:**
-- Implement cache-backed `/api/contacts` and `/api/products`
-- Enable UI selectors without local mirrors
-- Validate cache → stale behavior
-- Implement simple cache busting endpoints
-
-**Success Criteria:**
-- First call hits Pipedrive, second call serves cached data
-- Responses include stale/source flags
-- Cache TTL works correctly (24h)
-
----
-
-## 🎨 Phase 3: UI Integration
-
-### 5) Replace UI Edit Flow (Section 6)
-**Goal:** Wire UI to new flat JSON architecture
-
-**Actions:**
-- Ship Main Page with new `RequestCard` component
-- Read/write JSON directly to `/api/requests`
-- Enable Submit only when contact exists and ≥1 line_items
-- Use new Contact/Product selectors from Section 3.3 endpoints
-- Persist data back to JSON draft
-
-**Success Criteria:**
-- Can create draft from main page
-- Can add contact, items, and comment
-- Submit button enables only when requirements met
-- No "Edit Draft" detour required
-
----
-
-## 🧪 Phase 4: Testing & Validation
-
-### 6) Enable Tests & Mock Mode Validation (Section 4)
-**Goal:** Comprehensive testing with mock submissions
-
-**Actions:**
-- Add unit/integration/E2E scaffolding and mocks
-- Create contacts/products fixtures
-- Implement API helpers and cleanup procedures
-- Run complete E2E workflow in mock mode
-
-**Success Criteria:**
-- Green E2E tests with mock submit
-- Fixtures prove selectors and caching behavior
-- Cleanup works correctly
-- Full workflow: create draft → add contact → add line item → submit (mock) → verify DB state
-
----
-
-## 🚀 Phase 5: Production Readiness
-
-### 7) Final Integration & Navigation (Section 7.1)
-**Goal:** Complete UI/API integration with navigation
-
-**Actions:**
-- Implement layout and navigation components
-- Ensure new flows are reachable and consistent
-- Final local validation of UI ↔ API integration
-
-**Success Criteria:**
-- Full user journey works locally on mock mode
-- Clean navigation between all pages
-- Complete workflow: list → create → add → submit
-
-### 8) Pre-Deploy & Production Validation (Section 7)
-**Goal:** Production deployment with comprehensive validation
-
-**Actions:**
-- Use verify/health scripts for pre-deployment checks
-- Deploy to production (still in mock mode)
-- Run post-deploy validation checklist
-- Flip mock → real only after health + E2E checks pass
-
-**Success Criteria:**
-- Production runs clean in mock mode
-- Real submissions create live Pipedrive deals
-- No code changes required for mock → real switch
-
-### 9) Monitoring & Rollback (Section 7)
-**Goal:** Production monitoring and safety measures
-
-**Actions:**
-- Enable monitoring and cron job snippets
-- Set up health check alerting
-- Keep rollback plan ready and tested
-
-**Success Criteria:**
-- Steady green health endpoints
-- Alerting in place for issues
-- Immediate path to revert if needed
-
----
-
-Detailed checklist
-
-
-
----
 
 ## Section 1: Environment Setup & Foundation
 
 ### 1.1 Environment Configuration
-- [ ] Create comprehensive environment configuration system
-  - [ ] Create `.env.example` with all required variables
-  - [ ] Create `/lib/env.ts` with complete environment validation
-  - [ ] Create `/scripts/env-check.js` for environment validation
-  - [ ] Update `package.json` scripts section
-  - [ ] Install required dependencies: `zod @supabase/supabase-js dotenv`
+- [x] Create comprehensive environment configuration system
+  - [x] Create `.env.example` with all required variables
+  - [x] Create `/lib/env.ts` with complete environment validation
+  - [x] Install required dependencies: `zod @supabase/supabase-js dotenv`
+  
+  Skipped till later:
+- [ ] Create `/scripts/env-check.js` for environment validation
   - [ ] Install dev dependencies: `vitest @playwright/test @types/node`
   - [ ] Make env-check script executable: `chmod +x scripts/env-check.js`
   - [ ] Manual validation: Run `npm run env:check` and verify success
   - [ ] Test with missing env vars to ensure proper error messages
   - [ ] Verify APP_ENV=test vs APP_ENV=prod selects different DB credentials
+  
+  De-scoped due to green approach
+  - [ ] Update `package.json` scripts section (not needed for new build)
 
 ### 1.2 Database Foundation & Schema
-- [ ] Create database schema migrations for flat JSONB structure
-  - [ ] Create `/supabase/migrations/20250815000001_requests_flat_schema.sql`
-  - [ ] Create `/supabase/migrations/20250815000002_support_tables.sql`
-  - [ ] Apply migrations to both test and prod databases
+
+- [x] Create database schema migrations for flat JSONB structure
+  - [x] Create `/supabase/migrations/20250815000001_requests_flat_schema.sql`
+  - [x] Create `/supabase/migrations/20250815000002_support_tables.sql`
+
+  Skipped
+    - [ ] Apply migrations to both test and prod databases (manual)
   - [ ] Manual validation: Run `supabase migration up` with no errors
   - [ ] Check all tables exist: requests, kv_cache, mock_pipedrive_submissions
   - [ ] Verify all indexes created correctly, including salesperson index
@@ -204,6 +39,77 @@ Detailed checklist
   - [ ] Test automatic request ID generation via trigger
   - [ ] Verify contact JSONB validation function
   - [ ] Test salesperson_selection constraint with valid/invalid values
+
+  De-scoped due to green approach
+
+## Section 1.3 Convert to Neon (Postgres) and Upstash Redis (contacts/products KV)
+
+### Updated Environment Configuration
+
+- [ ] **Update environment configuration for Neon + Upstash**
+  - [ ] Update `/lib/env.ts` with new simplified schema (7 variables)
+  - [ ] Update `.env.example` with new structure
+  - [ ] Update `/scripts/env-check.js` for new environment variables
+  - [ ] Install new dependencies: `npm install pg @types/pg @upstash/redis`
+  - [ ] Remove Supabase dependency: `npm uninstall @supabase/supabase-js`
+  - [ ] Manual validation: Run `npm run env:check` with new variables
+  - [ ] Test URL masking in env-check script
+  - [ ] Verify DATABASE_URL and REDIS_URL validation works
+
+### Database Migration from Supabase to Neon
+
+#### Database Connection Layer
+
+- [ ] **Replace Supabase client with native Postgres connection**
+  - [ ] Create `/lib/db.ts` with pg connection pool
+  - [ ] Implement query function with parameter binding
+  - [ ] Add database health check function
+  - [ ] Add error handling wrapper function
+  - [ ] Test connection pool with Neon DATABASE_URL
+  - [ ] Manual validation: Connection pool creates successfully
+  - [ ] Test query execution with sample SQL
+  - [ ] Verify SSL configuration works for Neon
+
+#### Database Schema Migration
+
+- [ ] **Create explicit SQL migration system**
+  - [ ] Create `/migrations/001_initial_schema.sql` with exact same schema
+  - [ ] Create `/migrations/002_support_tables.sql` with cache and mock tables
+  - [ ] Create `/scripts/migrate.js` migration runner
+  - [ ] Create `/scripts/migration-status.js` status checker
+  - [ ] Create `/scripts/reset-db.js` for development
+  - [ ] Update package.json scripts for new migration system
+  - [ ] Make migration scripts executable: `chmod +x scripts/*.js`
+  - [ ] Manual validation: Run `npm run db:migrate` on dev branch
+  - [ ] Verify all tables, functions, and indexes created
+  - [ ] Test request ID generation function
+  - [ ] Test JSONB validation function
+  - [ ] Test generated columns extract JSONB values correctly
+
+### Cache Layer Migration from Supabase to Redis
+
+#### Redis Cache Implementation
+
+- [ ] **Replace Supabase cache with Upstash Redis**
+  - [ ] Create `/lib/cache.ts` with Upstash Redis client
+  - [ ] Implement KVCache class with get/set/bust operations
+  - [ ] Add cache statistics and monitoring functions
+  - [ ] Preserve existing hierarchy transformation functions
+  - [ ] Test Redis connection with Upstash URL
+  - [ ] Manual validation: Cache get/set operations work
+  - [ ] Test TTL and stale data detection
+  - [ ] Test pattern-based cache busting
+  - [ ] Verify cache statistics return properly
+
+#### Cache Key Management
+
+- [ ] **Update cache key strategy for Redis**
+  - [ ] Define cache key constants in `/lib/cache.ts`
+  - [ ] Implement cache warming for critical data
+  - [ ] Add cache versioning for schema changes
+  - [ ] Test cache key naming conventions
+  - [ ] Manual validation: Cache keys are properly namespaced
+  - [ ] Verify cache busting works with patterns
 
 ---
 
