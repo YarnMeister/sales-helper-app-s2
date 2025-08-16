@@ -24,19 +24,26 @@ export async function GET(request: NextRequest) {
     }
     
     try {
-      // TEMPORARILY DISABLED: Fetch fresh data from Pipedrive
-      console.log('PIPEDRIVE API TEMPORARILY DISABLED - Testing cache only');
-      throw new Error('Pipedrive API temporarily disabled for testing');
+      // Fetch fresh data from Pipedrive
+      console.log('Fetching fresh products from Pipedrive');
+      const products = await fetchProducts();
       
-      // const products = await fetchProducts();
-      // const categorizedData = transformProductsHierarchy(products);
-      // await cache.set(CACHE_KEYS.PRODUCTS, categorizedData);
-      // return Response.json({ 
-      //   ok: true, 
-      //   data: categorizedData, 
-      //   stale: false,
-      //   source: 'pipedrive'
-      // });
+      // PRD requirement: Transform to categorized structure
+      const categorizedData = transformProductsHierarchy(products);
+      
+      // Try to update cache (but don't fail if cache is unavailable)
+      try {
+        await cache.set(CACHE_KEYS.PRODUCTS, categorizedData);
+      } catch (cacheError) {
+        console.log('Failed to update cache:', (cacheError as Error).message);
+      }
+      
+      return Response.json({ 
+        ok: true, 
+        data: categorizedData, 
+        stale: false,
+        source: 'pipedrive'
+      });
       
     } catch (pipedriveError) {
       console.error('Pipedrive fetch failed, checking for stale cache', { error: pipedriveError });
