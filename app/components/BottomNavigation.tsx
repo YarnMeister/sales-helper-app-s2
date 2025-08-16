@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 
 interface BottomNavigationProps {
   onNewRequest?: () => void;
+  isCreating?: boolean;
 }
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({

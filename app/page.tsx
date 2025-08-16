@@ -74,8 +74,14 @@ export default function MainPage() {
       console.log('API response:', data);
       
       if (data.ok) {
-        setRequests(data.data || []);
-        console.log('Set requests:', data.data);
+        // Sort requests by QR-ID in descending order (newest first)
+        const sortedRequests = (data.data || []).sort((a: Request, b: Request) => {
+          const aNum = parseInt(a.request_id.replace('QR-', ''));
+          const bNum = parseInt(b.request_id.replace('QR-', ''));
+          return bNum - aNum; // Descending order (newest first)
+        });
+        setRequests(sortedRequests);
+        console.log('Set requests:', sortedRequests);
       } else {
         throw new Error(data.message || 'Failed to load requests');
       }
@@ -133,7 +139,14 @@ export default function MainPage() {
 
       const data = await response.json();
       if (data.ok) {
+        // Add new request at the top of the list
         setRequests(prev => [data.data, ...prev]);
+        
+        // Show success toast
+        toast({
+          title: "New Request Created",
+          description: `Request ${data.data.request_id} has been created successfully.`,
+        });
       } else {
         throw new Error(data.message || 'Failed to create request');
       }
