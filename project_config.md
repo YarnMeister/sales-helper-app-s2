@@ -18,9 +18,6 @@ For each new prompt, before making changes, review the instructions below and co
 4. Replace all mention of Supabase with our new Neon Postgres Db and Upstash cahcing 
 4. Keep in mind this is a 2nd generation rewrite, Greenfield but based on learning from original app.
 
-## Instuctions for interim prompts (not new feature branch)
-5. Update the "Production Deployment Notes for current feature branch" section in workfow_state.md if any production config is needed (like db migration or env config) for the previous change we just completed (if relevant)
-
 
 ## Process for each deployment to prod
 1. Always deploy to preview in Vercel first
