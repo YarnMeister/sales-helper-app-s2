@@ -3,20 +3,19 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { ChevronDown, ChevronRight, Search, Package, Check, AlertCircle, ShoppingCart } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, Package, AlertCircle } from 'lucide-react';
 import { Product, LineItem, ProductsHierarchy } from '../types/product';
-import { QuantityControl } from './QuantityControl';
 import { useDebounce } from '../hooks/useDebounce';
 
 interface ProductAccordionProps {
-  onProductsChange: (products: LineItem[]) => void;
-  selectedProducts: LineItem[];
+  onProductSelect: (product: LineItem) => void;
+  existingItems: LineItem[];
   className?: string;
 }
 
 export const ProductAccordion: React.FC<ProductAccordionProps> = ({
-  onProductsChange,
-  selectedProducts,
+  onProductSelect,
+  existingItems,
   className = ''
 }) => {
   const [productsData, setProductsData] = useState<ProductsHierarchy>({});
@@ -28,10 +27,10 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Convert selectedProducts array to Map for easier lookup
-  const selectedProductsMap = useMemo(() => {
-    return new Map(selectedProducts.map(item => [item.pipedriveProductId, item]));
-  }, [selectedProducts]);
+  // Convert existingItems array to Map for easier lookup
+  const existingItemsMap = useMemo(() => {
+    return new Map(existingItems.map(item => [item.pipedriveProductId, item]));
+  }, [existingItems]);
 
   const fetchProducts = async () => {
     try {
@@ -92,7 +91,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
     });
   };
 
-  const handleProductAdd = (product: Product) => {
+  const handleProductSelect = (product: Product) => {
     const newLineItem: LineItem = {
       pipedriveProductId: product.pipedriveProductId,
       name: product.name,
@@ -102,26 +101,8 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
       shortDescription: product.shortDescription
     };
 
-    const updatedProducts = [...selectedProducts, newLineItem];
-    onProductsChange(updatedProducts);
+    onProductSelect(newLineItem);
   };
-
-  const handleProductRemove = (productId: number) => {
-    const updatedProducts = selectedProducts.filter(item => item.pipedriveProductId !== productId);
-    onProductsChange(updatedProducts);
-  };
-
-  const handleQuantityChange = (productId: number, newQuantity: number) => {
-    const updatedProducts = selectedProducts.map(item =>
-      item.pipedriveProductId === productId 
-        ? { ...item, quantity: newQuantity }
-        : item
-    );
-    onProductsChange(updatedProducts);
-  };
-
-  const getTotalItems = () => selectedProducts.reduce((sum, item) => sum + item.quantity, 0);
-  const getTotalValue = () => selectedProducts.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
 
   if (loading) {
     return (
@@ -169,29 +150,11 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
         </div>
       </div>
 
-      {/* Selection Summary */}
-      {selectedProducts.length > 0 && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <ShoppingCart className="h-5 w-5 text-green-600" />
-            <h3 className="font-medium text-green-900">
-              Selected Products ({selectedProducts.length})
-            </h3>
-          </div>
-          <div className="space-y-1 text-sm text-green-800">
-            <p>Total Items: {getTotalItems()}</p>
-            {getTotalValue() > 0 && (
-              <p>Total Value: R{getTotalValue().toFixed(2)}</p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Products Hierarchy */}
       <div className="space-y-3" data-testid="sh-products-hierarchy">
         {Object.entries(filteredProductsData).map(([category, products]) => {
           const isCategoryExpanded = expandedCategories.has(category);
-          const selectedInCategory = products.filter(p => selectedProductsMap.has(p.pipedriveProductId)).length;
+          const existingInCategory = products.filter(p => existingItemsMap.has(p.pipedriveProductId)).length;
           
           return (
             <Card key={category} className="overflow-hidden shadow-sm">
@@ -212,9 +175,9 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                     <h3 className="font-semibold text-lg text-gray-900">{category}</h3>
                   </div>
                   <div className="flex items-center gap-2">
-                    {selectedInCategory > 0 && (
+                    {existingInCategory > 0 && (
                       <Badge variant="default" className="bg-green-600">
-                        {selectedInCategory} selected
+                        {existingInCategory} added
                       </Badge>
                     )}
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
@@ -228,25 +191,36 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
               {isCategoryExpanded && (
                 <div className="bg-white">
                   {products.map((product) => {
-                    const isSelected = selectedProductsMap.has(product.pipedriveProductId);
-                    const selectedItem = selectedProductsMap.get(product.pipedriveProductId);
+                    const isExisting = existingItemsMap.has(product.pipedriveProductId);
                     
                     return (
                       <div
                         key={product.pipedriveProductId}
-                        className={`p-4 border-b border-gray-50 last:border-b-0 transition-colors ${
-                          isSelected ? 'bg-green-25' : 'hover:bg-gray-25'
+                        className={`p-4 border-b border-gray-50 last:border-b-0 transition-colors cursor-pointer min-h-[44px] flex items-center ${
+                          isExisting ? 'bg-green-25' : 'hover:bg-gray-25 active:bg-gray-50'
                         }`}
+                        onClick={() => !isExisting && handleProductSelect(product)}
+                        onKeyDown={(e) => {
+                          if (!isExisting && (e.key === 'Enter' || e.key === ' ')) {
+                            e.preventDefault();
+                            handleProductSelect(product);
+                          }
+                        }}
+                        tabIndex={isExisting ? -1 : 0}
+                        role={isExisting ? undefined : "button"}
+                        aria-label={isExisting ? `${product.name} already added` : `Add ${product.name} to request`}
                         data-testid={`sh-product-item-${product.pipedriveProductId}`}
                       >
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start justify-between gap-4 w-full">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium text-gray-900">
                                 {product.name}
                               </span>
-                              {isSelected && (
-                                <Check className="h-4 w-4 text-green-600" />
+                              {isExisting && (
+                                <Badge variant="default" className="bg-green-600 text-xs">
+                                  Added
+                                </Badge>
                               )}
                               {product.code && (
                                 <Badge variant="outline" className="text-xs">
@@ -265,37 +239,6 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                               <p className="text-sm font-medium text-green-600">
                                 R{product.price.toFixed(2)}
                               </p>
-                            )}
-                          </div>
-                          
-                          <div className="flex flex-col items-end gap-2">
-                            {isSelected ? (
-                              <div className="space-y-2">
-                                <QuantityControl
-                                  quantity={selectedItem?.quantity || 1}
-                                  onQuantityChange={(qty) => handleQuantityChange(product.pipedriveProductId, qty)}
-                                  productName={product.name}
-                                  size="sm"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleProductRemove(product.pipedriveProductId)}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  data-testid={`sh-remove-product-${product.pipedriveProductId}`}
-                                >
-                                  Remove
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                size="sm"
-                                onClick={() => handleProductAdd(product)}
-                                className="bg-blue-600 hover:bg-blue-700"
-                                data-testid={`sh-add-product-${product.pipedriveProductId}`}
-                              >
-                                Add
-                              </Button>
                             )}
                           </div>
                         </div>

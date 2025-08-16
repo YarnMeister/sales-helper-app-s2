@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-08-16 15:42  
+**Last Updated:** 2025-01-27 10:30  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `main`
+**Current Branch:** `feature/mock-submit-draft-requests`
 
 ---
 
@@ -11,18 +11,14 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     |                       |                      |
+| In Progress / Local     | `feature/mock-submit-draft-requests` | 🔄 Saving submitted draft requests to mock-submit table |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  | `add-line-items-feature` | 📦 Add Line Items functionality with Product Category fix |
+| Deployed to Production  |                       |                      |
 
 ---
 
 ## 📝 Recent Commits
-1986b64 fix: update Product Category mapping to use correct category names from Pipedrive standard field
-62a0736 fix: resolve Product Category mapping issue by updating category IDs and adding custom_fields=1 parameter
-08ef6f8 fix: add custom_fields=1 parameter to Pipedrive API calls to fetch Mine Group data
-28a09ff fix: resolve Mine Group mapping bug using correct Pipedrive field IDs from legacy specs
-b7b3473 docs: add legacy technical specifications for reference
+(No commits yet - new feature branch)
 
 ---
 

@@ -5,19 +5,17 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { ChevronDown, ChevronRight, Search, Mail, Phone, Check, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, Mail, Phone, AlertCircle } from 'lucide-react';
 import { Contact, ContactsHierarchy, ContactSelectionState } from '../types/contact';
 import { useDebounce } from '../hooks/useDebounce';
 
 interface ContactAccordionProps {
   onSelectContact: (contact: Contact) => void;
-  selectedContact: Contact | null;
   className?: string;
 }
 
 export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   onSelectContact,
-  selectedContact,
   className = ''
 }) => {
   const [contactsData, setContactsData] = useState<ContactsHierarchy>({});
@@ -130,7 +128,6 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   };
 
   const handleContactSelect = (contact: Contact) => {
-    setState(prev => ({ ...prev, selectedContact: contact }));
     onSelectContact(contact);
   };
 
@@ -280,11 +277,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                             {contacts.map((contact) => (
                               <div
                                 key={contact.personId}
-                                className={`p-4 pl-12 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center ${
-                                  selectedContact?.personId === contact.personId
-                                    ? 'bg-blue-50 border-blue-100'
-                                    : 'hover:bg-gray-25 active:bg-gray-50'
-                                }`}
+                                className="p-4 pl-12 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center hover:bg-gray-25 active:bg-gray-50"
                                 onClick={() => handleContactSelect(contact)}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
@@ -294,7 +287,6 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                                 }}
                                 tabIndex={0}
                                 role="button"
-                                aria-pressed={selectedContact?.personId === contact.personId}
                                 aria-label={`Select ${contact.name} from ${contact.mineName}, ${contact.mineGroup}. ${contact.email ? `Email: ${contact.email}. ` : ''}${contact.phone ? `Phone: ${contact.phone}` : ''}`}
                                 data-testid={`sh-contact-person-${contact.personId}`}
                               >
@@ -304,9 +296,6 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                                       <span className="font-medium text-gray-900">
                                         {contact.name}
                                       </span>
-                                      {selectedContact?.personId === contact.personId && (
-                                        <Check className="h-4 w-4 text-blue-600" />
-                                      )}
                                     </div>
                                     
                                     <div className="space-y-1">

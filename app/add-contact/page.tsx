@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { ContactAccordion } from '../components/ContactAccordion';
 import { Contact } from '../types/contact';
 import { useRouter } from 'next/navigation';
 import { BottomNavigation } from '../components/BottomNavigation';
 
 export default function AddContactPage() {
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,13 +25,8 @@ export default function AddContactPage() {
     }
   }, [router]);
 
-  const handleContactSelect = (contact: Contact) => {
-    setSelectedContact(contact);
-    setError(null);
-  };
-
-  const handleSaveContact = async () => {
-    if (!selectedContact || !editingRequestId) return;
+  const handleContactSelect = async (contact: Contact) => {
+    if (!editingRequestId) return;
 
     setSaving(true);
     setError(null);
@@ -43,7 +37,7 @@ export default function AddContactPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: editingRequestId,
-          contact: selectedContact
+          contact: contact
         })
       });
 
@@ -56,11 +50,11 @@ export default function AddContactPage() {
         router.push('/');
       } else {
         setError(data.message || 'Failed to save contact');
+        setSaving(false);
       }
     } catch (err) {
       setError('Unable to save contact. Please try again.');
       console.error('Error saving contact:', err);
-    } finally {
       setSaving(false);
     }
   };
@@ -106,38 +100,6 @@ export default function AddContactPage() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         
-        {/* Selected Contact Preview */}
-        {selectedContact && (
-          <div className="mb-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <User className="h-5 w-5 text-blue-600 mt-1" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900 mb-1">
-                    {selectedContact.name}
-                  </h3>
-                  <p className="text-sm text-blue-700 mb-2">
-                    {selectedContact.mineGroup} → {selectedContact.mineName}
-                  </p>
-                  
-                  <div className="space-y-1">
-                    {selectedContact.email && (
-                      <p className="text-sm text-blue-600">
-                        📧 {selectedContact.email}
-                      </p>
-                    )}
-                    {selectedContact.phone && (
-                      <p className="text-sm text-blue-600">
-                        📞 {selectedContact.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -145,35 +107,22 @@ export default function AddContactPage() {
           </div>
         )}
 
+        {/* Loading Overlay */}
+        {saving && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Saving contact...</p>
+            </div>
+          </div>
+        )}
+
         {/* Contact Selection */}
         <div className="mb-6">
           <ContactAccordion
             onSelectContact={handleContactSelect}
-            selectedContact={selectedContact}
+            selectedContact={null}
           />
-        </div>
-      </div>
-
-      {/* Fixed Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-        <div className="container mx-auto max-w-2xl flex gap-3">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            className="flex-1"
-            disabled={saving}
-            data-testid="sh-add-contact-cancel"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSaveContact}
-            disabled={!selectedContact || saving}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
-            data-testid="sh-add-contact-save"
-          >
-            {saving ? 'Saving...' : 'Save Contact'}
-          </Button>
         </div>
       </div>
 
