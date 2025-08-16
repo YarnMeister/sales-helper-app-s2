@@ -33,7 +33,7 @@ export class DBRequestFactory extends BaseFactory<TestRequestDB> {
       contact: overrides.contact !== undefined ? overrides.contact : baseRequest.contact,
       line_items: overrides.line_items !== undefined ? overrides.line_items : baseRequest.line_items,
       comment: overrides.comment !== undefined ? overrides.comment : baseRequest.comment,
-      pipedrive_deal_id: overrides.pipedrive_deal_id || null,
+      pipedrive_deal_id: overrides.pipedrive_deal_id || undefined,
       created_at: overrides.created_at || now,
       updated_at: overrides.updated_at || now,
       ...overrides
