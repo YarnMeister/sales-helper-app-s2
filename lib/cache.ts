@@ -138,6 +138,10 @@ export class KVCache {
 // Export singleton instance
 export const cache = new KVCache();
 
+// Pipedrive field IDs from legacy tech specs
+const MINE_GROUP_FIELD_ID = 'd0b6b2d1d53bed3053e896f938c6051a790bd15e';
+const JOB_TITLE_FIELD_ID = 'd84955e5e1a7284521f90bca9aa2b94a533ed24e';
+
 // PRD-specific hierarchical transformation for contacts
 export const transformContactsHierarchy = (persons: any[], organizations: any[]) => {
   const orgMap = new Map(organizations.map(org => [org.id, org]));
@@ -145,7 +149,8 @@ export const transformContactsHierarchy = (persons: any[], organizations: any[])
   const grouped = persons.reduce((acc, person) => {
     const org = orgMap.get(person.org_id?.value);
     // PRD requirement: Group by Mine Group > Mine Name > Persons
-    const mineGroup = org?.['your_mine_group_field_id'] || 'Unknown Group';
+    // Use correct Pipedrive field ID from legacy tech specs
+    const mineGroup = org?.[MINE_GROUP_FIELD_ID] || 'Unknown Group';
     const mineName = person.org_id?.name || 'Unknown Mine';
     
     if (!acc[mineGroup]) acc[mineGroup] = {};
@@ -159,7 +164,8 @@ export const transformContactsHierarchy = (persons: any[], organizations: any[])
       orgId: person.org_id?.value,
       orgName: person.org_id?.name,
       mineGroup,
-      mineName
+      mineName,
+      jobTitle: person[JOB_TITLE_FIELD_ID] || null
     });
     
     return acc;

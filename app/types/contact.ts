@@ -7,6 +7,7 @@ export interface Contact {
   orgName?: string;
   mineGroup: string;
   mineName: string;
+  jobTitle?: string;
 }
 
 export interface ContactsHierarchy {

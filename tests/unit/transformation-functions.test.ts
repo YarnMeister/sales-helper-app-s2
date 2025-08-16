@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
 
+// Pipedrive field IDs from legacy tech specs
+const MINE_GROUP_FIELD_ID = 'd0b6b2d1d53bed3053e896f938c6051a790bd15e';
+const JOB_TITLE_FIELD_ID = 'd84955e5e1a7284521f90bca9aa2b94a533ed24e';
+
 // Copy the transformation functions here to test them in isolation
 const transformContactsHierarchy = (persons: any[], organizations: any[]) => {
   const orgMap = new Map(organizations.map(org => [org.id, org]));
@@ -7,7 +11,8 @@ const transformContactsHierarchy = (persons: any[], organizations: any[]) => {
   const grouped = persons.reduce((acc, person) => {
     const org = orgMap.get(person.org_id?.value);
     // PRD requirement: Group by Mine Group > Mine Name > Persons
-    const mineGroup = org?.['your_mine_group_field_id'] || 'Unknown Group';
+    // Use correct Pipedrive field ID from legacy tech specs
+    const mineGroup = org?.[MINE_GROUP_FIELD_ID] || 'Unknown Group';
     const mineName = person.org_id?.name || 'Unknown Mine';
     
     if (!acc[mineGroup]) acc[mineGroup] = {};
@@ -21,7 +26,8 @@ const transformContactsHierarchy = (persons: any[], organizations: any[]) => {
       orgId: person.org_id?.value,
       orgName: person.org_id?.name,
       mineGroup,
-      mineName
+      mineName,
+      jobTitle: person[JOB_TITLE_FIELD_ID] || null
     });
     
     return acc;
@@ -64,14 +70,16 @@ describe('Transformation Functions', () => {
           name: 'John Doe',
           email: [{ value: 'john@mine.com' }],
           phone: [{ value: '+1234567890' }],
-          org_id: { value: 1, name: 'Mine A' }
+          org_id: { value: 1, name: 'Mine A' },
+          [JOB_TITLE_FIELD_ID]: 'Mining Engineer'
         },
         {
           id: 2,
           name: 'Jane Smith',
           email: [{ value: 'jane@mine.com' }],
           phone: [{ value: '+0987654321' }],
-          org_id: { value: 2, name: 'Mine B' }
+          org_id: { value: 2, name: 'Mine B' },
+          [JOB_TITLE_FIELD_ID]: 'Safety Manager'
         }
       ];
 
@@ -79,12 +87,12 @@ describe('Transformation Functions', () => {
         {
           id: 1,
           name: 'Mine A',
-          your_mine_group_field_id: 'Group 1'
+          [MINE_GROUP_FIELD_ID]: 'Group 1'
         },
         {
           id: 2,
           name: 'Mine B',
-          your_mine_group_field_id: 'Group 2'
+          [MINE_GROUP_FIELD_ID]: 'Group 2'
         }
       ];
 
@@ -101,7 +109,8 @@ describe('Transformation Functions', () => {
               orgId: 1,
               orgName: 'Mine A',
               mineGroup: 'Group 1',
-              mineName: 'Mine A'
+              mineName: 'Mine A',
+              jobTitle: 'Mining Engineer'
             }
           ]
         },
@@ -115,7 +124,8 @@ describe('Transformation Functions', () => {
               orgId: 2,
               orgName: 'Mine B',
               mineGroup: 'Group 2',
-              mineName: 'Mine B'
+              mineName: 'Mine B',
+              jobTitle: 'Safety Manager'
             }
           ]
         }
@@ -129,7 +139,8 @@ describe('Transformation Functions', () => {
           name: 'John Doe',
           email: [{ value: 'john@mine.com' }],
           phone: [{ value: '+1234567890' }],
-          org_id: { value: 999, name: 'Unknown Mine' }
+          org_id: { value: 999, name: 'Unknown Mine' },
+          [JOB_TITLE_FIELD_ID]: 'Engineer'
         }
       ];
 
@@ -148,7 +159,8 @@ describe('Transformation Functions', () => {
               orgId: 999,
               orgName: 'Unknown Mine',
               mineGroup: 'Unknown Group',
-              mineName: 'Unknown Mine'
+              mineName: 'Unknown Mine',
+              jobTitle: 'Engineer'
             }
           ]
         }
