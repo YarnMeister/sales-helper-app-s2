@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-08-16 18:05  
+**Last Updated:** 2025-01-27 10:00  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `main`
+**Current Branch:** `feature/submit-pipedrive-integration`
 
 ---
 
@@ -11,9 +11,9 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     |                       |                      |
+| In Progress / Local     | `feature/submit-pipedrive-integration` | Submit & Pipedrive Integration API |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  | `main`                | Core request management API live in production |
+| Deployed to Production  |                 |  |
 
 ---
 
@@ -21,11 +21,7 @@
 ---
 
 ## 📝 Recent Commits
-e6949e2 Update workflow state: core request management API deployed to preview
-35bd803 Update workflow state and progress checklist: core request management API complete
-5e69323 Implement core request management API with Neon PostgreSQL support
-2633cc7 Update workflow state: cleaned database client utilities deployed to production
-9f8b23d Remove database-based KV cache utilities, use only Upstash Redis
+83872f9 Update project config and clear workflow state for new feature
 f458d51 Update workflow state: database client utilities deployed to production
 936924d Update project config: clarify production deployment notes instructions
 4bb3d7d Update workflow state: database client utilities deployed to preview
