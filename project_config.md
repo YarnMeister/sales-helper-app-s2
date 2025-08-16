@@ -11,12 +11,14 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` as cont
 
 
 ## Key questions for each new major prompt
+Key consideraions for below quetions:
+1. We are using Neon and Upstash for Redis (no Supabase allowed)
 For each new prompt, before making changes, review the instructions below and confirm:
 1. Are they clear?
 2. Any gaps?  
 3. Call out any parts we can skip
-4. Replace all mention of Supabase with our new Neon Postgres Db and Upstash cahcing 
-4. Keep in mind this is a 2nd generation rewrite, Greenfield but based on learning from original app.
+
+ 
 
 
 ## Process for each deployment to prod
