@@ -109,16 +109,16 @@ Skipped
 ## Section 3: API Layer Implementation
 
 ### 3.1 Core Request Management API
-- [ ] Implement CRUD operations with PRD-specific filtering
-  - [ ] Create `/app/api/requests/route.ts`
-  - [ ] Create unit tests in `/tests/unit/requests-api.test.ts`
-  - [ ] Manual validation: Test GET /api/requests returns proper JSON
-  - [ ] Test GET with salesperson filter (Luyanda, James, Stefan)
-  - [ ] Test showAll parameter controls filtering and New Request button visibility
-  - [ ] Test POST creates new request with generated QR-xxx ID
-  - [ ] Test POST supports inline updates for existing requests
-  - [ ] Test DELETE removes request successfully
-  - [ ] Verify all database queries use proper indexes (generated columns)
+- [x] Implement CRUD operations with PRD-specific filtering
+  - [x] Create `/app/api/requests/route.ts`
+  - [x] Create unit tests in `/tests/unit/requests-api.test.ts`
+  - [x] Manual validation: Test GET /api/requests returns proper JSON
+  - [x] Test GET with salesperson filter (Luyanda, James, Stefan)
+  - [x] Test showAll parameter controls filtering and New Request button visibility
+  - [x] Test POST creates new request with generated QR-xxx ID
+  - [x] Test POST supports inline updates for existing requests
+  - [x] Test DELETE removes request successfully
+  - [x] Verify all database queries use proper indexes (generated columns)
 
 ### 3.2 Submit & Pipedrive Integration API
 - [ ] Implement submission logic with mock/real mode support
