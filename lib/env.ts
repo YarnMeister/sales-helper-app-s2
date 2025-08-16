@@ -3,7 +3,7 @@ import { logInfo, logError } from './log';
 
 // Simplified environment schema for Neon + Upstash
 const EnvSchema = z.object({
-  APP_ENV: z.enum(['development', 'production']).default('development'),
+  APP_ENV: z.enum(['development', 'production', 'test']).default('development'),
   
   // Neon Postgres - single DATABASE_URL for both environments
   DATABASE_URL: z.string().url('Invalid DATABASE_URL'),
