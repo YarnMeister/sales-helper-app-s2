@@ -6,7 +6,7 @@ This document defines how schema changes propagate through environments (local â
 
 ## Environments
 
-### Neon Project: `sales-helper`
+### Neon Project: `sales-helper-db`
 - **`main`** â†’ Production database
 - **`dev`** â†’ Local development database  
 - **`preview/*`** â†’ Auto-created by Vercel for each PR (based on `main`)
@@ -35,7 +35,7 @@ This document defines how schema changes propagate through environments (local â
 ### Local Development Setup
 ```bash
 # Get connection string for dev branch
-export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch dev)
+export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch dev)
 export APP_ENV=local
 ```
 
@@ -49,15 +49,15 @@ Always branch from the latest production state.
 ```bash
 git checkout main
 git pull origin main
-neonctl branch delete dev --project sales-helper --force   # clean slate if exists
-neonctl branch create dev --from main --project sales-helper
+neonctl branch delete dev --project sales-helper-db --force   # clean slate if exists
+neonctl branch create dev --from main --project sales-helper-db
 ```
 
 ### 2. Work Locally
 Point to Neon dev branch:
 
 ```bash
-export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch dev)
+export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch dev)
 ```
 
 Apply migration manually:
@@ -88,7 +88,7 @@ Neon auto-creates a `preview/pr-###` branch cloned from main.
 Your migration must run against this branch:
 
 ```bash
-export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch preview/pr-###)
+export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch preview/pr-###)
 psql $DATABASE_URL -f migrations/2025xxxx_add_request_type.sql
 ```
 
@@ -107,7 +107,7 @@ Vercel deploys to Production (connected to Neon main branch).
 Apply the same migration to main:
 
 ```bash
-export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch main)
+export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch main)
 psql $DATABASE_URL -f migrations/2025xxxx_add_request_type.sql
 ```
 
@@ -119,15 +119,15 @@ psql $DATABASE_URL -f migrations/2025xxxx_add_request_type.sql
 Just delete the branch and recreate from main.
 
 ```bash
-neonctl branch delete dev --project sales-helper --force
-neonctl branch delete preview/pr-### --project sales-helper --force
+neonctl branch delete dev --project sales-helper-db --force
+neonctl branch delete preview/pr-### --project sales-helper-db --force
 ```
 
 ### Production Rollbacks
 Create a new branch from snapshot:
 
 ```bash
-neonctl branch create rollback-2025xxxx --from main@<snapshot-id>
+neonctl branch create rollback-2025xxxx --from main@<snapshot-id> --project sales-helper-db
 ```
 
 ---
@@ -161,7 +161,7 @@ ALTER TABLE requests ADD COLUMN request_type TEXT;
 
 ### 2. Apply Locally
 ```bash
-export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch dev)
+export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch dev)
 npm run db:migrate
 # Test the app locally
 ```
@@ -177,7 +177,7 @@ git push origin feature/add-request-type
 ### 4. Preview Deployment
 ```bash
 # Get preview branch connection string
-export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch preview/pr-123)
+export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch preview/pr-123)
 npm run db:migrate
 # Test at preview URL
 ```
@@ -189,7 +189,7 @@ git merge feature/add-request-type
 git push origin main
 
 # Apply to production
-export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch main)
+export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch main)
 npm run db:migrate
 ```
 
@@ -203,7 +203,7 @@ npm run db:migrate
 # scripts/setup-env.sh
 
 BRANCH=${1:-dev}
-PROJECT="sales-helper"
+PROJECT="sales-helper-db"
 
 echo "Setting up environment for branch: $BRANCH"
 
@@ -221,7 +221,7 @@ echo "Run: npm run db:migrate"
 # scripts/migrate-env.sh
 
 BRANCH=${1:-dev}
-PROJECT="sales-helper"
+PROJECT="sales-helper-db"
 
 echo "Running migrations on branch: $BRANCH"
 
@@ -236,8 +236,8 @@ npm run db:migrate
 ### Common Issues
 
 #### Migration Fails on Preview
-- Check if preview branch exists: `neonctl branch list --project sales-helper`
-- Recreate preview branch: `neonctl branch create preview/pr-123 --from main --project sales-helper`
+- Check if preview branch exists: `neonctl branch list --project sales-helper-db`
+- Recreate preview branch: `neonctl branch create preview/pr-123 --from main --project sales-helper-db`
 
 #### Connection Issues
 - Verify SSL mode: `?sslmode=require` in connection string
@@ -252,13 +252,13 @@ npm run db:migrate
 ### Emergency Procedures
 
 #### Production Schema Emergency
-1. Create backup branch: `neonctl branch create emergency-backup --from main --project sales-helper`
+1. Create backup branch: `neonctl branch create emergency-backup --from main --project sales-helper-db`
 2. Apply hotfix migration to main
 3. Test thoroughly before deploying
 
 #### Rollback Production
-1. Identify snapshot before issue: `neonctl branch list --project sales-helper`
-2. Create rollback branch: `neonctl branch create rollback-YYYYMMDD --from main@<snapshot> --project sales-helper`
+1. Identify snapshot before issue: `neonctl branch list --project sales-helper-db`
+2. Create rollback branch: `neonctl branch create rollback-YYYYMMDD --from main@<snapshot> --project sales-helper-db`
 3. Update Vercel to use rollback branch temporarily
 4. Fix and redeploy
 
@@ -280,10 +280,10 @@ Consider adding deployment hooks to automatically run migrations:
 ```bash
 # In Vercel deployment script
 if [ "$VERCEL_ENV" = "production" ]; then
-  export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch main)
+  export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch main)
   npm run db:migrate
 elif [ "$VERCEL_ENV" = "preview" ]; then
-  export DATABASE_URL=$(neonctl connection-string --project sales-helper --branch preview/$VERCEL_GIT_PULL_REQUEST_ID)
+  export DATABASE_URL=$(neonctl connection-string --project sales-helper-db --branch preview/$VERCEL_GIT_PULL_REQUEST_ID)
   npm run db:migrate
 fi
 ```

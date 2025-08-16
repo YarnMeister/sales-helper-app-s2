@@ -4,7 +4,7 @@
 
 ### 1. Neon Postgres Setup ✅
 
-Your Neon database is already configured. Update your `.env.local` with:
+Your Neon database (`sales-helper-db`) is already configured. Update your `.env.local` with:
 
 ```bash
 # Neon Postgres Database

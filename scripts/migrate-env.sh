@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BRANCH=${1:-dev}
-PROJECT="sales-helper"
+PROJECT="sales-helper-db"
 
 echo "Running migrations on branch: $BRANCH"
 
