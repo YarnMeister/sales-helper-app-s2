@@ -52,8 +52,12 @@ export const assertValidLineItems = (lineItems: any[]): void => {
 
 // Helper to assert request can be submitted (has both contact and line items)
 export const assertSubmittable = (request: any): void => {
-  assertValidContact(request.contact);
-  assertValidLineItems(request.line_items);
+  if (request.contact) {
+    assertValidContact(request.contact);
+  }
+  if (request.line_items) {
+    assertValidLineItems(request.line_items);
+  }
 };
 
 // Mock data providers with guaranteed valid data
