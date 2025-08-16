@@ -1,4 +1,4 @@
-// Database schema types matching the Supabase migrations
+// Database schema types matching the Neon PostgreSQL migrations
 
 export type RequestStatus = 'draft' | 'submitted' | 'failed';
 

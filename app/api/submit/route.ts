@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
-import { sql } from '@/lib/db';
 import { withTiming } from '@/lib/db-utils';
+import { getRequestById, getRequestByRequestId, updateRequestSubmission } from '@/lib/queries/requests';
+import { createMockSubmission } from '@/lib/queries/mock-submissions';
 import { createDeal, addProductsToDeal } from '@/lib/pipedrive';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 import { z } from 'zod';
@@ -24,11 +25,9 @@ export async function POST(req: NextRequest) {
       let requestData;
       
       if (id) {
-        const result = await sql`SELECT * FROM requests WHERE id = ${id}`;
-        requestData = result[0];
+        requestData = await getRequestById(id);
       } else {
-        const result = await sql`SELECT * FROM requests WHERE request_id = ${requestId}`;
-        requestData = result[0];
+        requestData = await getRequestByRequestId(requestId!);
       }
       
       if (!requestData) {
@@ -51,21 +50,18 @@ export async function POST(req: NextRequest) {
         const mockDealId = Math.floor(100000 + Math.random() * 900000);
         
         // Insert mock submission record
-        await sql`
-          INSERT INTO mock_pipedrive_submissions (request_id, payload, simulated_deal_id) 
-          VALUES (${requestData.request_id}, ${JSON.stringify({
+        await createMockSubmission({
+          requestId: requestData.request_id,
+          payload: {
             contact: requestData.contact,
             line_items: requestData.line_items,
             comment: requestData.comment
-          })}, ${mockDealId})
-        `;
+          },
+          simulatedDealId: mockDealId
+        });
         
         // Update request status
-        await sql`
-          UPDATE requests 
-          SET status = ${'submitted'}, pipedrive_deal_id = ${mockDealId} 
-          WHERE id = ${requestData.id}
-        `;
+        await updateRequestSubmission(requestData.id, mockDealId);
         
         return Response.json({ 
           ok: true, 
@@ -99,11 +95,7 @@ export async function POST(req: NextRequest) {
         await addProductsToDeal(deal.id, products);
         
         // Update request status
-        await sql`
-          UPDATE requests 
-          SET status = ${'submitted'}, pipedrive_deal_id = ${deal.id} 
-          WHERE id = ${requestData.id}
-        `;
+        await updateRequestSubmission(requestData.id, deal.id);
         
         return Response.json({ 
           ok: true, 

@@ -1,6 +1,14 @@
 import { NextRequest } from 'next/server';
-import { sql } from '@/lib/db';
 import { generateRequestId, withTiming } from '@/lib/db-utils';
+import { 
+  getRequests, 
+  getRequestById, 
+  createRequest, 
+  updateRequestContact, 
+  updateRequestLineItems, 
+  updateRequestComment,
+  deleteRequest 
+} from '@/lib/queries/requests';
 import { RequestUpsert } from '@/lib/schema';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 
@@ -16,36 +24,15 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     
     return await withTiming('GET /api/requests', async () => {
-      let query = sql`SELECT * FROM requests WHERE 1=1`;
-      const conditions: any[] = [];
-      const params: any[] = [];
-      let paramIndex = 1;
-      
-      // PRD requirement: Filter by salesperson unless showAll is true
-      if (!showAll && salesperson && salesperson !== 'all') {
-        conditions.push(sql`salesperson_selection = ${salesperson}`);
-      }
-      
-      if (status) {
-        conditions.push(sql`status = ${status}`);
-      }
-      if (mineGroup) {
-        conditions.push(sql`mine_group = ${mineGroup}`);
-      }
-      if (mineName) {
-        conditions.push(sql`mine_name = ${mineName}`);
-      }
-      if (personId) {
-        conditions.push(sql`contact->>'personId' = ${personId}`);
-      }
-      
-      if (conditions.length > 0) {
-        query = sql`SELECT * FROM requests WHERE ${sql.join(conditions, sql` AND `)} ORDER BY created_at DESC LIMIT ${limit}`;
-      } else {
-        query = sql`SELECT * FROM requests ORDER BY created_at DESC LIMIT ${limit}`;
-      }
-      
-      const result = await query;
+      const result = await getRequests({
+        status,
+        mineGroup,
+        mineName,
+        personId,
+        salesperson,
+        showAll,
+        limit
+      });
       
       console.log('Requests fetched successfully', { 
         count: result.length, 
@@ -91,61 +78,52 @@ export async function POST(request: NextRequest) {
           updates.comment = parsed.comment;
         }
         
-        // Build dynamic update query safely
-        const updateFields = Object.keys(updates);
-        const updateValues = Object.values(updates);
+        // Update fields individually to avoid dynamic query issues
+        let result;
         
-        // Create a simple string-based query for dynamic updates
-        const setClause = updateFields.map((field, index) => `${field} = $${index + 2}`).join(', ');
-        const query = `UPDATE requests SET ${setClause} WHERE id = $1 RETURNING *`;
-        const params = [parsed.id, ...updateValues];
+        if (parsed.contact !== undefined) {
+          result = await updateRequestContact(parsed.id, parsed.contact);
+        }
         
-        const result = await sql.unsafe(query, ...params);
+        if (parsed.line_items !== undefined) {
+          result = await updateRequestLineItems(parsed.id, parsed.line_items);
+        }
         
-        if (!result || result.length === 0) {
+        if (parsed.comment !== undefined) {
+          result = await updateRequestComment(parsed.id, parsed.comment);
+        }
+        
+        if (!result) {
           throw new NotFoundError('Request not found');
         }
         
         console.log('Request updated successfully', { 
-          request_id: result[0]?.request_id, 
+          request_id: result.request_id, 
           inline_update: true 
         });
         
-        return Response.json({ ok: true, data: result[0] });
+        return Response.json({ ok: true, data: result });
         
       } else {
         // Create new request
         const requestId = await generateRequestId();
         
-        const result = await sql`
-          INSERT INTO requests (
-            request_id,
-            salesperson_selection,
-            mine_group,
-            mine_name,
-            contact,
-            line_items,
-            comment,
-            status
-          ) VALUES (
-            ${requestId},
-            ${parsed.salespersonSelection},
-            ${parsed.mineGroup},
-            ${parsed.mineName},
-            ${parsed.contact ? JSON.stringify(parsed.contact) : null},
-            ${JSON.stringify(parsed.line_items || [])},
-            ${parsed.comment},
-            ${'draft'}
-          )
-          RETURNING *
-        `;
+        const result = await createRequest({
+          requestId,
+          salespersonSelection: parsed.salespersonSelection,
+          mineGroup: parsed.mineGroup,
+          mineName: parsed.mineName,
+          contact: parsed.contact,
+          lineItems: parsed.line_items,
+          comment: parsed.comment
+        });
         
         console.log('Request created successfully', { 
-          request_id: result[0].request_id, 
+          request_id: result.request_id, 
           inline_update: false 
         });
         
-        return Response.json({ ok: true, data: result[0] });
+        return Response.json({ ok: true, data: result });
       }
     });
     
@@ -164,11 +142,9 @@ export async function DELETE(request: NextRequest) {
     }
     
     return await withTiming('DELETE /api/requests', async () => {
-      const result = await sql`
-        DELETE FROM requests WHERE id = ${id} RETURNING id
-      `;
+      const result = await deleteRequest(id);
       
-      if (result.length === 0) {
+      if (!result) {
         throw new NotFoundError('Request not found');
       }
       
