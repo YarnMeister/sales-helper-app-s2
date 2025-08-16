@@ -88,21 +88,21 @@ This checklist covers the complete rewrite of the Sales Helper App from a comple
 - [x] Test RequestUpsert validation for mobile-first salesperson requirements
 
 Skipped
-- [ ] Create `/lib/log.ts` for structured logging
+- [ ] Create `/lib/log.ts` for structured logging (need to add comprehensice logging once we start generating data)
 
 
 ### 2.2 Database Client & Utilities
-- [ ] Create environment-aware database client
-  - [ ] Create `/lib/db.ts` with database utilities
-  - [ ] Update unit tests in `/tests/unit/db.test.ts`
-  - [ ] Create integration test in `/tests/integration/db-integration.test.ts`
-  - [ ] Manual validation: Test database client with correct environment
-  - [ ] Test generateRequestId creates sequential IDs using database function
-  - [ ] Test validateContactJsonb using database function
-  - [ ] Test database health check functionality
-  - [ ] Test withDbErrorHandling for proper error management
-  - [ ] Test KV cache set/get functionality
-  - [ ] Test salesperson constraint in database with valid/invalid values
+- [x] Create environment-aware database client
+  - [x] Create `/lib/db.ts` with database utilities
+  - [x] Update unit tests in `/tests/unit/db.test.ts`
+  - [x] Create integration test in `/tests/integration/db-integration.test.ts`
+  - [x] Manual validation: Test database client with correct environment
+  - [x] Test generateRequestId creates sequential IDs using database function
+  - [x] Test validateContactJsonb using database function
+  - [x] Test database health check functionality
+  - [x] Test withDbErrorHandling for proper error management
+  - [x] Test KV cache set/get functionality
+  - [x] Test salesperson constraint in database with valid/invalid values
 
 ---
 

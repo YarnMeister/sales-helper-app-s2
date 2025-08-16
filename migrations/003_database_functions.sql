@@ -31,18 +31,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create kv_cache table if it doesn't exist (for KV cache utilities)
-CREATE TABLE IF NOT EXISTS kv_cache (
-    key TEXT PRIMARY KEY,
-    value JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
-
--- Add index for better performance
-CREATE INDEX IF NOT EXISTS idx_kv_cache_updated_at ON kv_cache(updated_at);
-
 -- Add comment for documentation
 COMMENT ON FUNCTION generate_request_id() IS 'Generates sequential request IDs in format QR-001, QR-002, etc.';
 COMMENT ON FUNCTION validate_contact_jsonb(JSONB) IS 'Validates contact JSONB data has required fields: personId, name, mineGroup, mineName';
-COMMENT ON TABLE kv_cache IS 'Key-value cache table for application-level caching';

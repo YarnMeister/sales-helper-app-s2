@@ -23,8 +23,6 @@ import {
   generateRequestId, 
   validateContactJsonb,
   checkDbHealth,
-  kvGet,
-  kvSet,
   withDbErrorHandling 
 } from '../../lib/db';
 
@@ -121,50 +119,5 @@ describe('Database utilities', () => {
     await expect(
       withDbErrorHandling(operation, 'test-operation')
     ).rejects.toThrow('Database operation failed: test-operation');
-  });
-  
-  describe('KV Cache', () => {
-    it('should set and get values', async () => {
-      const testKey = 'test-key';
-      const testValue = { data: 'test', number: 42 };
-      
-      const mockClient = {
-        query: vi.fn()
-          .mockResolvedValueOnce({ rows: [] }) // kvSet
-          .mockResolvedValueOnce({ rows: [{ value: testValue }] }), // kvGet
-        release: vi.fn()
-      };
-      
-      const mockPool = {
-        connect: vi.fn().mockResolvedValue(mockClient)
-      };
-      
-      // Mock the Pool constructor to return our mock pool
-      const { Pool } = await import('pg');
-      vi.mocked(Pool).mockImplementation(() => mockPool as any);
-      
-      await kvSet(testKey, testValue);
-      const retrieved = await kvGet(testKey);
-      
-      expect(retrieved).toEqual(testValue);
-    });
-    
-    it('should return null for non-existent keys', async () => {
-      const mockClient = {
-        query: vi.fn().mockResolvedValue({ rows: [] }),
-        release: vi.fn()
-      };
-      
-      const mockPool = {
-        connect: vi.fn().mockResolvedValue(mockClient)
-      };
-      
-      // Mock the Pool constructor to return our mock pool
-      const { Pool } = await import('pg');
-      vi.mocked(Pool).mockImplementation(() => mockPool as any);
-      
-      const result = await kvGet('non-existent-key');
-      expect(result).toBeNull();
-    });
   });
 });

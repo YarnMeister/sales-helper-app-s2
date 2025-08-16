@@ -133,49 +133,7 @@ export const checkDbHealth = async (): Promise<{
   }, 'checkDbHealth');
 };
 
-// KV cache utilities for better performance
-export const kvGet = async <T = any>(key: string): Promise<T | null> => {
-  return withDbErrorHandling(async () => {
-    const db = getDb();
-    const client = await db.connect();
-    
-    try {
-      const result = await client.query(
-        'SELECT value FROM kv_cache WHERE key = $1',
-        [key]
-      );
-      
-      if (result.rows.length === 0) {
-        return null;
-      }
-      
-      return result.rows[0].value as T;
-    } finally {
-      client.release();
-    }
-  }, `kvGet:${key}`);
-};
 
-export const kvSet = async (key: string, value: any): Promise<void> => {
-  return withDbErrorHandling(async () => {
-    const db = getDb();
-    const client = await db.connect();
-    
-    try {
-      await client.query(
-        `INSERT INTO kv_cache (key, value, updated_at) 
-         VALUES ($1, $2, now()) 
-         ON CONFLICT (key) 
-         DO UPDATE SET value = $2, updated_at = now()`,
-        [key, JSON.stringify(value)]
-      );
-      
-      console.log(`KV cache updated`, { key });
-    } finally {
-      client.release();
-    }
-  }, `kvSet:${key}`);
-};
 
 // Enhanced query function for database-utils.ts compatibility
 export const query = async <T = any>(
