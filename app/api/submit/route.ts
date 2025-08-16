@@ -99,15 +99,23 @@ export async function POST(req: NextRequest) {
           requestId: requestData.request_id
         });
         
-        const dealTitle = `[${requestData.request_id}] - [${requestData.contact.mineGroup || 'Unknown'}] - [${requestData.contact.mineName || 'Unknown'}]`;
+        // Build deal title with product information (matching legacy specs)
+        const productSummary = requestData.line_items.length > 0 
+          ? ` - [${requestData.line_items[0].name}${requestData.line_items.length > 1 ? ` +${requestData.line_items.length - 1} more` : ''}]`
+          : '';
+        const dealTitle = `[${requestData.request_id}] - [${requestData.contact.mineGroup || 'Unknown'}] - [${requestData.contact.mineName || 'Unknown'}]${productSummary}`;
         
         const dealData = {
           title: dealTitle,
           pipeline_id: 9, // Your pipeline ID
           stage_id: 57,   // Your stage ID
           person_id: requestData.contact.personId,
-          org_id: requestData.contact.orgId,
-          user_id: 123456 // Your user ID
+          org_id: requestData.contact.orgId || null,
+          user_id: 22265724, // Ruan's actual user ID from Pipedrive
+          // Custom fields for tracking (matching legacy specs)
+          '4ad64c7e225ef479139742cdb9bf93f956298f69': requestData.request_id, // Request ID
+          '1fe134689b48d31c77a75af4a44d8a613da61df3': '47', // Salesperson (James)
+          'a6321f3f56ba1e30978e1176bef2ca18dab2066b': '38'  // Assigned Person (Ruan)
         };
         
         const deal = await createDeal(dealData);
@@ -133,7 +141,7 @@ export async function POST(req: NextRequest) {
         return Response.json({ 
           ok: true, 
           dealId: deal.id, 
-          dealUrl: `https://yourcompany.pipedrive.com/deal/${deal.id}`,
+          dealUrl: `https://rtse.pipedrive.com/deal/${deal.id}`,
           mode: 'real' 
         });
       }
