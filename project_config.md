@@ -25,3 +25,6 @@ For each new prompt, before making changes, review the instructions below and co
 - **Files:** supabase/migrations/*.sql, lib/types/database.ts, lib/database-utils.ts, supabase/README.md
 - **Status:** ✅ Complete
 - **Production Notes:** Migrations ready, requires Supabase project setup and CLI installation
+- **Vercel URLs:** 
+  - Production: https://sales-helper-app-s2-uqms-jan-jr-2762s-projects.vercel.app/
+  - Main Branch: https://sales-helper-app-s2-uqms-git-main-jan-jr-2762s-projects.vercel.app/
