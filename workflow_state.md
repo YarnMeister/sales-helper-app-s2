@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-08-16 15:51  
+**Last Updated:** 2025-08-16 15:15  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `add-contacts-feature`
+**Current Branch:** `add-line-items-feature`
 
 ---
 
@@ -11,18 +11,18 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     |                       |                      |
+| In Progress / Local     | `add-line-items-feature` | 📦 Implementing Add Line Items functionality |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  | `add-contacts-feature` | ✅ Add Contact functionality with mobile-first design |
+| Deployed to Production  |                       |                      |
 
 ---
 
 ## 📝 Recent Commits
+08ef6f8 fix: add custom_fields=1 parameter to Pipedrive API calls to fetch Mine Group data
+28a09ff fix: resolve Mine Group mapping bug using correct Pipedrive field IDs from legacy specs
+b7b3473 docs: add legacy technical specifications for reference
+4f93bed docs: update workflow state - add-contacts-feature deployed to production
 9500bdd fix: resolve import paths and implement modern CSS design system with OKLCH colors
-97f23bf feat: implement mobile-first design with bottom navigation and toast notifications
-61a08ba fix: resolve import path issues and add missing Input component
-596e58b feat: implement comprehensive Add Contact functionality with hierarchical accordion, search, and accessibility
-d4c8833 feat: implement UI components and styling for sales helper app
 
 ---
 
