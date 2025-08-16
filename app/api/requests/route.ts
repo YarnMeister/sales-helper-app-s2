@@ -90,20 +90,21 @@ export async function POST(request: NextRequest) {
       // PRD: Support inline updates for contact, line_items, comment
       if (parsed.id) {
         // Update existing request
-        let result;
-        
         // Update fields individually to avoid dynamic query issues
         if (parsed.contact !== undefined) {
-          result = await updateRequestContact(parsed.id, parsed.contact);
+          await updateRequestContact(parsed.id, parsed.contact);
         }
         
         if (parsed.line_items !== undefined) {
-          result = await updateRequestLineItems(parsed.id, parsed.line_items);
+          await updateRequestLineItems(parsed.id, parsed.line_items);
         }
         
         if (parsed.comment !== undefined) {
-          result = await updateRequestComment(parsed.id, parsed.comment);
+          await updateRequestComment(parsed.id, parsed.comment);
         }
+        
+        // Get the complete updated request
+        const result = await getRequestById(parsed.id);
         
         if (!result) {
           throw new NotFoundError('Request not found');

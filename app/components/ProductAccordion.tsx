@@ -92,8 +92,6 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   };
 
   const handleProductSelect = (product: Product) => {
-    console.log('ProductAccordion handleProductSelect called with product:', product);
-    
     const newLineItem: LineItem = {
       pipedriveProductId: product.pipedriveProductId,
       name: product.name,
@@ -103,9 +101,6 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
       shortDescription: product.shortDescription
     };
 
-    console.log('Created new line item:', newLineItem);
-    console.log('Calling onProductSelect with:', newLineItem);
-    
     onProductSelect(newLineItem);
   };
 
@@ -204,12 +199,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                         className={`p-4 border-b border-gray-50 last:border-b-0 transition-colors cursor-pointer min-h-[44px] flex items-center ${
                           isExisting ? 'bg-green-25' : 'hover:bg-gray-25 active:bg-gray-50'
                         }`}
-                        onClick={() => {
-                          console.log('Product clicked:', product.name, 'isExisting:', isExisting);
-                          if (!isExisting) {
-                            handleProductSelect(product);
-                          }
-                        }}
+                        onClick={() => !isExisting && handleProductSelect(product)}
                         onKeyDown={(e) => {
                           if (!isExisting && (e.key === 'Enter' || e.key === ' ')) {
                             e.preventDefault();
