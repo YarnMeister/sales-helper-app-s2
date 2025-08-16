@@ -60,7 +60,7 @@ This checklist covers the complete rewrite of the Sales Helper App from a comple
 
 #### Cache Key Management
 
-- [ ] **Update cache key strategy for Redis**
+- [x] **Update cache key strategy for Redis**
   - [x] Define cache key constants in `/lib/cache.ts`
   - [x] Verify cache busting works with patterns
   
@@ -75,18 +75,21 @@ This checklist covers the complete rewrite of the Sales Helper App from a comple
 ## Section 2: Core Schema & Validation
 
 ### 2.1 Schema Contracts & Validation
-- [ ] Create comprehensive schema validation system
-  - [ ] Create `/lib/log.ts` for structured logging
-  - [ ] Create `/lib/errors.ts` for standardized error handling
-  - [ ] Create `/lib/schema.ts` with comprehensive Zod schemas
-  - [ ] Create unit tests in `/tests/unit/schema.test.ts`
-  - [ ] Manual validation: Import schemas and verify TypeScript types
-  - [ ] Test Zod validation with valid/invalid data samples
-  - [ ] Verify error classes extend properly with correct status codes
-  - [ ] Test errorToResponse returns proper JSON format
-  - [ ] Test mobile-first ContactJSON requirements (mineGroup, mineName)
-  - [ ] Verify SalespersonSelection enum validation
-  - [ ] Test RequestUpsert validation for mobile-first salesperson requirements
+- [x] Create comprehensive schema validation system
+- [x] Create `/lib/errors.ts` for standardized error handling
+- [x] Create `/lib/schema.ts` with comprehensive Zod schemas
+- [x] Create unit tests in `/tests/unit/schema.test.ts`
+- [x] Manual validation: Import schemas and verify TypeScript types
+- [x] Test Zod validation with valid/invalid data samples
+- [x] Verify error classes extend properly with correct status codes
+- [x] Test errorToResponse returns proper JSON format
+- [x] Test mobile-first ContactJSON requirements (mineGroup, mineName)
+- [x] Verify SalespersonSelection enum validation
+- [x] Test RequestUpsert validation for mobile-first salesperson requirements
+
+Skipped
+- [ ] Create `/lib/log.ts` for structured logging
+
 
 ### 2.2 Database Client & Utilities
 - [ ] Create environment-aware database client
