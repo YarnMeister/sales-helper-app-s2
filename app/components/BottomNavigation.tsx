@@ -50,10 +50,15 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         {/* New Request Button */}
         <Button
           size="sm"
-          className="bg-red-600 hover:bg-red-700 text-white rounded-full h-12 w-12 flex items-center justify-center shadow-lg"
+          className="bg-red-600 hover:bg-red-700 text-white rounded-full h-12 w-12 flex items-center justify-center shadow-lg transition-all duration-200"
           onClick={onNewRequest}
+          disabled={isCreating}
         >
-          <Plus className="h-6 w-6" />
+          {isCreating ? (
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+          ) : (
+            <Plus className="h-6 w-6" />
+          )}
         </Button>
 
         {/* Filter */}

@@ -142,6 +142,9 @@ export default function MainPage() {
         // Add new request at the top of the list
         setRequests(prev => [data.data, ...prev]);
         
+        // Scroll to top so user can see the new request
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
         // Show success toast
         toast({
           title: "New Request Created",
@@ -397,7 +400,7 @@ export default function MainPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNavigation onNewRequest={handleNewRequest} />
+      <BottomNavigation onNewRequest={handleNewRequest} isCreating={isCreating} />
     </div>
   );
 }
