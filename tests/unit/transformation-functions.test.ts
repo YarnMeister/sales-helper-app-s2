@@ -22,13 +22,13 @@ const transformContactsHierarchy = (persons: any[], organizations: any[]) => {
     acc[mineGroup][mineName].push({
       personId: person.id,
       name: person.name,
-      email: person.email?.[0]?.value || undefined,
-      phone: person.phone?.[0]?.value || undefined,
+      email: person.email?.[0]?.value || null,
+      phone: person.phone?.[0]?.value || null,
       orgId: person.org_id?.value,
       orgName: person.org_id?.name,
       mineGroup,
       mineName,
-      jobTitle: person[JOB_TITLE_FIELD_ID] || undefined
+      jobTitle: person[JOB_TITLE_FIELD_ID] || null
     });
     
     return acc;

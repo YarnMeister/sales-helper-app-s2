@@ -9,8 +9,8 @@ export interface ContactJSON {
   personId: number;
   orgId?: number;
   name: string;
-  email?: string;
-  phone?: string;
+  email?: string | null;
+  phone?: string | null;
   mineGroup: string;  // Required for mobile-first workflow
   mineName: string;   // Required for mobile-first workflow
   company?: string;
@@ -94,8 +94,8 @@ export const ContactJSONSchema = z.object({
   personId: z.number().positive(),
   orgId: z.number().positive().optional(),
   name: z.string().min(1),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
+  email: z.string().email().nullable().optional(),
+  phone: z.string().nullable().optional(),
   mineGroup: z.string().min(1),  // Required
   mineName: z.string().min(1),   // Required
   company: z.string().optional(),

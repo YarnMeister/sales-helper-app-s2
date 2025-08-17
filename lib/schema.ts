@@ -26,8 +26,8 @@ export const LineItem = z.object({
 export const ContactJSON = z.object({
   personId: z.number().int().positive("Person ID must be a positive integer"),
   name: z.string().min(1, "Contact name is required"),
-  email: z.string().email("Invalid email format").optional(),
-  phone: z.string().optional(),
+  email: z.string().email("Invalid email format").nullable().optional(),
+  phone: z.string().nullable().optional(),
   orgId: z.number().int().positive("Organization ID must be a positive integer").optional(),
   orgName: z.string().optional(),
   mineGroup: z.string().min(1, "Mine group is required for mobile-first workflow"),
