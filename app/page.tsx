@@ -170,13 +170,17 @@ export default function MainPage() {
 
   const handleInlineUpdate = async (requestId: string, field: string, value: any) => {
     try {
+      const requestBody = { 
+        id: requestId, 
+        [field]: value
+      };
+      
+      console.log('🔍 Frontend: Sending update request:', requestBody);
+      
       const response = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          id: requestId, 
-          [field]: value
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
