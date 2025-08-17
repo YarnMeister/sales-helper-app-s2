@@ -380,7 +380,7 @@ export default function MainPage() {
           {/* Salesperson Selectors */}
           <div className="mb-4">
             <div className="flex gap-2">
-              {['James', 'Luyanda', 'Stefan', 'All requests'].map((name) => (
+              {['All requests', 'James', 'Luyanda', 'Stefan'].map((name) => (
                 <Button
                   key={name}
                   variant={selectedSalesperson === name ? 'default' : 'outline'}
