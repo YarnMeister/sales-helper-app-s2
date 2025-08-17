@@ -86,37 +86,60 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get('user-agent')
     });
     
-    return await withTiming('POST /api/requests', async () => {
+        return await withTiming('POST /api/requests', async () => {
       // PRD: Support inline updates for contact, line_items, comment
       if (parsed.id) {
-        // Update existing request
-        // Update fields individually to avoid dynamic query issues
+        // Update existing request - SINGLE UPDATE OPERATION
+        const { sql } = await import('@/lib/db');
+        
+        // Build the SET clause dynamically based on what was sent
+        let setClause = 'updated_at = $1';
+        const values: any[] = [new Date().toISOString()];
+        let paramIndex = 2;
+        
         if (parsed.contact !== undefined) {
-          await updateRequestContact(parsed.id, parsed.contact);
+          setClause += `, contact = $${paramIndex}`;
+          values.push(JSON.stringify(parsed.contact));
+          paramIndex++;
         }
-        
         if (parsed.line_items !== undefined) {
-          await updateRequestLineItems(parsed.id, parsed.line_items);
+          setClause += `, line_items = $${paramIndex}`;
+          values.push(JSON.stringify(parsed.line_items));
+          paramIndex++;
         }
-        
         if (parsed.comment !== undefined) {
-          await updateRequestComment(parsed.id, parsed.comment);
+          setClause += `, comment = $${paramIndex}`;
+          values.push(parsed.comment);
+          paramIndex++;
+        }
+        if (parsed.salespersonFirstName !== undefined) {
+          setClause += `, salesperson_first_name = $${paramIndex}`;
+          values.push(parsed.salespersonFirstName);
+          paramIndex++;
+        }
+        if (parsed.salespersonSelection !== undefined) {
+          setClause += `, salesperson_selection = $${paramIndex}`;
+          values.push(parsed.salespersonSelection);
+          paramIndex++;
         }
         
-        // Get the complete updated request
-        const result = await getRequestById(parsed.id);
+        // Add the ID as the last parameter
+        values.push(parsed.id);
         
-        if (!result) {
+        const query = `UPDATE requests SET ${setClause} WHERE id = $${paramIndex} RETURNING *`;
+        const result = await sql.unsafe(query, ...values);
+        
+        if (!result || result.length === 0) {
           throw new NotFoundError('Request not found');
         }
         
         logInfo('Request updated successfully', { 
           correlationId,
-          request_id: result.request_id, 
-          inline_update: true 
+          request_id: result[0].request_id, 
+          updated_fields: Object.keys(parsed).filter(key => key !== 'id') 
         });
         
-        return Response.json({ ok: true, data: result });
+        return Response.json({ ok: true, data: result[0] });
         
       } else {
         // Create new request
