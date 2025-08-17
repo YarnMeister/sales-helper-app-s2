@@ -11,7 +11,8 @@ interface BottomNavigationProps {
 }
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
-  onNewRequest
+  onNewRequest,
+  isCreating
 }) => {
   const router = useRouter();
   const pathname = usePathname();
