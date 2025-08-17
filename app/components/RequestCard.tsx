@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
-import { User, Package, ExternalLink, Trash2, Plus, Minus } from 'lucide-react';
+import { User, Package, ExternalLink, Trash2, Plus, Minus, Mail, Phone } from 'lucide-react';
 import { CommentControl } from './CommentControl';
 
 interface Contact {
@@ -185,14 +185,15 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                 <div className="flex items-center gap-2">
                   {request.contact.mineGroup && request.contact.mineName && (
                     <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
-                      {request.contact.mineGroup} | {request.contact.mineName}
+                      {request.contact.mineGroup} <span className="text-blue-400">|</span> {request.contact.mineName}
                     </Badge>
                   )}
                   {!isSubmitted && (
                     <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => onAddContact?.(request.id)}
-                      className="text-red-600 hover:text-red-700 px-3 py-0.5 text-xs"
+                      className="text-red-600 hover:text-red-700 text-xs"
                       data-testid="sh-request-change-contact"
                     >
                       Change
@@ -208,7 +209,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                       href={`mailto:${request.contact.email}`}
                       className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
                     >
-                      <span>📧</span>
+                      <Mail className="h-3 w-3" />
                       <span>{request.contact.email}</span>
                     </a>
                   )}
@@ -217,7 +218,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                       href={`tel:${request.contact.phone}`}
                       className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
                     >
-                      <span>📞</span>
+                      <Phone className="h-3 w-3" />
                       <span>{request.contact.phone}</span>
                     </a>
                   )}

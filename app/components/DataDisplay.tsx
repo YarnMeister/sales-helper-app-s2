@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Mail, Phone } from 'lucide-react';
 
 interface Contact {
   personId: number;
@@ -257,9 +258,19 @@ export default function DataDisplay() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div>
-                        {contact.email && <div>{contact.email}</div>}
-                        {contact.phone && <div>{contact.phone}</div>}
+                      <div className="space-y-1">
+                        {contact.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-3 w-3 text-gray-400" />
+                            <span>{contact.email}</span>
+                          </div>
+                        )}
+                        {contact.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-3 w-3 text-gray-400" />
+                            <span>{contact.phone}</span>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
