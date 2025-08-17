@@ -243,7 +243,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
       }
     };
 
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    (fetch as vi.Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
         ok: true,

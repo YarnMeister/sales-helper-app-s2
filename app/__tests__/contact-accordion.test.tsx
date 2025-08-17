@@ -132,7 +132,7 @@ describe('ContactAccordion', () => {
   });
 
   it('displays stale data warning', async () => {
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    (fetch as vi.Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
         ok: true,
