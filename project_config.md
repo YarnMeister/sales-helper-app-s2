@@ -18,10 +18,13 @@ For each new prompt, before making changes, review the instructions below and co
 2. Any gaps?  
 3. Call out any parts we can skip
 
- ## Process for each deployment to preview
-1. Update workflow_state.md using instructions in that doc
-2. Update "Update the "Last Preview URL:" with latest URL from Vercel
-
+## Process for each deployment to preview
+1. **Feature branch preview deployment:**
+   - Push feature branch to trigger Vercel preview deployment
+   - Test functionality in preview environment
+   - Verify all features work correctly
+   - Update workflow_state.md using instructions in that doc
+   - Update the "Last Preview URL:" in workflow_state.md using latest preview URL from Vercel
 
 ## Process for each deployment to prod
 1. **Pre-deployment validation:**
@@ -31,7 +34,9 @@ For each new prompt, before making changes, review the instructions below and co
    - Verify environment variables are properly configured
    - Ensure all dependencies are up to date
 
-2. **Deployment validation:**
+2. **Production deployment process:**
+   - Merge feature branch to main (if not already done)
+   - Push to main to trigger Vercel production deployment
    - Monitor Vercel deployment logs for any build errors
    - Check that deployment completes with "Ready" status
    - Verify the deployed app is accessible and functional
