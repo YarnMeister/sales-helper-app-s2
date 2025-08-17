@@ -24,7 +24,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   autoFocus = true,
   requestId
 }) => {
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = useState(initialValue || '');
   const [isSaving, setIsSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -81,7 +81,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 
   const remainingChars = maxLength - value.length;
   const isNearLimit = remainingChars < 100;
-  const hasChanges = value.trim() !== initialValue.trim();
+  const hasChanges = value.trim() !== (initialValue || '').trim();
 
   return (
     <div className="space-y-3" data-testid={`sh-comment-input-${requestId}`}>

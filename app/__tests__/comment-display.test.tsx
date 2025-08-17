@@ -1,9 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CommentDisplay } from '../components/CommentDisplay';
 
 describe('CommentDisplay', () => {
-  const mockOnEdit = jest.fn();
+  const mockOnEdit = vi.fn();
   
   const defaultProps = {
     comment: 'This is a test comment',
@@ -12,7 +13,7 @@ describe('CommentDisplay', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('displays comment text', () => {
@@ -24,7 +25,7 @@ describe('CommentDisplay', () => {
   it('calls onEdit when clicked', () => {
     render(<CommentDisplay {...defaultProps} />);
     
-    fireEvent.click(screen.getByTestId('sh-comment-display-QR-001'));
+    fireEvent.click(screen.getByTestId('sh-comment-display-content-QR-001'));
     
     expect(mockOnEdit).toHaveBeenCalled();
   });
@@ -32,7 +33,7 @@ describe('CommentDisplay', () => {
   it('calls onEdit with Enter key', () => {
     render(<CommentDisplay {...defaultProps} />);
     
-    const display = screen.getByTestId('sh-comment-display-QR-001');
+    const display = screen.getByTestId('sh-comment-display-content-QR-001');
     fireEvent.keyDown(display, { key: 'Enter' });
     
     expect(mockOnEdit).toHaveBeenCalled();
@@ -41,7 +42,7 @@ describe('CommentDisplay', () => {
   it('calls onEdit with Space key', () => {
     render(<CommentDisplay {...defaultProps} />);
     
-    const display = screen.getByTestId('sh-comment-display-QR-001');
+    const display = screen.getByTestId('sh-comment-display-content-QR-001');
     fireEvent.keyDown(display, { key: ' ' });
     
     expect(mockOnEdit).toHaveBeenCalled();
@@ -50,7 +51,7 @@ describe('CommentDisplay', () => {
   it('does not call onEdit when disabled', () => {
     render(<CommentDisplay {...defaultProps} disabled={true} />);
     
-    fireEvent.click(screen.getByTestId('sh-comment-display-QR-001'));
+    fireEvent.click(screen.getByTestId('sh-comment-display-content-QR-001'));
     
     expect(mockOnEdit).not.toHaveBeenCalled();
   });
@@ -65,7 +66,10 @@ describe('CommentDisplay', () => {
       />
     );
     
-    const commentElement = screen.getByText(multiLineComment);
+    // Check that the text is rendered with proper whitespace handling
+    const commentElement = screen.getByText((content, element) => {
+      return element?.textContent === multiLineComment;
+    });
     expect(commentElement).toHaveClass('whitespace-pre-wrap');
   });
 
@@ -90,7 +94,7 @@ describe('CommentDisplay', () => {
   });
 
   it('stops propagation on edit button click', () => {
-    const containerClick = jest.fn();
+    const containerClick = vi.fn();
     
     render(
       <div onClick={containerClick}>
@@ -107,7 +111,7 @@ describe('CommentDisplay', () => {
   it('has proper accessibility attributes', () => {
     render(<CommentDisplay {...defaultProps} />);
     
-    const display = screen.getByTestId('sh-comment-display-QR-001');
+    const display = screen.getByTestId('sh-comment-display-content-QR-001');
     expect(display).toHaveAttribute('role', 'button');
     expect(display).toHaveAttribute('tabIndex', '0');
     expect(display).toHaveAttribute('aria-label', 'Edit comment for request QR-001');
@@ -116,7 +120,7 @@ describe('CommentDisplay', () => {
   it('removes interactivity when disabled', () => {
     render(<CommentDisplay {...defaultProps} disabled={true} />);
     
-    const display = screen.getByTestId('sh-comment-display-QR-001');
+    const display = screen.getByTestId('sh-comment-display-content-QR-001');
     expect(display).toHaveAttribute('role', 'text');
     expect(display).toHaveAttribute('tabIndex', '-1');
     expect(display).not.toHaveAttribute('aria-label');
@@ -125,14 +129,14 @@ describe('CommentDisplay', () => {
   it('applies hover styles when not disabled', () => {
     render(<CommentDisplay {...defaultProps} />);
     
-    const display = screen.getByTestId('sh-comment-display-QR-001');
+    const display = screen.getByTestId('sh-comment-display-content-QR-001');
     expect(display).toHaveClass('cursor-pointer', 'hover:bg-gray-100', 'transition-colors');
   });
 
   it('does not apply hover styles when disabled', () => {
     render(<CommentDisplay {...defaultProps} disabled={true} />);
     
-    const display = screen.getByTestId('sh-comment-display-QR-001');
+    const display = screen.getByTestId('sh-comment-display-content-QR-001');
     expect(display).not.toHaveClass('cursor-pointer', 'hover:bg-gray-100');
   });
 
@@ -140,7 +144,7 @@ describe('CommentDisplay', () => {
     render(<CommentDisplay {...defaultProps} />);
     
     // Check that the MessageSquare icon is present
-    const icon = screen.getByTestId('sh-comment-display-QR-001').querySelector('svg');
+    const icon = screen.getByTestId('sh-comment-display-content-QR-001').querySelector('svg');
     expect(icon).toBeInTheDocument();
   });
 
@@ -197,7 +201,7 @@ describe('CommentDisplay', () => {
       />
     );
     
-    expect(screen.getByTestId('sh-comment-display-QR-001')).toBeInTheDocument();
+    expect(screen.getByTestId('sh-comment-display-content-QR-001')).toBeInTheDocument();
   });
 
   it('handles whitespace-only comment', () => {
@@ -208,6 +212,6 @@ describe('CommentDisplay', () => {
       />
     );
     
-    expect(screen.getByTestId('sh-comment-display-QR-001')).toBeInTheDocument();
+    expect(screen.getByTestId('sh-comment-display-content-QR-001')).toBeInTheDocument();
   });
 });

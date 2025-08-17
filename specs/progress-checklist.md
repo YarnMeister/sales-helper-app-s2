@@ -284,14 +284,34 @@ Skipped
   - [ ] Run unit tests and verify all pass with `npm test`
 
 Todo on UI
-[ ] Add contact/line item not saving, no way to select and save yet
+[x] Add contact/line item not saving, no way to select and save yet
 [ ] Search top of Add Contact not working
-[ ] Moce telephone inline with email to make contact row less tall
+[ ] Move telephone inline with email to make contact row less tall
 [ ] Deal Management title on main page
 [ ] bring back sales person picker
-[ ] proce is missing on line items
-[ ] remove "Null" product categories by looking at "Shoe on Helper App"
+[ ] price is missing on line items
+[x] remove "Null" product categories by looking at "Shoe on Helper App"
  
+[ ] Add a long-press widget for selecting contacts:
+# There are third-party packages such as use-long-press that abstract this pattern for React, #making it easier to add long-press events across components.
+#
+#bash
+#npm install use-long-press
+#Then use it like:
+#
+#
+#import { useLongPress } from 'use-long-press';
+#
+#function SelectableRow({ onSelect, children }) {
+#  const longPressProps = useLongPress(onSelect, { threshold: 2000 });
+#
+#  return <tr {...longPressProps}>{children}</tr>;
+#}
+
+
+
+
+
 ---
 
 ## Section 7: Final Integration & Testing

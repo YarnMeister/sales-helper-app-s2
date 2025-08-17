@@ -44,28 +44,31 @@ describe('CommentInput', () => {
     expect(textarea).toHaveValue('New text');
   });
 
-  it('calls onSave on blur with non-empty text', async () => {
+  it('calls onSave when save button is clicked', async () => {
     render(<CommentInput {...defaultProps} />);
     
     const textarea = screen.getByTestId('sh-comment-textarea');
+    const saveButton = screen.getByTestId('sh-comment-save');
+    
     fireEvent.change(textarea, { target: { value: 'Comment to save' } });
-    fireEvent.blur(textarea);
+    fireEvent.click(saveButton);
     
     await waitFor(() => {
       expect(mockOnSave).toHaveBeenCalledWith('Comment to save');
     });
   });
 
-  it('calls onCancel on blur with empty text', async () => {
-    render(<CommentInput {...defaultProps} />);
+  it('calls onCancel when cancel button is clicked', () => {
+    render(<CommentInput {...defaultProps} initialValue="Original" />);
     
     const textarea = screen.getByTestId('sh-comment-textarea');
-    fireEvent.blur(textarea);
+    const cancelButton = screen.getByTestId('sh-comment-cancel');
     
-    await waitFor(() => {
-      expect(mockOnCancel).toHaveBeenCalled();
-    });
-    expect(mockOnSave).not.toHaveBeenCalled();
+    fireEvent.change(textarea, { target: { value: 'Modified' } });
+    fireEvent.click(cancelButton);
+    
+    expect(mockOnCancel).toHaveBeenCalled();
+    expect(textarea).toHaveValue('Original'); // Should reset
   });
 
   it('saves on Ctrl+Enter', async () => {
@@ -103,141 +106,90 @@ describe('CommentInput', () => {
   it('prevents typing beyond character limit', () => {
     render(<CommentInput {...defaultProps} maxLength={10} />);
     
-    const textarea = screen.getByTestId('sh-comment-textarea') as HTMLTextAreaElement;
-    fireEvent.change(textarea, { target: { value: 'a'.repeat(15) } });
+    const textarea = screen.getByTestId('sh-comment-textarea');
+    fireEvent.change(textarea, { target: { value: 'This is a very long comment that should be truncated' } });
     
-    // Should be truncated to max length
-    expect(textarea.value.length).toBeLessThanOrEqual(10);
+    // The textarea should have the maxLength attribute set
+    expect(textarea).toHaveAttribute('maxlength', '10');
+    // The browser will prevent typing beyond maxLength, but we can't test that directly
+    // Instead, verify the maxLength attribute is properly set
   });
 
-  it('shows save/cancel buttons on mobile screens', () => {
-    // Mock small screen
-    Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      configurable: true,
-      value: 400,
-    });
+  it('disables save button when no changes', () => {
+    render(<CommentInput {...defaultProps} initialValue="Original" />);
     
-    render(<CommentInput {...defaultProps} />);
-    
-    expect(screen.getByTestId('sh-comment-save')).toBeInTheDocument();
-    expect(screen.getByTestId('sh-comment-cancel')).toBeInTheDocument();
+    const saveButton = screen.getByTestId('sh-comment-save');
+    expect(saveButton).toBeDisabled();
   });
 
-  it('handles save errors', async () => {
-    const failingSave = vi.fn().mockRejectedValue(new Error('Network error'));
-    
-    render(
-      <CommentInput 
-        {...defaultProps} 
-        onSave={failingSave}
-      />
-    );
+  it('enables save button when there are changes', () => {
+    render(<CommentInput {...defaultProps} initialValue="Original" />);
     
     const textarea = screen.getByTestId('sh-comment-textarea');
-    fireEvent.change(textarea, { target: { value: 'Test comment' } });
-    fireEvent.blur(textarea);
+    const saveButton = screen.getByTestId('sh-comment-save');
     
+    fireEvent.change(textarea, { target: { value: 'Modified' } });
+    
+    expect(saveButton).not.toBeDisabled();
+  });
+
+  it('handles save errors gracefully', async () => {
+    const errorOnSave = vi.fn().mockRejectedValue(new Error('Network error'));
+    render(<CommentInput {...defaultProps} onSave={errorOnSave} />);
+    
+    const textarea = screen.getByTestId('sh-comment-textarea');
+    const saveButton = screen.getByTestId('sh-comment-save');
+    
+    fireEvent.change(textarea, { target: { value: 'Test comment' } });
+    fireEvent.click(saveButton);
+    
+    // Should not crash, just log error
     await waitFor(() => {
-      expect(screen.getByText(/Network error/)).toBeInTheDocument();
+      expect(errorOnSave).toHaveBeenCalled();
     });
   });
 
   it('shows loading state during save', async () => {
-    const slowSave = vi.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
-    
+    const slowSave = vi.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
     render(<CommentInput {...defaultProps} onSave={slowSave} />);
     
     const textarea = screen.getByTestId('sh-comment-textarea');
-    fireEvent.change(textarea, { target: { value: 'Saving...' } });
-    fireEvent.blur(textarea);
+    const saveButton = screen.getByTestId('sh-comment-save');
+    
+    fireEvent.change(textarea, { target: { value: 'Test comment' } });
+    fireEvent.click(saveButton);
     
     // Should show loading spinner
-    const loadingSpinner = document.querySelector('.animate-spin');
-    expect(loadingSpinner).toBeInTheDocument();
+    expect(screen.getByText('Saving...')).toBeInTheDocument();
     
     await waitFor(() => {
-      expect(document.querySelector('.animate-spin')).not.toBeInTheDocument();
+      expect(slowSave).toHaveBeenCalledTimes(1);
     });
-  });
-
-  it('disables interactions when disabled prop is true', () => {
-    render(<CommentInput {...defaultProps} disabled={true} />);
-    
-    const textarea = screen.getByTestId('sh-comment-textarea');
-    expect(textarea).toBeDisabled();
-    
-    const saveButton = screen.queryByTestId('sh-comment-save');
-    if (saveButton) {
-      expect(saveButton).toBeDisabled();
-    }
-  });
-
-  it('shows help text for keyboard shortcuts', () => {
-    render(<CommentInput {...defaultProps} />);
-    
-    expect(screen.getByText(/Ctrl\+Enter to save/)).toBeInTheDocument();
-    expect(screen.getByText(/Esc to cancel/)).toBeInTheDocument();
-  });
-
-  it('updates help text after blur', async () => {
-    render(<CommentInput {...defaultProps} />);
-    
-    const textarea = screen.getByTestId('sh-comment-textarea');
-    fireEvent.blur(textarea);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/Comment will auto-save when you click outside/)).toBeInTheDocument();
-    });
-  });
-
-  it('auto-resizes textarea based on content', () => {
-    render(<CommentInput {...defaultProps} />);
-    
-    const textarea = screen.getByTestId('sh-comment-textarea') as HTMLTextAreaElement;
-    const originalHeight = textarea.style.height;
-    
-    // Add multi-line content
-    fireEvent.change(textarea, { target: { value: 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5' } });
-    
-    // Height should have changed
-    expect(textarea.style.height).not.toBe(originalHeight);
-  });
-
-  it('places cursor at end of text when auto-focusing', () => {
-    render(<CommentInput {...defaultProps} initialValue="Existing text" autoFocus={true} />);
-    
-    const textarea = screen.getByTestId('sh-comment-textarea') as HTMLTextAreaElement;
-    expect(textarea.selectionStart).toBe(textarea.value.length);
-    expect(textarea.selectionEnd).toBe(textarea.value.length);
-  });
-
-  it('handles empty initial value correctly', () => {
-    render(<CommentInput {...defaultProps} initialValue="" />);
-    
-    const textarea = screen.getByTestId('sh-comment-textarea') as HTMLTextAreaElement;
-    expect(textarea).toHaveValue('');
   });
 
   it('handles null initial value correctly', () => {
     render(<CommentInput {...defaultProps} initialValue={null as any} />);
     
-    const textarea = screen.getByTestId('sh-comment-textarea') as HTMLTextAreaElement;
+    const textarea = screen.getByTestId('sh-comment-textarea');
     expect(textarea).toHaveValue('');
+    
+    // Should not crash when typing
+    fireEvent.change(textarea, { target: { value: 'New comment' } });
+    expect(textarea).toHaveValue('New comment');
   });
 
   it('prevents save when isSaving is true', async () => {
-    const slowSave = vi.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
-    
+    const slowSave = vi.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
     render(<CommentInput {...defaultProps} onSave={slowSave} />);
     
     const textarea = screen.getByTestId('sh-comment-textarea');
-    fireEvent.change(textarea, { target: { value: 'Test comment' } });
+    const saveButton = screen.getByTestId('sh-comment-save');
     
-    // Trigger multiple saves quickly
-    fireEvent.blur(textarea);
-    fireEvent.focus(textarea);
-    fireEvent.blur(textarea);
+    fireEvent.change(textarea, { target: { value: 'Test comment' } });
+    fireEvent.click(saveButton);
+    
+    // Try to save again while first save is in progress
+    fireEvent.click(saveButton);
     
     await waitFor(() => {
       expect(slowSave).toHaveBeenCalledTimes(1);

@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProductAccordion } from '../components/ProductAccordion';
 
 const mockProductsData = {
@@ -27,10 +28,10 @@ const mockProductsData = {
   ]
 };
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('ProductAccordion - Streamlined Selection', () => {
-  const mockOnProductSelect = jest.fn();
+  const mockOnProductSelect = vi.fn();
   const existingItems = [
     {
       pipedriveProductId: 4,
@@ -41,8 +42,8 @@ describe('ProductAccordion - Streamlined Selection', () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (fetch as jest.Mock).mockResolvedValue({
+    vi.clearAllMocks();
+    (fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({
         ok: true,
@@ -296,7 +297,7 @@ describe('ProductAccordion - Streamlined Selection', () => {
       ]
     };
 
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    (fetch as any).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
         ok: true,

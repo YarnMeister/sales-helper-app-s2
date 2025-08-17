@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ContactAccordion } from '../components/ContactAccordion';
 
 const mockContactsData = {
@@ -26,14 +27,14 @@ const mockContactsData = {
   }
 };
 
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('ContactAccordion', () => {
-  const mockOnSelectContact = jest.fn();
+  const mockOnSelectContact = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (fetch as jest.Mock).mockResolvedValue({
+    vi.clearAllMocks();
+    (fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({
         ok: true,
