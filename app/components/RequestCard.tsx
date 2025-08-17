@@ -64,17 +64,6 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     
     setIsSubmitting(true);
     try {
-      // Check if there's an active comment input that needs saving
-      const activeElement = document.activeElement as HTMLElement;
-      const isCommentInput = activeElement?.getAttribute('data-testid') === 'sh-comment-textarea';
-      
-      if (isCommentInput && activeElement) {
-        // Trigger blur event to save the comment
-        activeElement.blur();
-        // Give a small delay for the save to complete
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      
       await onSubmit(request.id);
     } finally {
       setIsSubmitting(false);

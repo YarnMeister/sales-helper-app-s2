@@ -75,17 +75,6 @@ export const CommentControl: React.FC<CommentControlProps> = ({
           initialValue={comment || ''}
           onSave={handleSave}
           onCancel={handleCancel}
-          onBlur={async () => {
-            // Auto-save on blur if there are changes
-            const textarea = document.querySelector('[data-testid="sh-comment-textarea"]') as HTMLTextAreaElement;
-            if (textarea && textarea.value.trim() !== (comment || '').trim()) {
-              try {
-                await handleSave(); // Will get the value from textarea
-              } catch (error) {
-                console.error('Auto-save failed:', error);
-              }
-            }
-          }}
           disabled={disabled}
           requestId={requestId}
         />

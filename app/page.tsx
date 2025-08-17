@@ -234,6 +234,14 @@ export default function MainPage() {
       const request = requests.find(req => req.id === requestId);
       const qrId = request?.request_id || requestId;
       
+      // Option 5: Force Save Before Submit - Check for unsaved comment
+      const textarea = document.querySelector(`[data-testid="sh-comment-textarea"]`) as HTMLTextAreaElement;
+      if (textarea && textarea.value.trim() !== (request?.comment || '').trim()) {
+        // There's an unsaved comment, save it first
+        console.log('Saving unsaved comment before submit...');
+        await handleInlineUpdate(requestId, 'comment', textarea.value.trim());
+      }
+      
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

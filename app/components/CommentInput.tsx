@@ -7,7 +7,6 @@ interface CommentInputProps {
   initialValue?: string;
   onSave: (value: string) => Promise<void>;
   onCancel: () => void;
-  onBlur?: () => void;
   placeholder?: string;
   maxLength?: number;
   disabled?: boolean;
@@ -19,7 +18,6 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   initialValue = '',
   onSave,
   onCancel,
-  onBlur,
   placeholder = 'Add a comment...',
   maxLength = 2000,
   disabled = false,
@@ -93,7 +91,6 @@ export const CommentInput: React.FC<CommentInputProps> = ({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={onBlur}
           placeholder={placeholder}
           maxLength={maxLength}
           disabled={disabled || isSaving}
