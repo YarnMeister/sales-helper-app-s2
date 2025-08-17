@@ -1,14 +1,12 @@
 import { NextRequest } from 'next/server';
 import { generateRequestId, withTiming } from '@/lib/db-utils';
 import { 
-  getRequests, 
-  getRequestById, 
   createRequest, 
-  updateRequestContact, 
-  updateRequestLineItems, 
-  updateRequestComment,
+  updateRequest, 
+  getRequestById, 
+  getRequests, 
   deleteRequest 
-} from '@/lib/queries/requests';
+} from '@/lib/db';
 import { RequestUpsert } from '@/lib/schema';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 import { logInfo, logError, generateCorrelationId } from '@/lib/log';
@@ -36,11 +34,7 @@ export async function GET(request: NextRequest) {
     return await withTiming('GET /api/requests', async () => {
       const result = await getRequests({
         status: (status as RequestStatus) || undefined,
-        mineGroup: mineGroup || undefined,
-        mineName: mineName || undefined,
-        personId: personId || undefined,
         salesperson: (salesperson as SalespersonSelection | 'all') || undefined,
-        showAll,
         limit
       });
       
@@ -89,25 +83,30 @@ export async function POST(request: NextRequest) {
         return await withTiming('POST /api/requests', async () => {
       // PRD: Support inline updates for contact, line_items, comment
       if (parsed.id) {
-        // Update existing request - Use individual functions but ensure complete data return
+        // Update existing request using single updateRequest function
+        const updates: any = {};
+        
         if (parsed.contact !== undefined) {
-          await updateRequestContact(parsed.id, parsed.contact);
+          updates.contact = parsed.contact;
         }
         
         if (parsed.line_items !== undefined) {
-          await updateRequestLineItems(parsed.id, parsed.line_items);
+          updates.line_items = parsed.line_items;
         }
         
         if (parsed.comment !== undefined) {
-          await updateRequestComment(parsed.id, parsed.comment);
+          updates.comment = parsed.comment;
         }
         
-        // Get the complete updated request
-        const result = await getRequestById(parsed.id);
-        
-        if (!result) {
-          throw new NotFoundError('Request not found');
+        if (parsed.salespersonFirstName !== undefined) {
+          updates.salesperson_first_name = parsed.salespersonFirstName;
         }
+        
+        if (parsed.salespersonSelection !== undefined) {
+          updates.salesperson_selection = parsed.salespersonSelection;
+        }
+        
+        const result = await updateRequest(parsed.id, updates);
         
         logInfo('Request updated successfully', { 
           correlationId,
@@ -119,15 +118,13 @@ export async function POST(request: NextRequest) {
         
       } else {
         // Create new request
-        const requestId = await generateRequestId();
-        
         const result = await createRequest({
-          requestId,
-          salespersonSelection: parsed.salespersonSelection || (parsed.salespersonFirstName as any),
-          mineGroup: parsed.mineGroup,
-          mineName: parsed.mineName,
+          salesperson_first_name: parsed.salespersonFirstName,
+          salesperson_selection: parsed.salespersonSelection,
+          mine_group: parsed.mineGroup,
+          mine_name: parsed.mineName,
           contact: parsed.contact,
-          lineItems: parsed.line_items,
+          line_items: parsed.line_items,
           comment: parsed.comment
         });
         
