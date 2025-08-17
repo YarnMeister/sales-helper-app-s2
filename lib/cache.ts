@@ -22,8 +22,8 @@ export const getRedisClient = (): Redis => {
   return redis;
 };
 
-// Cache configuration
-const CACHE_MAX_AGE_SECONDS = 24 * 60 * 60; // 24 hours
+// Cache configuration - Optimized for better performance
+const CACHE_MAX_AGE_SECONDS = 2 * 60 * 60; // 2 hours (reduced from 24 hours)
 const STALE_WHILE_REVALIDATE_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
 export interface CacheEntry<T = any> {
@@ -212,3 +212,43 @@ export const CACHE_KEYS = {
   CONTACTS: 'contacts:hierarchical:v1',
   PRODUCTS: 'products:categorized:v1',
 } as const;
+
+// Cache warming function to pre-populate cache
+export const warmCache = async () => {
+  try {
+    logInfo('Starting cache warming process');
+    
+    // Import here to avoid circular dependencies
+    const { fetchContacts } = await import('./pipedrive');
+    const { fetchProducts } = await import('./pipedrive');
+    
+    // Warm contacts cache
+    try {
+      const { persons, organizations } = await fetchContacts();
+      const hierarchicalData = transformContactsHierarchy(persons, organizations);
+      await cache.set(CACHE_KEYS.CONTACTS, hierarchicalData);
+      logInfo('Contacts cache warmed successfully', { 
+        personsCount: persons.length,
+        organizationsCount: organizations.length
+      });
+    } catch (error) {
+      logWarn('Failed to warm contacts cache', { error: (error as Error).message });
+    }
+    
+    // Warm products cache
+    try {
+      const products = await fetchProducts();
+      const categorizedData = transformProductsHierarchy(products);
+      await cache.set(CACHE_KEYS.PRODUCTS, categorizedData);
+      logInfo('Products cache warmed successfully', { 
+        productsCount: products.length
+      });
+    } catch (error) {
+      logWarn('Failed to warm products cache', { error: (error as Error).message });
+    }
+    
+    logInfo('Cache warming process completed');
+  } catch (error) {
+    logError('Cache warming failed', { error: (error as Error).message });
+  }
+};

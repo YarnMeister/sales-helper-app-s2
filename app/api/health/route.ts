@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { validateEnvironment } from '@/lib/env'
 import { checkDbHealth } from '@/lib/db-utils'
-import { cache } from '@/lib/cache'
+import { cache, warmCache } from '@/lib/cache'
 import { logInfo, logError, generateCorrelationId } from '@/lib/log'
 
 export async function GET() {
@@ -18,6 +18,14 @@ export async function GET() {
     
     // Test cache connection
     const cacheStats = await cache.getStats()
+    
+    // Warm cache in background (don't wait for it)
+    warmCache().catch(error => {
+      logError('Background cache warming failed', { 
+        correlationId,
+        error: (error as Error).message 
+      });
+    });
     
     logInfo('Health check completed successfully', { 
       correlationId,
