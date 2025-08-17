@@ -373,7 +373,7 @@ export default function MainPage() {
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-shrink-0">
               <Image
-                src="/favicon.svg"
+                src="/favicon.ico"
                 alt="Sales Helper"
                 width={32}
                 height={32}
