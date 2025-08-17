@@ -21,6 +21,12 @@ export interface PipedriveProduct {
   item_price: number;
 }
 
+export interface PipedriveNote {
+  content: string;
+  deal_id: number;
+  user_id?: number;
+}
+
 const callPipedriveAPI = async (endpoint: string, method: string = 'GET', data?: any) => {
   const config = getPipedriveConfig();
   
@@ -68,6 +74,11 @@ export const addProductsToDeal = async (dealId: number, products: PipedriveProdu
   );
   
   return await Promise.all(promises);
+};
+
+export const addNoteToDeal = async (noteData: PipedriveNote) => {
+  const response = await callPipedriveAPI('/notes', 'POST', noteData);
+  return response.data;
 };
 
 export const fetchContacts = async () => {

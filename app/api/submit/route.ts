@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { withTiming } from '@/lib/db-utils';
 import { getRequestById, getRequestByRequestId, updateRequestSubmission } from '@/lib/queries/requests';
 import { createMockSubmission } from '@/lib/queries/mock-submissions';
-import { createDeal, addProductsToDeal } from '@/lib/pipedrive';
+import { createDeal, addProductsToDeal, addNoteToDeal } from '@/lib/pipedrive';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 import { logInfo, logError, generateCorrelationId } from '@/lib/log';
 import { z } from 'zod';
@@ -99,11 +99,13 @@ export async function POST(req: NextRequest) {
           requestId: requestData.request_id
         });
         
-        // Build deal title with product information (matching legacy specs)
-        const productSummary = requestData.line_items.length > 0 
-          ? ` - [${requestData.line_items[0].name}${requestData.line_items.length > 1 ? ` +${requestData.line_items.length - 1} more` : ''}]`
-          : '';
-        const dealTitle = `[${requestData.request_id}] - [${requestData.contact.mineGroup || 'Unknown'}] - [${requestData.contact.mineName || 'Unknown'}]${productSummary}`;
+        // Build deal title with all line items (improved format)
+        const lineItemsSummary = requestData.line_items.map((item: any) => {
+          const shortDesc = item.shortDescription || item.name;
+          return `[${shortDesc} x ${item.quantity}]`;
+        }).join(' ');
+        
+        const dealTitle = `[${requestData.request_id}][${requestData.contact.mineGroup || 'Unknown'}] [${requestData.contact.mineName || 'Unknown'}] ${lineItemsSummary}`;
         
         const dealData = {
           title: dealTitle,
@@ -128,6 +130,32 @@ export async function POST(req: NextRequest) {
         }));
         
         await addProductsToDeal(deal.id, products);
+        
+        // Add comment as note to deal if comment exists
+        if (requestData.comment && requestData.comment.trim()) {
+          try {
+            await addNoteToDeal({
+              content: requestData.comment,
+              deal_id: deal.id,
+              user_id: 22265724 // Ruan's user ID
+            });
+            
+            logInfo('Comment added as note to deal', { 
+              correlationId,
+              request_id: requestData.request_id, 
+              deal_id: deal.id,
+              comment_length: requestData.comment.length
+            });
+          } catch (noteError) {
+            // Log error but don't fail the submission
+            logError('Failed to add comment as note to deal', { 
+              correlationId,
+              request_id: requestData.request_id, 
+              deal_id: deal.id,
+              error: noteError instanceof Error ? noteError.message : String(noteError)
+            });
+          }
+        }
         
         // Update request status
         await updateRequestSubmission(requestData.id, deal.id);
