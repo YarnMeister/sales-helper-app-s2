@@ -152,12 +152,8 @@ export default function MainPage() {
         // Scroll to top so user can see the new request
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
-        // Show success toast
-        console.log('🔍 Toast data:', data.data);
-        toast({
-          title: "New Request Created",
-          description: `Request ${data.data.request_id} has been created successfully.`,
-        });
+        // Success - no toast to avoid distraction
+        console.log('🔍 Request created:', data.data);
       } else {
         throw new Error(data.message || 'Failed to create request');
       }
@@ -201,11 +197,7 @@ export default function MainPage() {
         // Scroll to top so user can see the new request
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
-        // Show success toast
-        toast({
-          title: "New Request Created",
-          description: `Request ${data.data.request_id} has been created successfully.`,
-        });
+        // Success - no toast to avoid distraction
       } else {
         throw new Error(data.message || 'Failed to create request');
       }
