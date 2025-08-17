@@ -35,6 +35,19 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <span className="text-xs">Deals</span>
         </Button>
 
+        {/* Check-in */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`flex flex-col items-center gap-1 min-w-0 ${
+            isActive('/check-in') ? 'text-red-600' : 'text-gray-600'
+          }`}
+          onClick={() => router.push('/check-in')}
+        >
+          <CheckSquare className="h-5 w-5" />
+          <span className="text-xs">Check-in</span>
+        </Button>
+
         {/* New Request Button */}
         <Button
           size="sm"
@@ -47,19 +60,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           ) : (
             <Plus className="h-6 w-6" />
           )}
-        </Button>
-
-        {/* Check-in */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 ${
-            isActive('/check-in') ? 'text-red-600' : 'text-gray-600'
-          }`}
-          onClick={() => router.push('/check-in')}
-        >
-          <CheckSquare className="h-5 w-5" />
-          <span className="text-xs">Check-in</span>
         </Button>
 
         {/* Contacts */}
