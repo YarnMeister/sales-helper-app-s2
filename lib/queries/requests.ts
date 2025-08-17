@@ -1,7 +1,9 @@
 import { sql } from '@/lib/db';
 import { Request, RequestStatus, SalespersonSelection } from '@/lib/types/database';
 
-// Get requests with filtering
+// DEPRECATED: This function has been replaced by getRequests in lib/db.ts
+// The simplified version in lib/db.ts handles the core filtering needs
+// This function is kept for backward compatibility but will be removed in a future update.
 export const getRequests = async (params: {
   status?: RequestStatus;
   mineGroup?: string;
@@ -11,46 +13,14 @@ export const getRequests = async (params: {
   showAll?: boolean;
   limit?: number;
 }) => {
-  const { status, mineGroup, mineName, personId, salesperson, showAll = false, limit = 50 } = params;
-  
-  // Build conditions dynamically
-  let conditions: any[] = [];
-  
-  // Filter by salesperson unless showAll is true
-  if (!showAll && salesperson && salesperson !== 'all') {
-    conditions.push(sql`salesperson_selection = ${salesperson}`);
-  }
-  
-  if (status) {
-    conditions.push(sql`status = ${status}`);
-  }
-  if (mineGroup) {
-    conditions.push(sql`mine_group = ${mineGroup}`);
-  }
-  if (mineName) {
-    conditions.push(sql`mine_name = ${mineName}`);
-  }
-  if (personId) {
-    conditions.push(sql`contact->>'personId' = ${personId}`);
-  }
-  
-  // Use a simple approach with individual queries
-  if (conditions.length === 0) {
-    return await sql`SELECT * FROM requests ORDER BY created_at DESC LIMIT ${limit}`;
-  } else if (conditions.length === 1) {
-    return await sql`SELECT * FROM requests WHERE ${conditions[0]} ORDER BY created_at DESC LIMIT ${limit}`;
-  } else if (conditions.length === 2) {
-    return await sql`SELECT * FROM requests WHERE ${conditions[0]} AND ${conditions[1]} ORDER BY created_at DESC LIMIT ${limit}`;
-  } else if (conditions.length === 3) {
-    return await sql`SELECT * FROM requests WHERE ${conditions[0]} AND ${conditions[1]} AND ${conditions[2]} ORDER BY created_at DESC LIMIT ${limit}`;
-  } else if (conditions.length === 4) {
-    return await sql`SELECT * FROM requests WHERE ${conditions[0]} AND ${conditions[1]} AND ${conditions[2]} AND ${conditions[3]} ORDER BY created_at DESC LIMIT ${limit}`;
-  } else if (conditions.length === 5) {
-    return await sql`SELECT * FROM requests WHERE ${conditions[0]} AND ${conditions[1]} AND ${conditions[2]} AND ${conditions[3]} AND ${conditions[4]} ORDER BY created_at DESC LIMIT ${limit}`;
-  } else {
-    // Fallback for more than 5 conditions
-    return await sql`SELECT * FROM requests ORDER BY created_at DESC LIMIT ${limit}`;
-  }
+  // For now, delegate to the new implementation in lib/db.ts
+  // This maintains backward compatibility while we transition
+  const { getRequests: newGetRequests } = await import('@/lib/db');
+  return newGetRequests({
+    status: params.status,
+    salesperson: params.salesperson,
+    limit: params.limit
+  });
 };
 
 // Get request by ID
@@ -101,49 +71,8 @@ export const createRequest = async (data: {
   return result[0];
 };
 
-// Update request contact
-export const updateRequestContact = async (id: string, contact: any) => {
-  const result = await sql`
-    UPDATE requests 
-    SET contact = ${JSON.stringify(contact)}, updated_at = ${new Date().toISOString()}
-    WHERE id = ${id} 
-    RETURNING *
-  `;
-  
-  return result[0];
-};
-
-// Update request line items
-export const updateRequestLineItems = async (id: string, lineItems: any[]) => {
-  const result = await sql`
-    UPDATE requests 
-    SET line_items = ${JSON.stringify(lineItems)}, updated_at = ${new Date().toISOString()}
-    WHERE id = ${id} 
-    RETURNING *
-  `;
-  
-  return result[0];
-};
-
-// Update request comment
-export const updateRequestComment = async (id: string, comment: string) => {
-  console.log('🔍 updateRequestComment called with:', { id, comment });
-  
-  // First, get the current state
-  const current = await sql`SELECT * FROM requests WHERE id = ${id}`;
-  console.log('🔍 Current state before update:', current[0]);
-  
-  const result = await sql`
-    UPDATE requests 
-    SET comment = ${comment}, updated_at = ${new Date().toISOString()}
-    WHERE id = ${id} 
-    RETURNING *
-  `;
-  
-  console.log('🔍 Result after update:', result[0]);
-  
-  return result[0];
-};
+// DEPRECATED: These functions have been replaced by the single updateRequest function in lib/db.ts
+// The individual update functions are no longer needed and will be removed in a future update.
 
 // Update request status and pipedrive deal ID
 export const updateRequestSubmission = async (id: string, dealId: number) => {
