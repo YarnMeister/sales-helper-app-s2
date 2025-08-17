@@ -20,8 +20,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const isActive = (path: string) => pathname === path;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div className="flex items-center justify-around py-3 px-4">
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-100 border-t border-gray-200 z-50">
+      <div className="flex items-center justify-around py-4 px-4 pb-6">
         {/* Deals */}
         <Button
           variant="ghost"
@@ -51,14 +51,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         {/* New Request Button */}
         <Button
           size="sm"
-          className="bg-red-600 hover:bg-red-700 text-white rounded-full h-12 w-12 flex items-center justify-center shadow-lg transition-all duration-200"
+          className="bg-red-600 hover:bg-red-700 text-white rounded-full h-12 w-12 flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.3),0_2px_4px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_12px_rgba(0,0,0,0.4),0_3px_6px_rgba(0,0,0,0.3)] transition-all duration-200 transform hover:scale-105"
           onClick={onNewRequest}
           disabled={isCreating}
         >
           {isCreating ? (
             <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
           ) : (
-            <Plus className="h-6 w-6" />
+            <Plus className="h-6 w-6 drop-shadow-sm" />
           )}
         </Button>
 
