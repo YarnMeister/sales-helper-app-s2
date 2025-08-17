@@ -47,6 +47,7 @@ export const createRequest = async (data: {
   return withDbErrorHandling(async () => {
     const result = await sql`
       INSERT INTO requests (
+        request_id,
         salesperson_first_name,
         salesperson_selection, 
         mine_group,
@@ -56,6 +57,7 @@ export const createRequest = async (data: {
         comment,
         status
       ) VALUES (
+        NULL,
         ${data.salesperson_first_name || null},
         ${data.salesperson_selection || null},
         ${data.mine_group || null},

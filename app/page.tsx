@@ -279,9 +279,9 @@ export default function MainPage() {
   // Filter requests based on search and status
   const filteredRequests = requests.filter((request) => {
     const matchesSearch =
-      request.request_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.contact?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.salesperson_first_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      (request.request_id?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (request.contact?.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (request.salesperson_first_name?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
     
