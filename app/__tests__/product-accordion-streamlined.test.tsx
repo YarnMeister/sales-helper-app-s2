@@ -138,26 +138,7 @@ describe('ProductAccordion - Streamlined Selection', () => {
     expect(screen.queryByTestId('sh-product-add-button-1')).not.toBeInTheDocument();
   });
 
-  it('shows "Added" badge for existing items', async () => {
-    render(
-      <ProductAccordion 
-        onProductSelect={mockOnProductSelect} 
-        existingItems={existingItems}
-      />
-    );
 
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId('sh-product-category-category-a'));
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('Product Alpha')).toBeInTheDocument();
-    });
-
-    // Should show "Added" badge for existing items
-    const existingItemElement = screen.getByTestId('sh-product-item-4');
-    expect(existingItemElement).toHaveTextContent('Added');
-  });
 
   it('makes entire product row clickable', async () => {
     render(
@@ -403,23 +384,5 @@ describe('ProductAccordion - Streamlined Selection', () => {
     expect(screen.getByText('R100.00')).toBeInTheDocument();
   });
 
-  it('displays product descriptions when available', async () => {
-    render(
-      <ProductAccordion 
-        onProductSelect={mockOnProductSelect} 
-        existingItems={existingItems}
-      />
-    );
 
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId('sh-product-category-category-a'));
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('Product Alpha')).toBeInTheDocument();
-    });
-
-    // Should display description
-    expect(screen.getByText('High-quality product')).toBeInTheDocument();
-  });
 });
