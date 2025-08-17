@@ -275,7 +275,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
           </Button>
         ) : isFailed ? (
           <Button
-            variant="destructive"
+            variant={canSubmit ? "active" : "disabled"}
             className="w-full"
             onClick={handleSubmit}
             disabled={!canSubmit || isSubmitting}
@@ -286,8 +286,8 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         ) : (
           <div className="flex justify-end">
             <Button
-              variant="default"
-              className="bg-red-600 hover:bg-red-700"
+              variant={canSubmit ? "active" : "disabled"}
+              className="w-full"
               onClick={handleSubmit}
               disabled={!canSubmit || isSubmitting}
               data-testid="sh-request-submit"
