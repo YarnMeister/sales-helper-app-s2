@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-01-27 10:45  
+**Last Updated:** 2025-08-17 21:15  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `feature/add-contact-ui-improvements`
+**Current Branch:** `main`
 
 ---
 
@@ -11,15 +11,18 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     | `feature/add-contact-ui-improvements` | 🚧 Add Contact UI improvements - 2-row layout, email/phone hyperlinks, mobile-first design |
+| In Progress / Local     |                       |                      |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  |                       |                      |
+| Deployed to Production  | `main` | ✅ Complete: Add Contact UI improvements - 2-row layout, email/phone hyperlinks, mobile-first design - Transparent loading overlays, reduced toast time, ESLint setup - All 157 tests passing - Production deployment successful |
 
 ---
 
 ## 📝 Recent Commits
-6c7c156 Fix Show on Sales Helper field mapping - correct dropdown value mapping (79 = Yes, 78 = No) - remove debug logging - enable proper filtering
-2e46889 Fix test data for Show on Sales Helper field mapping - update test values to match correct dropdown mapping (79 = Yes, 78 = No) - all 157 tests now passing
+7669f9c Fix black background spinners in contact and line item selection - Replace black overlays with transparent white backgrounds in add-contact and add-line-items pages - Update loading overlays: bg-white bg-opacity-75 instead of bg-black bg-opacity-50 - Add border and center text alignment for better visual consistency - Maintain app visibility during contact and line item selection - All 157 tests passing
+c88bd8a Reduce Change button height by 50% in contact container - Update padding from py-1 to py-0.5 for reduced height - Add text-xs for smaller text size to match reduced height - All 157 tests passing
+1e03fa9 Additional Add Contact UI improvements: main page styling and Add Contact page cleanup - Main page: white background for contact container, blue border maintained - Change button: solid blue background with white text - Mine Group | Mine Name: capsule badge with light blue styling - Remove contact name icon for cleaner look - Add Contact page: remove redundant Mine Group | Mine Name from contact display - All 157 tests passing
+55aaa50 Implement Add Contact UI improvements: 2-row layout, email/phone hyperlinks, mobile-first design - Update ContactAccordion: 2-row layout with name left, mine group|name right - Add email/phone hyperlinks (mailto/tel) with click handlers - Fix unescaped quotes and useMemo dependencies - Update RequestCard: remove Mine Group badge, implement 2-row contact layout - Add email/phone hyperlinks in contact display - Fix React hooks dependencies with useCallback - Setup autonomous ESLint configuration - All 157 tests passing
+b7f084f Update workflow state - start Add Contact UI improvements feature branch
 
 
 ---
