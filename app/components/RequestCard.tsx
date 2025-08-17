@@ -125,7 +125,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         };
       case 'failed':
         return {
-          bgColor: 'bg-red-500',
+          bgColor: 'bg-red-600',
           textColor: 'text-white',
           label: 'Failed'
         };

@@ -149,7 +149,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   if (error) {
     return (
       <div className={`text-center py-8 ${className}`} data-testid="sh-contacts-error">
-        <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+        <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-4" />
         <p className="text-red-600 mb-4">{error}</p>
         <Button onClick={fetchContacts} variant="outline">
           Try Again

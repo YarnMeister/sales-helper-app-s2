@@ -393,9 +393,9 @@ export default function MainPage() {
       {/* Main Content */}
       <div className="px-4 py-2 pb-24">
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-800">{error}</p>
-          </div>
+                  <div className="mb-4 p-4 bg-red-50 border border-red-600 rounded-md">
+          <p className="text-red-800">{error}</p>
+        </div>
         )}
 
         {loading ? (

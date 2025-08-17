@@ -155,7 +155,7 @@ export default function DataDisplay() {
   if (error) {
     return (
       <div className="w-full max-w-6xl mx-auto p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-100 border border-red-600 text-red-700 px-4 py-3 rounded">
           Error: {error}
         </div>
       </div>
