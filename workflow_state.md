@@ -39,18 +39,24 @@ c88bd8a Reduce Change button height by 50% in contact container - Update padding
    - Branch name in "Current Branch"
    - Kanban board (move feature branch to correct state)
 
+3. **Docs Branch Workflow:**
+   - Always update workflow_state.md in `docs` branch: `git checkout docs`
+   - Never update workflow_state.md in `main` branch
+   - Push docs branch: `git push origin docs`
+   - This prevents triggering production deployments for documentation updates
 
 4. **Kanban progression:**
    - "No Feature Branch" → "In Progress / Local" → "Deployed to Preview" → "Deployed to Production"
    - Only one branch should be active at a time
    - Move branch name between rows as it progresses
 
-5. **Preview Deployemnts:**
-   
-
+5. **Preview Deployments:**
+   - Update workflow state in `docs` branch after preview deployment
 
 **Example update pattern:**
+- Switch to docs: `git checkout docs`
 - Update date: `2025-08-16 14:54` → `2025-08-16 15:30`
 - Update branch: `neon-upstash-direct` → `feature/new-ui`
 - Move branch in kanban: "In Progress / Local" → "Deployed to Preview"
 - Update commits: Replace with 5 most recent commits
+- Commit and push docs branch: `git add . && git commit -m "Update workflow state" && git push origin docs`
