@@ -4,11 +4,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RequestCard } from './components/RequestCard';
 import { BottomNavigation } from './components/BottomNavigation';
 import { SalespersonModal } from './components/SalespersonModal';
+import { RTSElogo } from './components/RTSElogo';
 import { useRouter } from 'next/navigation';
 import { useToast } from './hooks/use-toast';
 import { Filter } from 'lucide-react';
 import { Button } from './components/ui/button';
-import Image from 'next/image';
 
 interface Contact {
   personId: number;
@@ -369,16 +369,10 @@ export default function MainPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="px-4 py-4">
-          {/* Header with Favicon and Title */}
+          {/* Header with RTSE Logo and Title */}
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-shrink-0">
-              <Image
-                src="/favicon.ico"
-                alt="Sales Helper"
-                width={32}
-                height={32}
-                className="w-8 h-8"
-              />
+              <RTSElogo size={32} />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Sales Helper</h1>
           </div>
