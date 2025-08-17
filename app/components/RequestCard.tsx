@@ -162,7 +162,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                     <Button
                       size="sm"
                       onClick={() => onAddContact?.(request.id)}
-                      className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-1"
+                      className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-0.5 text-xs"
                       data-testid="sh-request-change-contact"
                     >
                       Change
