@@ -79,7 +79,10 @@ describe('ProductAccordion - Streamlined Selection', () => {
       pipedriveProductId: 1,
       name: 'Product Alpha',
       quantity: 1,
-      price: 100.00
+      price: 100.00,
+      description: 'High-quality product',
+      shortDescription: undefined,
+      showOnSalesHelper: undefined
     });
   });
 
@@ -188,7 +191,10 @@ describe('ProductAccordion - Streamlined Selection', () => {
       pipedriveProductId: 1,
       name: 'Product Alpha',
       quantity: 1,
-      price: 100.00
+      price: 100.00,
+      description: 'High-quality product',
+      shortDescription: undefined,
+      showOnSalesHelper: undefined
     });
   });
 
@@ -216,7 +222,10 @@ describe('ProductAccordion - Streamlined Selection', () => {
       pipedriveProductId: 1,
       name: 'Product Alpha',
       quantity: 1,
-      price: 100.00
+      price: 100.00,
+      description: 'High-quality product',
+      shortDescription: undefined,
+      showOnSalesHelper: undefined
     });
   });
 
@@ -307,7 +316,12 @@ describe('ProductAccordion - Streamlined Selection', () => {
     expect(mockOnProductSelect).toHaveBeenCalledWith({
       pipedriveProductId: 5,
       name: 'Product Delta',
-      quantity: 1
+      quantity: 1,
+      price: undefined,
+      code: undefined,
+      description: undefined,
+      shortDescription: undefined,
+      showOnSalesHelper: undefined
     });
   });
 

@@ -189,9 +189,25 @@ export const transformProductsHierarchy = (products: any[]) => {
     '36': 'General Supplies',
     '37': 'General Supplies'
   };
+
+  // Custom field IDs from legacy tech specs
+  const SHORT_DESCRIPTION_FIELD_ID = 'f320da5e15bef8b83d8c9d997533107dfdb66d5c';
+  const SHOW_ON_SALES_HELPER_FIELD_ID = '59af9d567fc57492de93e82653ce01d0c967f6f5';
   
   return products.reduce((acc, product) => {
     const category = categoryMap[product.category as string] || 'Other';
+    
+    // Extract custom field values
+    const shortDescription = product[SHORT_DESCRIPTION_FIELD_ID] || '';
+    const showOnSalesHelperValue = product[SHOW_ON_SALES_HELPER_FIELD_ID];
+    
+    // Map "Show on Sales Helper" field: 78 = "Yes", 79 = "No", null/empty = false
+    const showOnSalesHelper = showOnSalesHelperValue === 78;
+    
+    // Only include products that should be shown on Sales Helper
+    if (!showOnSalesHelper) {
+      return acc;
+    }
     
     if (!acc[category]) acc[category] = [];
     
@@ -200,7 +216,9 @@ export const transformProductsHierarchy = (products: any[]) => {
       name: product.name,
       code: product.code,
       price: product.price || 0,
-      shortDescription: product.description || ''
+      description: product.description || '',
+      shortDescription: shortDescription,
+      showOnSalesHelper: showOnSalesHelper
     });
     
     return acc;

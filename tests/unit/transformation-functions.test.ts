@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { transformProductsHierarchy } from '../../lib/cache';
 
 // Pipedrive field IDs from legacy tech specs
 const MINE_GROUP_FIELD_ID = 'd0b6b2d1d53bed3053e896f938c6051a790bd15e';
@@ -36,30 +37,7 @@ const transformContactsHierarchy = (persons: any[], organizations: any[]) => {
   return grouped;
 };
 
-const transformProductsHierarchy = (products: any[]) => {
-  const categoryMap: Record<string, string> = {
-    '1': 'Safety Equipment',
-    '2': 'Mining Tools',
-    '3': 'Personal Protective Equipment',
-    '4': 'Machinery Parts'
-  };
-  
-  return products.reduce((acc, product) => {
-    const category = categoryMap[product.category as string] || 'Other';
-    
-    if (!acc[category]) acc[category] = [];
-    
-    acc[category].push({
-      pipedriveProductId: product.id,
-      name: product.name,
-      code: product.code,
-      price: product.price || 0,
-      shortDescription: product.description || ''
-    });
-    
-    return acc;
-  }, {});
-};
+
 
 describe('Transformation Functions', () => {
   describe('transformContactsHierarchy', () => {
@@ -169,80 +147,103 @@ describe('Transformation Functions', () => {
   });
 
   describe('transformProductsHierarchy', () => {
-    it('should transform products to categorized structure', () => {
+    it('should transform products to categorized structure with custom fields', () => {
       const products = [
         {
           id: 1,
           name: 'Safety Helmet',
-          category: '1',
+          category: '28', // Cable category
           price: 50,
           code: 'SH-001',
-          description: 'Hard hat for safety'
+          description: 'Safety helmet for mining operations', // Main description
+          'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Hard hat for safety', // Short description field
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
         },
         {
           id: 2,
           name: 'Mining Pick',
-          category: '2',
+          category: '29', // Conveyor Belt Equipment category
           price: 100,
           code: 'MP-001',
-          description: 'Tool for mining'
+          description: 'Mining pick for excavation work', // Main description
+          'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Tool for mining', // Short description field
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
         },
         {
           id: 3,
-          name: 'Unknown Product',
-          category: '999',
+          name: 'Hidden Product',
+          category: '30', // Environmental Monitoring category
           price: 25,
-          code: 'UP-001'
+          code: 'HP-001',
+          description: 'Hidden product description', // Main description
+          'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Hidden product', // Short description field
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 79 // Show on Sales Helper = No
         }
       ];
 
       const result = transformProductsHierarchy(products);
 
       expect(result).toEqual({
-        'Safety Equipment': [
+        'Cable': [
           {
             pipedriveProductId: 1,
             name: 'Safety Helmet',
             code: 'SH-001',
             price: 50,
-            shortDescription: 'Hard hat for safety'
+            description: 'Safety helmet for mining operations',
+            shortDescription: 'Hard hat for safety',
+            showOnSalesHelper: true
           }
         ],
-        'Mining Tools': [
+        'Conveyor Belt Equipment': [
           {
             pipedriveProductId: 2,
             name: 'Mining Pick',
             code: 'MP-001',
             price: 100,
-            shortDescription: 'Tool for mining'
-          }
-        ],
-        'Other': [
-          {
-            pipedriveProductId: 3,
-            name: 'Unknown Product',
-            code: 'UP-001',
-            price: 25,
-            shortDescription: ''
+            description: 'Mining pick for excavation work',
+            shortDescription: 'Tool for mining',
+            showOnSalesHelper: true
           }
         ]
+        // Hidden product should not appear in results
       });
     });
 
     it('should handle all PRD category mappings', () => {
       const products = [
-        { id: 1, name: 'Safety Item', category: '1' },
-        { id: 2, name: 'Mining Tool', category: '2' },
-        { id: 3, name: 'PPE Item', category: '3' },
-        { id: 4, name: 'Machine Part', category: '4' }
+        { 
+          id: 1, 
+          name: 'Cable Item', 
+          category: '28',
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
+        },
+        { 
+          id: 2, 
+          name: 'Conveyor Item', 
+          category: '29',
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
+        },
+        { 
+          id: 3, 
+          name: 'Environmental Item', 
+          category: '30',
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
+        },
+        { 
+          id: 4, 
+          name: 'General Item', 
+          category: '31',
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
+        }
       ];
 
       const result = transformProductsHierarchy(products);
 
-      expect(result['Safety Equipment']).toBeDefined();
-      expect(result['Mining Tools']).toBeDefined();
-      expect(result['Personal Protective Equipment']).toBeDefined();
-      expect(result['Machinery Parts']).toBeDefined();
+      expect(result['Cable']).toBeDefined();
+      expect(result['Conveyor Belt Equipment']).toBeDefined();
+      expect(result['Environmental Monitoring']).toBeDefined();
+      expect(result['General Supplies']).toBeDefined();
     });
   });
 });

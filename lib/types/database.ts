@@ -36,6 +36,8 @@ export interface LineItem {
   currency?: string;
   category?: string;
   customFields?: Record<string, any>;
+  shortDescription?: string;
+  showOnSalesHelper?: boolean;
 }
 
 // Main Request table structure
@@ -118,6 +120,8 @@ export const LineItemSchema = z.object({
   currency: z.string().optional(),
   category: z.string().optional(),
   customFields: z.record(z.any()).optional(),
+  shortDescription: z.string().optional(),
+  showOnSalesHelper: z.boolean().optional(),
 });
 
 export const RequestSchema = z.object({

@@ -13,8 +13,10 @@ export const LineItem = z.object({
   category: z.string().optional(),
   price: z.number().nonnegative("Price cannot be negative").default(0),
   quantity: z.number().int().positive("Quantity must be a positive integer").default(1),
+  description: z.string().optional(),
   shortDescription: z.string().optional(),
   customDescription: z.string().optional(),
+  showOnSalesHelper: z.boolean().optional(),
 }).refine(
   (data) => data.name.trim().length > 0,
   { message: "Product name cannot be empty or whitespace only", path: ["name"] }

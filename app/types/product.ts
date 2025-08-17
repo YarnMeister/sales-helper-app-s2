@@ -3,7 +3,9 @@ export interface Product {
   name: string;
   code?: string;
   price?: number;
+  description?: string;
   shortDescription?: string;
+  showOnSalesHelper?: boolean;
 }
 
 export interface LineItem {
@@ -12,8 +14,10 @@ export interface LineItem {
   code?: string;
   price?: number;
   quantity: number;
+  description?: string;
   shortDescription?: string;
   customDescription?: string;
+  showOnSalesHelper?: boolean;
 }
 
 export interface ProductsHierarchy {

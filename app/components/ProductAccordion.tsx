@@ -100,7 +100,9 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
       code: product.code,
       price: product.price,
       quantity: 1, // Default quantity
-      shortDescription: product.shortDescription
+      description: product.description,
+      shortDescription: product.shortDescription,
+      showOnSalesHelper: product.showOnSalesHelper
     };
 
     onProductSelect(newLineItem);
@@ -241,9 +243,9 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                               )}
                             </div>
                             
-                            {product.shortDescription && (
+                            {product.description && (
                               <p className="text-sm text-gray-600 mb-2">
-                                {product.shortDescription}
+                                {product.description}
                               </p>
                             )}
                             
