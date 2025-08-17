@@ -234,77 +234,115 @@ export default function CheckInPage() {
         <div>
           <h2 className="text-lg font-medium text-gray-900 mb-3">Select visiting mine</h2>
           <div className="space-y-3">
-            {Object.entries(contactsData).map(([group, mines]) => {
-              const isGroupExpanded = expandedGroups.has(group);
-              const totalMines = Object.keys(mines).length;
-              
-              return (
-                <Card key={group} className="overflow-hidden shadow-sm">
-                  {/* Mine Group Header */}
-                  <div
-                    className="p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors active:bg-gray-100 min-h-[44px] flex items-center"
-                    onClick={() => toggleGroup(group)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleGroup(group);
-                      }
-                    }}
-                    tabIndex={0}
-                    role="button"
-                    aria-expanded={isGroupExpanded}
-                    aria-label={`${isGroupExpanded ? 'Collapse' : 'Expand'} ${group} mine group with ${totalMines} mines`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-3">
-                        {isGroupExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-gray-500" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-gray-500" />
-                        )}
-                        <h3 className="font-medium text-gray-800">{group}</h3>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {totalMines} mines
-                      </Badge>
-                    </div>
+            {/* All Mines Top Level */}
+            <Card className="overflow-hidden shadow-sm">
+              {/* All Mines Header */}
+              <div
+                className="p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors active:bg-gray-100 min-h-[44px] flex items-center"
+                onClick={() => toggleGroup('all-mines')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleGroup('all-mines');
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-expanded={expandedGroups.has('all-mines')}
+                aria-label={`${expandedGroups.has('all-mines') ? 'Collapse' : 'Expand'} all mine groups`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-3">
+                    {expandedGroups.has('all-mines') ? (
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-gray-500" />
+                    )}
+                    <h3 className="font-medium text-gray-800">All mines</h3>
                   </div>
-                  
-                  {/* Mines List */}
-                  {isGroupExpanded && (
-                    <div className="bg-white">
-                      {Object.entries(mines).map(([mine, contacts]) => (
+                  <Badge variant="outline" className="text-xs">
+                    {Object.values(contactsData).reduce((total, mines) => total + Object.keys(mines).length, 0)} mines
+                  </Badge>
+                </div>
+              </div>
+              
+              {/* All Mine Groups */}
+              {expandedGroups.has('all-mines') && (
+                <div className="bg-white">
+                  {Object.entries(contactsData).map(([group, mines]) => {
+                    const isGroupExpanded = expandedGroups.has(group);
+                    const totalMines = Object.keys(mines).length;
+                    
+                    return (
+                      <div key={group} className="border-b border-gray-50 last:border-b-0">
+                        {/* Mine Group Header */}
                         <div
-                          key={`${group}-${mine}`}
-                          className={`p-4 pl-12 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center hover:bg-gray-25 cursor-pointer ${
-                            selectedMine === mine ? 'bg-red-50 border-l-4 border-l-red-600' : ''
-                          }`}
-                          onClick={() => handleMineSelect(mine)}
+                          className="p-4 pl-8 cursor-pointer hover:bg-gray-25 transition-colors active:bg-gray-100 min-h-[44px] flex items-center"
+                          onClick={() => toggleGroup(group)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              toggleGroup(group);
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-expanded={isGroupExpanded}
+                          aria-label={`${isGroupExpanded ? 'Collapse' : 'Expand'} ${group} mine group with ${totalMines} mines`}
                         >
                           <div className="flex items-center justify-between w-full">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-gray-900">
-                                  {mine}
-                                </span>
-                                {selectedMine === mine && (
-                                  <Badge variant="default" className="text-xs">
-                                    Selected
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {contacts.length} contacts
-                              </div>
+                            <div className="flex items-center gap-3">
+                              {isGroupExpanded ? (
+                                <ChevronDown className="h-4 w-4 text-gray-500" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-gray-500" />
+                              )}
+                              <h4 className="font-medium text-gray-800">{group}</h4>
                             </div>
+                            <Badge variant="outline" className="text-xs">
+                              {totalMines} mines
+                            </Badge>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
+                        
+                        {/* Mines List */}
+                        {isGroupExpanded && (
+                          <div className="bg-gray-25">
+                            {Object.entries(mines).map(([mine, contacts]) => (
+                              <div
+                                key={`${group}-${mine}`}
+                                className={`p-4 pl-16 border-b border-gray-100 last:border-b-0 transition-colors min-h-[44px] flex items-center hover:bg-gray-50 cursor-pointer ${
+                                  selectedMine === mine ? 'bg-red-50 border-l-4 border-l-red-600' : ''
+                                }`}
+                                onClick={() => handleMineSelect(mine)}
+                              >
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-medium text-gray-900">
+                                        {mine}
+                                      </span>
+                                      {selectedMine === mine && (
+                                        <Badge variant="default" className="text-xs">
+                                          Selected
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {contacts.length} contacts
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
           </div>
         </div>
 
