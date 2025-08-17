@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from './ui/button';
-import { Package, User, Plus, Filter, List } from 'lucide-react';
+import { Package, User, Plus, Filter, List, CheckSquare } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 
 interface BottomNavigationProps {
@@ -33,6 +33,19 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         >
           <List className="h-5 w-5" />
           <span className="text-xs">Deals</span>
+        </Button>
+
+        {/* Check-in */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`flex flex-col items-center gap-1 min-w-0 ${
+            isActive('/check-in') ? 'text-red-600' : 'text-gray-600'
+          }`}
+          onClick={() => router.push('/check-in')}
+        >
+          <CheckSquare className="h-5 w-5" />
+          <span className="text-xs">Check-in</span>
         </Button>
 
         {/* Contacts */}
