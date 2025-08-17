@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/database';
-import { logInfo, logError } from '@/lib/log';
-import { generateCorrelationId } from '@/lib/log';
-import { withTiming } from '@/lib/log';
+import { sql } from '@/lib/db';
+import { logInfo, logError, generateCorrelationId, withPerformanceLogging } from '@/lib/log';
 
 // Validation schema for check-in data
 const CheckInSchema = z.object({
@@ -23,7 +21,7 @@ const CheckInSchema = z.object({
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
   
-  return await withTiming('POST /api/site-visits', async () => {
+  return await withPerformanceLogging('POST /api/site-visits', 'api', async () => {
     try {
       logInfo('Site visit check-in request started', { correlationId });
       
@@ -39,28 +37,25 @@ export async function POST(req: NextRequest) {
         purpose: validatedData.main_purpose
       });
       
-      // Insert into database
-      const query = `
+      // Insert into database using Neon SQL template
+      const result = await sql`
         INSERT INTO site_visits (
           salesperson, 
           planned_mines, 
           main_purpose, 
           availability, 
           comments
-        ) VALUES ($1, $2, $3, $4, $5)
+        ) VALUES (
+          ${validatedData.salesperson},
+          ${validatedData.planned_mines},
+          ${validatedData.main_purpose},
+          ${validatedData.availability},
+          ${validatedData.comments || null}
+        )
         RETURNING id, date, created_at
       `;
       
-      const values = [
-        validatedData.salesperson,
-        validatedData.planned_mines,
-        validatedData.main_purpose,
-        validatedData.availability,
-        validatedData.comments || null
-      ];
-      
-      const result = await db.query(query, values);
-      const savedVisit = result.rows[0];
+      const savedVisit = result[0];
       
       logInfo('Site visit saved to database', { 
         correlationId,
@@ -107,7 +102,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const correlationId = generateCorrelationId();
   
-  return await withTiming('GET /api/site-visits', async () => {
+  return await withPerformanceLogging('GET /api/site-visits', 'api', async () => {
     try {
       logInfo('Site visits fetch request started', { correlationId });
       
@@ -115,39 +110,45 @@ export async function GET(req: NextRequest) {
       const salesperson = searchParams.get('salesperson');
       const date = searchParams.get('date');
       
-      let query = `
-        SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
-        FROM site_visits
-      `;
+      let result;
       
-      const values: any[] = [];
-      let paramCount = 0;
-      
-      if (salesperson) {
-        paramCount++;
-        query += ` WHERE salesperson = $${paramCount}`;
-        values.push(salesperson);
+      if (salesperson && date) {
+        result = await sql`
+          SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+          FROM site_visits
+          WHERE salesperson = ${salesperson} AND date = ${date}
+          ORDER BY created_at DESC
+        `;
+      } else if (salesperson) {
+        result = await sql`
+          SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+          FROM site_visits
+          WHERE salesperson = ${salesperson}
+          ORDER BY created_at DESC
+        `;
+      } else if (date) {
+        result = await sql`
+          SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+          FROM site_visits
+          WHERE date = ${date}
+          ORDER BY created_at DESC
+        `;
+      } else {
+        result = await sql`
+          SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+          FROM site_visits
+          ORDER BY created_at DESC
+        `;
       }
-      
-      if (date) {
-        paramCount++;
-        const whereClause = salesperson ? ' AND' : ' WHERE';
-        query += `${whereClause} date = $${paramCount}`;
-        values.push(date);
-      }
-      
-      query += ' ORDER BY created_at DESC';
-      
-      const result = await db.query(query, values);
       
       logInfo('Site visits fetched successfully', { 
         correlationId,
-        count: result.rows.length
+        count: result.length
       });
       
       return NextResponse.json({
         ok: true,
-        data: result.rows
+        data: result
       });
       
     } catch (error) {

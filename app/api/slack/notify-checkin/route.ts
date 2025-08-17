@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { env } from '@/lib/env';
 import { logInfo, logError } from '@/lib/log';
-import { generateCorrelationId } from '@/lib/log';
-import { withTiming } from '@/lib/log';
+import { generateCorrelationId, withPerformanceLogging } from '@/lib/log';
 
 // Validation schema for check-in notification data
 const CheckInNotificationSchema = z.object({
@@ -36,7 +35,7 @@ function formatCheckInMessage(data: z.infer<typeof CheckInNotificationSchema>): 
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
   
-  return await withTiming('POST /api/slack/notify-checkin', async () => {
+  return await withPerformanceLogging('POST /api/slack/notify-checkin', 'api', async () => {
     try {
       logInfo('Slack check-in notification request started', { correlationId });
       
