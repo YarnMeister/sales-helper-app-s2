@@ -377,11 +377,11 @@ export default function CheckInPage() {
         </Card>
 
         {/* Check-in Button */}
-        <div className="pt-4">
+        <div className="pt-4 pb-8">
           <Button
             onClick={handleCheckIn}
             variant={selectedMine && selectedPurpose && backInOffice ? "active" : "disabled"}
-            className="w-full h-12 text-lg font-medium"
+            className="w-full h-12 text-lg font-medium bg-green-700 hover:bg-green-800 text-white border-green-700"
             disabled={!selectedMine || !selectedPurpose || !backInOffice}
           >
             Check-in Now

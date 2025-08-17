@@ -156,7 +156,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
 
       {/* Products Hierarchy */}
       <div className="space-y-3" data-testid="sh-products-hierarchy">
-        {Object.entries(filteredProductsData).map(([category, products]) => {
+        {Object.entries(filteredProductsData).sort(([a], [b]) => a.localeCompare(b)).map(([category, products]) => {
           const isCategoryExpanded = expandedCategories.has(category);
           const existingInCategory = products.filter(p => existingItemsMap.has(p.pipedriveProductId)).length;
           
@@ -194,7 +194,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
               {/* Products List */}
               {isCategoryExpanded && (
                 <div className="bg-white">
-                  {products.map((product) => {
+                  {products.sort((a, b) => a.name.localeCompare(b.name)).map((product) => {
                     const isExisting = existingItemsMap.has(product.pipedriveProductId);
                     
                     return (

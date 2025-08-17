@@ -254,7 +254,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         {/* Display existing line items */}
         {request.line_items.length > 0 && (
           <div 
-            className="bg-white border border-green-200 rounded-lg p-3"
+            className="bg-white border border-green-700 rounded-lg p-3"
             data-testid="sh-request-items-display"
           >
             <div className="mb-2">
@@ -293,7 +293,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                         size="sm"
                         onClick={() => handleQuantityChange(index, Math.max(1, (optimisticQuantities[index] ?? item.quantity) - 1))}
                         disabled={isSubmitted || (optimisticQuantities[index] ?? item.quantity) <= 1}
-                        className="text-red-600 hover:text-red-700 bg-white hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
+                        className="text-red-600 hover:text-red-700 bg-gray-50 hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
                         data-testid={`sh-decrease-quantity-${index}`}
                       >
                         <Minus className="h-4 w-4" />
@@ -317,7 +317,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                         size="sm"
                         onClick={() => handleQuantityChange(index, (optimisticQuantities[index] ?? item.quantity) + 1)}
                         disabled={isSubmitted}
-                        className="text-red-600 hover:text-red-700 bg-white hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
+                        className="text-red-600 hover:text-red-700 bg-gray-50 hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
                         data-testid={`sh-increase-quantity-${index}`}
                       >
                         <Plus className="h-4 w-4" />
@@ -341,7 +341,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         <div className="mt-3">
           <Button
             variant="outline"
-            className="w-full border-green-200 text-green-700 hover:bg-green-50"
+            className="w-full border-green-700 text-green-700 hover:bg-green-50"
             onClick={() => onAddLineItems?.(request.id)}
             disabled={isSubmitted}
             data-testid="sh-request-add-items"
@@ -392,7 +392,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
           <div className="flex justify-end">
             <Button
               variant={canSubmit ? "active" : "disabled"}
-              className={`w-full ${!canSubmit ? 'border-gray-300' : ''}`}
+              className={`w-full ${!canSubmit ? 'border-gray-300' : 'bg-green-700 hover:bg-green-800 text-white border-green-700'}`}
               onClick={handleSubmit}
               disabled={!canSubmit || isSubmitting}
               data-testid="sh-request-submit"

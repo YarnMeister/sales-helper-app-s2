@@ -196,7 +196,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
 
       {/* Contacts Hierarchy */}
       <div className="space-y-3" data-testid="sh-contacts-hierarchy">
-        {Object.entries(filteredContactsData).map(([group, mines]) => {
+        {Object.entries(filteredContactsData).sort(([a], [b]) => a.localeCompare(b)).map(([group, mines]) => {
           const isGroupExpanded = state.expandedGroups.has(group);
           const totalContacts = Object.values(mines).reduce((sum, contacts) => sum + contacts.length, 0);
           
@@ -236,7 +236,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
               {/* Mine Names */}
               {isGroupExpanded && (
                 <div className="bg-gray-25">
-                  {Object.entries(mines).map(([mine, contacts]) => {
+                  {Object.entries(mines).sort(([a], [b]) => a.localeCompare(b)).map(([mine, contacts]) => {
                     const mineKey = `${group}-${mine}`;
                     const isMineExpanded = state.expandedMines.has(mineKey);
                     
@@ -276,7 +276,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                         {/* Contacts List */}
                         {isMineExpanded && (
                           <div className="bg-white">
-                            {contacts.map((contact) => (
+                            {contacts.sort((a, b) => a.name.localeCompare(b.name)).map((contact) => (
                               <div
                                 key={contact.personId}
                                 className={`p-4 pl-12 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center ${
