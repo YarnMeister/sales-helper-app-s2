@@ -378,7 +378,7 @@ export default function MainPage() {
           </div>
 
           {/* Horizontal line with 3D effect */}
-          <div className="w-full h-px bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 mb-6 shadow-[0_1px_2px_rgba(0,0,0,0.1)]"></div>
+          <div className="w-screen h-px bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 mb-6 shadow-[0_1px_2px_rgba(0,0,0,0.1)] -mx-4"></div>
 
           {/* Salesperson Selectors */}
           <div className="mb-2">
