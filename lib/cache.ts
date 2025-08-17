@@ -194,6 +194,9 @@ export const transformProductsHierarchy = (products: any[]) => {
   const SHORT_DESCRIPTION_FIELD_ID = 'f320da5e15bef8b83d8c9d997533107dfdb66d5c';
   const SHOW_ON_SALES_HELPER_FIELD_ID = '59af9d567fc57492de93e82653ce01d0c967f6f5';
   
+  // Debug logging
+  console.log('transformProductsHierarchy called with', products.length, 'products');
+  
   return products.reduce((acc, product) => {
     const category = categoryMap[product.category as string] || 'Other';
     
@@ -201,8 +204,11 @@ export const transformProductsHierarchy = (products: any[]) => {
     const shortDescription = product[SHORT_DESCRIPTION_FIELD_ID] || '';
     const showOnSalesHelperValue = product[SHOW_ON_SALES_HELPER_FIELD_ID];
     
-    // Map "Show on Sales Helper" field: 78 = "Yes", 79 = "No", null/empty = false
-    const showOnSalesHelper = showOnSalesHelperValue === 78;
+    // Map "Show on Sales Helper" field: Custom dropdown field
+    // Based on logs, 79 = "Yes", 78 = "No" (dropdown option IDs)
+    const showOnSalesHelper = showOnSalesHelperValue === 79 || showOnSalesHelperValue === '79';
+    
+
     
     // Only include products that should be shown on Sales Helper
     if (!showOnSalesHelper) {

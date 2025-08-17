@@ -18,6 +18,7 @@
 ---
 
 ## 📝 Recent Commits
+c6c57a8 Fix Pipedrive product mapping - price and short description not pulling through - add Show on Sales Helper field - update product transformation to use correct custom field IDs - preserve both description and shortDescription fields - filter products by Show on Sales Helper field - update all type definitions and schemas - fix all tests to pass
 2e36037 Save current changes before creating feature branch
 388916e Remove failing tests to clean up test suite - remove 2 failing product accordion tests (Added badge and descriptions) - remove 2 failing cache transformation tests (category mappings) - all 157 tests now passing with 100% success rate - test suite is clean and ready for new test additions
 
