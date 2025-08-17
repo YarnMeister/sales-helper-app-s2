@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         salesperson: validatedData.salesperson,
         minesCount: validatedData.planned_mines.length,
         purpose: validatedData.main_purpose,
-        channel: env.SLACK_CHANNEL
+        channel: env.SLACK_CHANNEL || '#out-of-office'
       });
       
       // Format message for Slack
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       
       // Prepare Slack API request
       const slackMessage = {
-        channel: env.SLACK_CHANNEL,
+        channel: env.SLACK_CHANNEL || '#out-of-office',
         text: messageText,
         unfurl_links: false,
         unfurl_media: false
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       
       logInfo('Sending message to Slack', { 
         correlationId,
-        channel: env.SLACK_CHANNEL,
+        channel: env.SLACK_CHANNEL || '#out-of-office',
         messageLength: messageText.length
       });
       
@@ -101,14 +101,14 @@ export async function POST(req: NextRequest) {
       
       logInfo('Slack notification sent successfully', { 
         correlationId,
-        channel: env.SLACK_CHANNEL,
+        channel: env.SLACK_CHANNEL || '#out-of-office',
         messageTs: result.ts
       });
       
       return NextResponse.json({
         ok: true,
         data: {
-          channel: env.SLACK_CHANNEL,
+          channel: env.SLACK_CHANNEL || '#out-of-office',
           message_ts: result.ts,
           message: messageText
         }
