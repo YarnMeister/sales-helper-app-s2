@@ -360,7 +360,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         {isSubmitted ? (
           <Button
             variant="default"
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
             onClick={() => onViewDeal?.(request.pipedrive_deal_id!)}
             data-testid="sh-request-see-deal"
           >
