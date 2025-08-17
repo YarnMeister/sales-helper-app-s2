@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CommentDisplay } from '@/components/CommentDisplay';
+import { CommentDisplay } from '../components/CommentDisplay';
 
 describe('CommentDisplay', () => {
   const mockOnEdit = jest.fn();

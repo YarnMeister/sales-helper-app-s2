@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ContactAccordion } from '@/components/ContactAccordion';
+import { ContactAccordion } from '../components/ContactAccordion';
 
 const mockContactsData = {
   'Mining Group A': {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ProductAccordion } from '@/components/ProductAccordion';
+import { ProductAccordion } from '../components/ProductAccordion';
 
 const mockProductsData = {
   'Category A': [
