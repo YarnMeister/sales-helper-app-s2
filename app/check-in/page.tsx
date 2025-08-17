@@ -5,6 +5,7 @@ import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
 import { useRouter } from 'next/navigation';
 import { Contact, ContactsHierarchy } from '../types/contact';
 
@@ -14,6 +15,13 @@ export default function CheckInPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  
+  // New state for check-in form
+  const [selectedSalesperson, setSelectedSalesperson] = useState('James');
+  const [selectedMine, setSelectedMine] = useState('');
+  const [selectedPurpose, setSelectedPurpose] = useState('');
+  const [backInOffice, setBackInOffice] = useState('');
+  const [comments, setComments] = useState('');
 
   const fetchContacts = async () => {
     try {
@@ -49,6 +57,21 @@ export default function CheckInPage() {
         newExpanded.add(group);
       }
       return newExpanded;
+    });
+  };
+
+  const handleMineSelect = (mineName: string) => {
+    setSelectedMine(mineName);
+  };
+
+  const handleCheckIn = async () => {
+    // TODO: Implement check-in functionality
+    console.log('Check-in data:', {
+      salesperson: selectedSalesperson,
+      mine: selectedMine,
+      purpose: selectedPurpose,
+      backInOffice,
+      comments
     });
   };
 
@@ -130,71 +153,168 @@ export default function CheckInPage() {
       </div>
 
       {/* Main Content */}
-      <div className="px-4 py-4">
-        <div className="space-y-3">
-          {Object.entries(contactsData).map(([group, mines]) => {
-            const isGroupExpanded = expandedGroups.has(group);
-            const totalMines = Object.keys(mines).length;
-            
-            return (
-              <Card key={group} className="overflow-hidden shadow-sm">
-                {/* Mine Group Header */}
-                <div
-                  className="p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors active:bg-gray-100 min-h-[44px] flex items-center"
-                  onClick={() => toggleGroup(group)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      toggleGroup(group);
-                    }
-                  }}
-                  tabIndex={0}
-                  role="button"
-                  aria-expanded={isGroupExpanded}
-                  aria-label={`${isGroupExpanded ? 'Collapse' : 'Expand'} ${group} mine group with ${totalMines} mines`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3">
-                      {isGroupExpanded ? (
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-gray-500" />
-                      )}
-                      <h3 className="font-medium text-gray-800">{group}</h3>
+      <div className="px-4 py-4 space-y-6">
+        {/* Salesperson Selection */}
+        <div>
+          <h2 className="text-lg font-medium text-gray-900 mb-3">Select name</h2>
+          <div className="flex gap-2">
+            {['James', 'Luyanda', 'Stefan'].map((name) => (
+              <Button
+                key={name}
+                variant={selectedSalesperson === name ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setSelectedSalesperson(name)}
+              >
+                {name}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Mine Selection */}
+        <div>
+          <h2 className="text-lg font-medium text-gray-900 mb-3">Select visiting mine</h2>
+          <div className="space-y-3">
+            {Object.entries(contactsData).map(([group, mines]) => {
+              const isGroupExpanded = expandedGroups.has(group);
+              const totalMines = Object.keys(mines).length;
+              
+              return (
+                <Card key={group} className="overflow-hidden shadow-sm">
+                  {/* Mine Group Header */}
+                  <div
+                    className="p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors active:bg-gray-100 min-h-[44px] flex items-center"
+                    onClick={() => toggleGroup(group)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleGroup(group);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-expanded={isGroupExpanded}
+                    aria-label={`${isGroupExpanded ? 'Collapse' : 'Expand'} ${group} mine group with ${totalMines} mines`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        {isGroupExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-gray-500" />
+                        )}
+                        <h3 className="font-medium text-gray-800">{group}</h3>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {totalMines} mines
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {totalMines} mines
-                    </Badge>
                   </div>
-                </div>
-                
-                {/* Mines List */}
-                {isGroupExpanded && (
-                  <div className="bg-white">
-                    {Object.entries(mines).map(([mine, contacts]) => (
-                      <div
-                        key={`${group}-${mine}`}
-                        className="p-4 pl-12 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center hover:bg-gray-25"
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-gray-900">
-                                {mine}
-                              </span>
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {contacts.length} contacts
+                  
+                  {/* Mines List */}
+                  {isGroupExpanded && (
+                    <div className="bg-white">
+                      {Object.entries(mines).map(([mine, contacts]) => (
+                        <div
+                          key={`${group}-${mine}`}
+                          className={`p-4 pl-12 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center hover:bg-gray-25 cursor-pointer ${
+                            selectedMine === mine ? 'bg-red-50 border-l-4 border-l-red-600' : ''
+                          }`}
+                          onClick={() => handleMineSelect(mine)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-gray-900">
+                                  {mine}
+                                </span>
+                                {selectedMine === mine && (
+                                  <Badge variant="default" className="text-xs">
+                                    Selected
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {contacts.length} contacts
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            );
-          })}
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Purpose Selection */}
+        <Card className="p-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Purpose</h3>
+          <div className="flex flex-wrap gap-2">
+            {[
+              'Quote follow-up',
+              'Delivery',
+              'Site check',
+              'Installation support',
+              'General sales visit'
+            ].map((purpose) => (
+              <Button
+                key={purpose}
+                variant={selectedPurpose === purpose ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedPurpose(purpose)}
+              >
+                {purpose}
+              </Button>
+            ))}
+          </div>
+        </Card>
+
+        {/* Back in Office Selection */}
+        <Card className="p-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Back in office</h3>
+          <div className="flex gap-2">
+            {[
+              'Later this morning',
+              'In the afternoon',
+              'Tomorrow'
+            ].map((time) => (
+              <Button
+                key={time}
+                variant={backInOffice === time ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setBackInOffice(time)}
+              >
+                {time}
+              </Button>
+            ))}
+          </div>
+        </Card>
+
+        {/* Comments */}
+        <Card className="p-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Comments</h3>
+          <Textarea
+            placeholder="Enter any additional comments..."
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+            className="min-h-[120px]"
+          />
+        </Card>
+
+        {/* Check-in Button */}
+        <div className="pt-4">
+          <Button
+            onClick={handleCheckIn}
+            className="w-full h-12 text-lg font-medium"
+            disabled={!selectedMine || !selectedPurpose || !backInOffice}
+          >
+            Check-in Now
+          </Button>
         </div>
 
         {/* No Results */}
