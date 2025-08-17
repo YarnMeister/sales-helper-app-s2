@@ -373,17 +373,17 @@ export default function MainPage() {
       <div className="px-4 py-4">
         <div className="mb-2">
           <div className="flex gap-2">
-            {['All requests', 'James', 'Luyanda', 'Stefan'].map((name) => (
-              <Button
-                key={name}
-                variant={selectedSalesperson === name ? 'default' : 'outline'}
-                size="sm"
-                className={`flex-1 ${selectedSalesperson === name ? 'text-white' : ''}`}
-                onClick={() => handleSalespersonChange(name)}
-              >
-                {name}
-              </Button>
-            ))}
+                          {['All requests', 'James', 'Luyanda', 'Stefan'].map((name) => (
+                <Button
+                  key={name}
+                  variant={selectedSalesperson === name ? 'default' : 'outline'}
+                  size="sm"
+                  className={`flex-1 ${selectedSalesperson === name ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+                  onClick={() => handleSalespersonChange(name)}
+                >
+                  {name}
+                </Button>
+              ))}
           </div>
         </div>
       </div>

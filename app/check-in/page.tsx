@@ -186,7 +186,7 @@ export default function CheckInPage() {
                 key={name}
                 variant={selectedSalesperson === name ? 'default' : 'outline'}
                 size="sm"
-                className={`flex-1 ${selectedSalesperson === name ? 'text-white' : ''}`}
+                className={`flex-1 ${selectedSalesperson === name ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
                 onClick={() => setSelectedSalesperson(name)}
               >
                 {name}

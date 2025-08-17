@@ -144,23 +144,23 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
   return (
     <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 mb-4">
-      {/* Header with Request ID, Salesperson, and Status */}
+      {/* Header with Request ID and Status */}
       <div className="p-4 border-b border-gray-100">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-center">
           <div>
             <h2 
-              className="text-2xl font-bold text-red-600 font-mono mb-1"
+              className="text-2xl font-bold text-red-600 font-mono"
               data-testid="sh-request-id"
             >
               {request.request_id}
             </h2>
+          </div>
+          <div className="flex items-center gap-3">
             {request.salesperson_first_name && (
               <p className="text-sm text-gray-600 font-medium">
                 {request.salesperson_first_name}
               </p>
             )}
-          </div>
-          <div className="flex items-center gap-2">
             <Badge 
               className={`${statusConfig.bgColor} ${statusConfig.textColor} border-0 text-xs font-medium`}
               data-testid="sh-request-status"
@@ -269,7 +269,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 flex-shrink-0"
                         data-testid={`sh-delete-line-item-${index}`}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-6 w-6" />
                       </Button>
                     )}
                   </div>
@@ -282,10 +282,10 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                         size="sm"
                         onClick={() => handleQuantityChange(index, Math.max(1, (optimisticQuantities[index] ?? item.quantity) - 1))}
                         disabled={isSubmitted || (optimisticQuantities[index] ?? item.quantity) <= 1}
-                        className="text-red-600 hover:text-red-700 bg-white border border-red-300 hover:border-red-400 hover:bg-red-50 p-1 h-5 w-5 flex items-center justify-center rounded"
+                        className="text-red-600 hover:text-red-700 bg-white hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
                         data-testid={`sh-decrease-quantity-${index}`}
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className="h-4 w-4" />
                       </Button>
                       <input
                         type="number"
@@ -306,10 +306,10 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                         size="sm"
                         onClick={() => handleQuantityChange(index, (optimisticQuantities[index] ?? item.quantity) + 1)}
                         disabled={isSubmitted}
-                        className="text-green-600 hover:text-green-700 bg-white border border-green-300 hover:border-green-400 hover:bg-green-50 p-1 h-5 w-5 flex items-center justify-center rounded"
+                        className="text-red-600 hover:text-red-700 bg-white hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
                         data-testid={`sh-increase-quantity-${index}`}
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="text-sm text-gray-600">

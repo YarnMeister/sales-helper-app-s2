@@ -11,7 +11,7 @@ export const RTSElogo: React.FC<RTSElogoProps> = ({
 }) => {
   return (
     <div 
-      className={`bg-rtse-red rounded-md flex items-center justify-center text-white font-bold ${className}`}
+      className={`bg-red-600 rounded-md flex items-center justify-center text-white font-bold ${className}`}
       style={{ 
         width: `${size * 1.43}px`, 
         height: `${size}px`,
