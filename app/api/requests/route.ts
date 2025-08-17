@@ -82,33 +82,35 @@ export async function POST(request: NextRequest) {
     });
     
         return await withTiming('POST /api/requests', async () => {
-      // PRD: Support inline updates for contact, line_items, comment
-      if (parsed.id) {
-        // Update existing request using single updateRequest function
-        const updates: any = {};
+          // PRD: Support inline updates for contact, line_items, comment
+    if (parsed.id) {
+      // Update existing request using single updateRequest function
+      const updates: any = {};
+      
+      // Only include fields that were explicitly sent in the request body
+      // (not fields added by Zod defaults)
+      if (body.contact !== undefined) {
+        updates.contact = parsed.contact;
+      }
+      
+      if (body.line_items !== undefined) {
+        updates.line_items = parsed.line_items;
+      }
+      
+      if (body.comment !== undefined) {
+        updates.comment = parsed.comment;
+        console.log('🔍 API: Will update comment:', parsed.comment);
+      }
+      
+      if (body.salespersonFirstName !== undefined) {
+        updates.salesperson_first_name = parsed.salespersonFirstName;
+      }
+      
+      if (body.salespersonSelection !== undefined) {
+        updates.salesperson_selection = parsed.salespersonSelection;
+      }
         
-        if (parsed.contact !== undefined) {
-          updates.contact = parsed.contact;
-        }
-        
-        if (parsed.line_items !== undefined) {
-          updates.line_items = parsed.line_items;
-        }
-        
-        if (parsed.comment !== undefined) {
-          updates.comment = parsed.comment;
-          console.log('🔍 API: Will update comment:', parsed.comment);
-        }
-        
-        if (parsed.salespersonFirstName !== undefined) {
-          updates.salesperson_first_name = parsed.salespersonFirstName;
-        }
-        
-        if (parsed.salespersonSelection !== undefined) {
-          updates.salesperson_selection = parsed.salespersonSelection;
-        }
-        
-        console.log('🔍 API: About to call updateRequest with updates:', updates);
+        console.log('🔍 API: Final updates object:', updates);
         const result = await updateRequest(parsed.id, updates);
         console.log('🔍 API: updateRequest returned:', result);
         
