@@ -11,13 +11,14 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     | `ui-enhancements` | ✅ Complete: UI enhancements - title update, button styling, navigation improvements, submit button variants, tests passing |
+| In Progress / Local     | `ui-enhancements` | ✅ Complete: UI enhancements - title update, button styling, navigation improvements, submit button variants, check-in feature, tests passing |
 | Deployed to Preview     |                       |                      |
 | Deployed to Production  | `main` | ✅ Complete: Supabase tech debt cleanup, line_items bug fix, spinner animation, scroll to top, deployment pipeline fixes, comment save UX improvements, error handling components |
 
 ---
 
 ## 📝 Recent Commits
+62f80af Add Check-in feature to bottom navigation - add Check-in button with CheckSquare icon between Deals and Contacts - create new /check-in page with consistent header and back button - implement contacts accordion showing only first two tiers (mine group + mine name) - display mine groups with expandable mine names and contact counts - maintain consistent styling with other pages
 f8ccbb2 Apply new button variants to submit buttons - update submit and retry buttons to use active/disabled variants - active: light green background with dark grey text - disabled: light grey background with dark grey text - maintain consistent styling across all submit buttons
 b688541 Fix import paths in test files - update component imports from @/components/ to relative paths - resolve test framework compatibility issues - all core functionality tests pass (62/64) - UI enhancements working correctly
 ca394d6 Implement UI enhancements - update main title to 'Sales Helper' - add new button variants for active/disabled states - create Price List page with view-only ProductAccordion - create Contacts List page with view-only ContactAccordion - update BottomNavigation with new navigation structure - replace Filter with Price List, update Deals icon to List - add viewOnly prop support to accordion components
