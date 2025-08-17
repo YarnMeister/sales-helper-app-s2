@@ -176,7 +176,7 @@ export default function CheckInPage() {
       <CommonHeader title="Check-in" />
 
       {/* Main Content */}
-      <div className="px-4 py-4 space-y-6">
+      <div className="px-4 py-4 pb-24">
         {/* Salesperson Selection */}
         <div>
           <h2 className="text-lg font-medium text-gray-900 mb-3">Select name</h2>
@@ -397,7 +397,10 @@ export default function CheckInPage() {
       </div>
 
       {/* Common Footer */}
-      <CommonFooter />
+      <CommonFooter 
+        onNewRequest={() => {}} 
+        isCreating={false}
+      />
     </div>
   );
 }

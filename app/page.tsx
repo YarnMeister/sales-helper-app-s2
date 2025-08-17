@@ -5,6 +5,7 @@ import { RequestCard } from './components/RequestCard';
 import { BottomNavigation } from './components/BottomNavigation';
 import { SalespersonModal } from './components/SalespersonModal';
 import { CommonHeader } from './components/CommonHeader';
+import { CommonFooter } from './components/CommonFooter';
 import { useRouter } from 'next/navigation';
 import { useToast } from './hooks/use-toast';
 
@@ -97,6 +98,15 @@ export default function MainPage() {
   useEffect(() => {
     fetchRequests();
   }, [selectedSalesperson, fetchRequests]);
+
+  // Handle salesperson selection from other pages
+  useEffect(() => {
+    const storedSalesperson = sessionStorage.getItem('selectedSalesperson');
+    if (storedSalesperson) {
+      setSelectedSalesperson(storedSalesperson);
+      sessionStorage.removeItem('selectedSalesperson');
+    }
+  }, []);
 
   // Handle returning from contact/line items pages
   useEffect(() => {
@@ -362,8 +372,8 @@ export default function MainPage() {
       <CommonHeader title="Sales Helper" showDivider={false} />
 
       {/* Salesperson Selectors */}
-      <div className="px-4 py-4">
-        <div className="mb-2">
+      <div className="px-4 py-2">
+        <div className="mb-1">
           <div className="flex gap-2">
                           {['All requests', 'James', 'Luyanda', 'Stefan'].map((name) => (
                 <Button
@@ -381,7 +391,7 @@ export default function MainPage() {
       </div>
 
       {/* Main Content */}
-      <div className="px-4 py-4 pb-24">
+      <div className="px-4 py-2 pb-24">
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
             <p className="text-red-800">{error}</p>
@@ -435,7 +445,12 @@ export default function MainPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNavigation onNewRequest={handleNewRequest} isCreating={isCreating} />
+      <CommonFooter 
+        onNewRequest={handleNewRequest} 
+        isCreating={isCreating}
+        selectedSalesperson={selectedSalesperson}
+        onSalespersonChange={handleSalespersonChange}
+      />
 
       {/* Loading Overlay for New Request Creation */}
       {isCreating && (

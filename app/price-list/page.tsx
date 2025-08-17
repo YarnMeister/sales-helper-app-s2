@@ -21,7 +21,7 @@ export default function PriceListPage() {
       <CommonHeader title="Price List" />
 
       {/* Main Content */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 pb-24">
         <ProductAccordion
           onProductSelect={handleProductView}
           existingItems={[]}
@@ -31,7 +31,10 @@ export default function PriceListPage() {
       </div>
 
       {/* Common Footer */}
-      <CommonFooter />
+      <CommonFooter 
+        onNewRequest={() => {}} 
+        isCreating={false}
+      />
     </div>
   );
 }

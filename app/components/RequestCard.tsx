@@ -173,6 +173,11 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
       {/* Contact Section */}
       <div className="p-4 border-b border-gray-100">
+        {request.contact && (
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-gray-700">Contact</h3>
+          </div>
+        )}
         {request.contact ? (
           <div 
             className="bg-white border border-blue-200 rounded-lg p-3"
@@ -241,6 +246,11 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
       {/* Line Items Section */}
       <div className="p-4 border-b border-gray-100">
+        {request.line_items.length > 0 && (
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-gray-700">Line Items</h3>
+          </div>
+        )}
         {/* Display existing line items */}
         {request.line_items.length > 0 && (
           <div 

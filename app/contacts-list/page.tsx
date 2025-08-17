@@ -21,7 +21,7 @@ export default function ContactsListPage() {
       <CommonHeader title="Contacts" />
 
       {/* Main Content */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 pb-24">
         <ContactAccordion
           onSelectContact={handleContactView}
           className="view-only"
@@ -30,7 +30,10 @@ export default function ContactsListPage() {
       </div>
 
       {/* Common Footer */}
-      <CommonFooter />
+      <CommonFooter 
+        onNewRequest={() => {}} 
+        isCreating={false}
+      />
     </div>
   );
 }
