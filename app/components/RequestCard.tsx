@@ -192,7 +192,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                     <Button
                       size="sm"
                       onClick={() => onAddContact?.(request.id)}
-                      className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-0.5 text-xs"
+                      className="text-red-600 hover:text-red-700 px-3 py-0.5 text-xs"
                       data-testid="sh-request-change-contact"
                     >
                       Change
@@ -269,7 +269,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 flex-shrink-0"
                         data-testid={`sh-delete-line-item-${index}`}
                       >
-                        <Trash2 className="h-6 w-6" />
+                        <Trash2 className="h-5 w-5" />
                       </Button>
                     )}
                   </div>
