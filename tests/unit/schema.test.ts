@@ -57,6 +57,69 @@ describe('Schema validation', () => {
       expect(() => ContactJSON.parse(validContact)).not.toThrow();
     });
     
+    it('should validate contact with null email and phone (from Pipedrive)', () => {
+      const contactWithNulls = {
+        personId: 789,
+        name: "Shreeya Pandya",
+        email: null,
+        phone: null,
+        mineGroup: "Seriti",
+        mineName: "Kriel"
+      };
+      
+      expect(() => ContactJSON.parse(contactWithNulls)).not.toThrow();
+    });
+    
+    it('should validate contact with null email only', () => {
+      const contactWithNullEmail = {
+        personId: 101,
+        name: "Jane Smith",
+        email: null,
+        phone: "+27123456789",
+        mineGroup: "Anglo American",
+        mineName: "Zibulo Mine"
+      };
+      
+      expect(() => ContactJSON.parse(contactWithNullEmail)).not.toThrow();
+    });
+    
+    it('should validate contact with null phone only', () => {
+      const contactWithNullPhone = {
+        personId: 102,
+        name: "Bob Johnson",
+        email: "bob@example.com",
+        phone: null,
+        mineGroup: "Exxaro",
+        mineName: "Grootegeluk"
+      };
+      
+      expect(() => ContactJSON.parse(contactWithNullPhone)).not.toThrow();
+    });
+    
+    it('should validate contact with undefined email and phone', () => {
+      const contactWithUndefined = {
+        personId: 103,
+        name: "Alice Brown",
+        mineGroup: "Sibanye",
+        mineName: "Driefontein"
+      };
+      
+      expect(() => ContactJSON.parse(contactWithUndefined)).not.toThrow();
+    });
+    
+    it('should reject contact with empty string email (invalid email format)', () => {
+      const contactWithEmptyEmail = {
+        personId: 104,
+        name: "Charlie Wilson",
+        email: "",
+        phone: "",
+        mineGroup: "Harmony",
+        mineName: "Kusasalethu"
+      };
+      
+      expect(() => ContactJSON.parse(contactWithEmptyEmail)).toThrow();
+    });
+    
     it('should reject contact missing mobile-first required fields', () => {
       const invalidContact = {
         personId: 456,
@@ -66,6 +129,45 @@ describe('Schema validation', () => {
       };
       
       expect(() => ContactJSON.parse(invalidContact)).toThrow();
+    });
+    
+    it('should reject contact with invalid email format when not null', () => {
+      const contactWithInvalidEmail = {
+        personId: 105,
+        name: "Invalid Email",
+        email: "not-an-email",
+        phone: null,
+        mineGroup: "Test Group",
+        mineName: "Test Mine"
+      };
+      
+      expect(() => ContactJSON.parse(contactWithInvalidEmail)).toThrow();
+    });
+    
+    it('should reject contact with empty name', () => {
+      const contactWithEmptyName = {
+        personId: 106,
+        name: "",
+        email: null,
+        phone: null,
+        mineGroup: "Test Group",
+        mineName: "Test Mine"
+      };
+      
+      expect(() => ContactJSON.parse(contactWithEmptyName)).toThrow();
+    });
+    
+    it('should reject contact with whitespace-only name', () => {
+      const contactWithWhitespaceName = {
+        personId: 107,
+        name: "   ",
+        email: null,
+        phone: null,
+        mineGroup: "Test Group",
+        mineName: "Test Mine"
+      };
+      
+      expect(() => ContactJSON.parse(contactWithWhitespaceName)).toThrow();
     });
   });
 

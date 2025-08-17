@@ -144,6 +144,184 @@ describe('Transformation Functions', () => {
         }
       });
     });
+
+    it('should handle null email and phone values from Pipedrive', () => {
+      const persons = [
+        {
+          id: 789,
+          name: 'Shreeya Pandya',
+          email: null, // Pipedrive sends null when no email
+          phone: null, // Pipedrive sends null when no phone
+          org_id: { value: 1, name: 'Kriel' },
+          [JOB_TITLE_FIELD_ID]: null
+        },
+        {
+          id: 101,
+          name: 'Jane Smith',
+          email: null,
+          phone: [{ value: '+27123456789' }],
+          org_id: { value: 2, name: 'Zibulo Mine' },
+          [JOB_TITLE_FIELD_ID]: 'Manager'
+        },
+        {
+          id: 102,
+          name: 'Bob Johnson',
+          email: [{ value: 'bob@example.com' }],
+          phone: null,
+          org_id: { value: 3, name: 'Grootegeluk' },
+          [JOB_TITLE_FIELD_ID]: null
+        }
+      ];
+
+      const organizations = [
+        {
+          id: 1,
+          name: 'Kriel',
+          [MINE_GROUP_FIELD_ID]: 'Seriti'
+        },
+        {
+          id: 2,
+          name: 'Zibulo Mine',
+          [MINE_GROUP_FIELD_ID]: 'Anglo American'
+        },
+        {
+          id: 3,
+          name: 'Grootegeluk',
+          [MINE_GROUP_FIELD_ID]: 'Exxaro'
+        }
+      ];
+
+      const result = transformContactsHierarchy(persons, organizations);
+
+      expect(result).toEqual({
+        'Seriti': {
+          'Kriel': [
+            {
+              personId: 789,
+              name: 'Shreeya Pandya',
+              email: null,
+              phone: null,
+              orgId: 1,
+              orgName: 'Kriel',
+              mineGroup: 'Seriti',
+              mineName: 'Kriel',
+              jobTitle: null
+            }
+          ]
+        },
+        'Anglo American': {
+          'Zibulo Mine': [
+            {
+              personId: 101,
+              name: 'Jane Smith',
+              email: null,
+              phone: '+27123456789',
+              orgId: 2,
+              orgName: 'Zibulo Mine',
+              mineGroup: 'Anglo American',
+              mineName: 'Zibulo Mine',
+              jobTitle: 'Manager'
+            }
+          ]
+        },
+        'Exxaro': {
+          'Grootegeluk': [
+            {
+              personId: 102,
+              name: 'Bob Johnson',
+              email: 'bob@example.com',
+              phone: null,
+              orgId: 3,
+              orgName: 'Grootegeluk',
+              mineGroup: 'Exxaro',
+              mineName: 'Grootegeluk',
+              jobTitle: null
+            }
+          ]
+        }
+      });
+    });
+
+    it('should handle missing email and phone arrays gracefully', () => {
+      const persons = [
+        {
+          id: 103,
+          name: 'Alice Brown',
+          // No email or phone arrays at all
+          org_id: { value: 4, name: 'Driefontein' },
+          [JOB_TITLE_FIELD_ID]: 'Supervisor'
+        }
+      ];
+
+      const organizations = [
+        {
+          id: 4,
+          name: 'Driefontein',
+          [MINE_GROUP_FIELD_ID]: 'Sibanye'
+        }
+      ];
+
+      const result = transformContactsHierarchy(persons, organizations);
+
+      expect(result).toEqual({
+        'Sibanye': {
+          'Driefontein': [
+            {
+              personId: 103,
+              name: 'Alice Brown',
+              email: null,
+              phone: null,
+              orgId: 4,
+              orgName: 'Driefontein',
+              mineGroup: 'Sibanye',
+              mineName: 'Driefontein',
+              jobTitle: 'Supervisor'
+            }
+          ]
+        }
+      });
+    });
+
+    it('should handle empty email and phone arrays', () => {
+      const persons = [
+        {
+          id: 104,
+          name: 'Charlie Wilson',
+          email: [], // Empty array
+          phone: [], // Empty array
+          org_id: { value: 5, name: 'Kusasalethu' },
+          [JOB_TITLE_FIELD_ID]: null
+        }
+      ];
+
+      const organizations = [
+        {
+          id: 5,
+          name: 'Kusasalethu',
+          [MINE_GROUP_FIELD_ID]: 'Harmony'
+        }
+      ];
+
+      const result = transformContactsHierarchy(persons, organizations);
+
+      expect(result).toEqual({
+        'Harmony': {
+          'Kusasalethu': [
+            {
+              personId: 104,
+              name: 'Charlie Wilson',
+              email: null,
+              phone: null,
+              orgId: 5,
+              orgName: 'Kusasalethu',
+              mineGroup: 'Harmony',
+              mineName: 'Kusasalethu',
+              jobTitle: null
+            }
+          ]
+        }
+      });
+    });
   });
 
   describe('transformProductsHierarchy', () => {
