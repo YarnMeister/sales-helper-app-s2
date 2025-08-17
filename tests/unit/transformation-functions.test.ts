@@ -153,7 +153,7 @@ describe('Transformation Functions', () => {
           id: 1,
           name: 'Safety Helmet',
           category: '28', // Cable category
-          price: 50,
+          prices: [{ price: 50, currency: 'ZAR' }],
           code: 'SH-001',
           description: 'Safety helmet for mining operations', // Main description
           'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Hard hat for safety', // Short description field
@@ -163,7 +163,7 @@ describe('Transformation Functions', () => {
           id: 2,
           name: 'Mining Pick',
           category: '29', // Conveyor Belt Equipment category
-          price: 100,
+          prices: [{ price: 100, currency: 'ZAR' }],
           code: 'MP-001',
           description: 'Mining pick for excavation work', // Main description
           'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Tool for mining', // Short description field
@@ -173,7 +173,7 @@ describe('Transformation Functions', () => {
           id: 3,
           name: 'Hidden Product',
           category: '30', // Environmental Monitoring category
-          price: 25,
+          prices: [{ price: 25, currency: 'ZAR' }],
           code: 'HP-001',
           description: 'Hidden product description', // Main description
           'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Hidden product', // Short description field

@@ -197,6 +197,8 @@ export const transformProductsHierarchy = (products: any[]) => {
   // Debug logging
   console.log('transformProductsHierarchy called with', products.length, 'products');
   
+
+  
   return products.reduce((acc, product) => {
     const category = categoryMap[product.category as string] || 'Other';
     
@@ -217,11 +219,14 @@ export const transformProductsHierarchy = (products: any[]) => {
     
     if (!acc[category]) acc[category] = [];
     
+    // Extract price from the prices array (first price entry)
+    const price = product.prices && product.prices.length > 0 ? product.prices[0].price : 0;
+    
     acc[category].push({
       pipedriveProductId: product.id,
       name: product.name,
       code: product.code,
-      price: product.price || 0,
+      price: price,
       description: product.description || '',
       shortDescription: shortDescription,
       showOnSalesHelper: showOnSalesHelper
