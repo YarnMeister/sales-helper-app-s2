@@ -144,7 +144,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
   return (
     <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 mb-4">
-      {/* Header with Request ID and Status */}
+      {/* Header with Request ID, Salesperson, and Status */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex justify-between items-start">
           <div>
@@ -154,6 +154,11 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             >
               {request.request_id}
             </h2>
+            {request.salesperson_first_name && (
+              <p className="text-sm text-gray-600 font-medium">
+                {request.salesperson_first_name}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Badge 

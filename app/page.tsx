@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RequestCard } from './components/RequestCard';
 import { BottomNavigation } from './components/BottomNavigation';
+import { SalespersonModal } from './components/SalespersonModal';
 import { useRouter } from 'next/navigation';
 import { useToast } from './hooks/use-toast';
-import { Search, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { Button } from './components/ui/button';
-import { Input } from './components/ui/input';
+import Image from 'next/image';
 
 interface Contact {
   personId: number;
@@ -44,9 +45,9 @@ export default function MainPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [recentlyUpdated, setRecentlyUpdated] = useState<Set<string>>(new Set());
+  const [showSalespersonModal, setShowSalespersonModal] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -58,7 +59,7 @@ export default function MainPage() {
     
     try {
       const params = new URLSearchParams();
-      if (selectedSalesperson !== 'all') {
+      if (selectedSalesperson !== 'All requests') {
         params.append('salesperson', selectedSalesperson);
       } else {
         params.append('showAll', 'true');
@@ -121,6 +122,12 @@ export default function MainPage() {
   };
 
   const handleNewRequest = async () => {
+    // If "All requests" is selected, show the modal
+    if (selectedSalesperson === 'All requests') {
+      setShowSalespersonModal(true);
+      return;
+    }
+
     setIsCreating(true);
     try {
       const response = await fetch('/api/requests', {
@@ -129,7 +136,7 @@ export default function MainPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          salespersonFirstName: selectedSalesperson === 'all' ? 'James' : selectedSalesperson,
+          salespersonFirstName: selectedSalesperson,
         }),
       });
 
@@ -147,6 +154,54 @@ export default function MainPage() {
         
         // Show success toast
         console.log('🔍 Toast data:', data.data);
+        toast({
+          title: "New Request Created",
+          description: `Request ${data.data.request_id} has been created successfully.`,
+        });
+      } else {
+        throw new Error(data.message || 'Failed to create request');
+      }
+    } catch (err) {
+      console.error('Error creating request:', err);
+      setError('Failed to create new request. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleSalespersonSelect = (salesperson: string) => {
+    setSelectedSalesperson(salesperson);
+    
+    // Create the request with the selected salesperson
+    handleNewRequestWithSalesperson(salesperson);
+  };
+
+  const handleNewRequestWithSalesperson = async (salesperson: string) => {
+    setIsCreating(true);
+    try {
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          salespersonFirstName: salesperson,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create request');
+      }
+
+      const data = await response.json();
+      if (data.ok) {
+        // Add new request at the top of the list
+        setRequests(prev => [data.data, ...prev]);
+        
+        // Scroll to top so user can see the new request
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Show success toast
         toast({
           title: "New Request Created",
           description: `Request ${data.data.request_id} has been created successfully.`,
@@ -296,20 +351,14 @@ export default function MainPage() {
     window.open(`https://yourcompany.pipedrive.com/deal/${dealId}`, '_blank');
   };
 
-  // Filter requests based on search and status
+  // Filter requests based on status only
   const filteredRequests = requests.filter((request) => {
-    const matchesSearch =
-      (request.request_id?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (request.contact?.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (request.salesperson_first_name?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+    return matchesStatus;
   });
 
   const getPageTitle = () => {
-    if (selectedSalesperson === 'all') {
+    if (selectedSalesperson === 'All requests') {
       return 'All Requests';
     }
     return `${selectedSalesperson}'s Requests`;
@@ -320,40 +369,48 @@ export default function MainPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Sales Helper</h1>
-
-          {/* Search and Filters */}
-          <div className="space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search deals, contacts, or IDs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+          {/* Header with Favicon and Title */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-shrink-0">
+              <Image
+                src="/favicon.svg"
+                alt="Sales Helper"
+                width={32}
+                height={32}
+                className="w-8 h-8"
               />
             </div>
+            <h1 className="text-2xl font-bold text-gray-900">Sales Helper</h1>
+          </div>
 
+          {/* Salesperson Selectors */}
+          <div className="mb-4">
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => setStatusFilter(statusFilter === 'all' ? 'draft' : 'all')}
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                {statusFilter === 'all' ? 'All Status' : 'Draft Only'}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => handleSalespersonChange(selectedSalesperson === 'all' ? 'James' : 'all')}
-              >
-                {selectedSalesperson === 'all' ? 'All Reps' : selectedSalesperson}
-              </Button>
+              {['James', 'Luyanda', 'Stefan', 'All requests'].map((name) => (
+                <Button
+                  key={name}
+                  variant={selectedSalesperson === name ? 'default' : 'outline'}
+                  size="sm"
+                  className={`flex-1 ${selectedSalesperson === name ? 'text-white' : ''}`}
+                  onClick={() => handleSalespersonChange(name)}
+                >
+                  {name}
+                </Button>
+              ))}
             </div>
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => setStatusFilter(statusFilter === 'all' ? 'draft' : 'all')}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              {statusFilter === 'all' ? 'All Status' : 'Draft Only'}
+            </Button>
           </div>
         </div>
       </div>
@@ -374,14 +431,14 @@ export default function MainPage() {
         ) : filteredRequests.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg mb-4">
-              {searchTerm || statusFilter !== 'all'
-                ? 'No requests match your search criteria'
-                : selectedSalesperson === 'all' 
+              {statusFilter !== 'all'
+                ? 'No requests match your filter criteria'
+                : selectedSalesperson === 'All requests' 
                   ? 'No requests found' 
                   : `No requests found for ${selectedSalesperson}`
               }
             </p>
-            {selectedSalesperson !== 'all' && !searchTerm && statusFilter === 'all' && (
+            {selectedSalesperson !== 'All requests' && statusFilter === 'all' && (
               <p className="text-sm text-gray-400">
                 Create your first request using the button above
               </p>
@@ -424,6 +481,13 @@ export default function MainPage() {
           </div>
         </div>
       )}
+
+      {/* Salesperson Selection Modal */}
+      <SalespersonModal
+        isOpen={showSalespersonModal}
+        onClose={() => setShowSalespersonModal(false)}
+        onSelect={handleSalespersonSelect}
+      />
     </div>
   );
 }
