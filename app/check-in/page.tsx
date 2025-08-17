@@ -65,14 +65,72 @@ export default function CheckInPage() {
   };
 
   const handleCheckIn = async () => {
-    // TODO: Implement check-in functionality
-    console.log('Check-in data:', {
-      salesperson: selectedSalesperson,
-      mine: selectedMine,
-      purpose: selectedPurpose,
-      backInOffice,
-      comments
-    });
+    try {
+      // Validate required fields
+      if (!selectedMine || !selectedPurpose || !backInOffice) {
+        console.error('Missing required fields');
+        return;
+      }
+
+      const checkInData = {
+        salesperson: selectedSalesperson,
+        planned_mines: [selectedMine], // Convert single mine to array
+        main_purpose: selectedPurpose,
+        availability: backInOffice,
+        comments: comments.trim() || undefined
+      };
+
+      console.log('Submitting check-in data:', checkInData);
+
+      // First, save to database
+      const siteVisitResponse = await fetch('/api/site-visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(checkInData)
+      });
+
+      if (!siteVisitResponse.ok) {
+        const errorData = await siteVisitResponse.json();
+        throw new Error(`Failed to save site visit: ${errorData.error || 'Unknown error'}`);
+      }
+
+      const siteVisitResult = await siteVisitResponse.json();
+      console.log('Site visit saved:', siteVisitResult);
+
+      // Then, send Slack notification (non-blocking)
+      try {
+        const slackResponse = await fetch('/api/slack/notify-checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(checkInData)
+        });
+
+        if (slackResponse.ok) {
+          const slackResult = await slackResponse.json();
+          console.log('Slack notification sent:', slackResult);
+        } else {
+          const slackError = await slackResponse.json();
+          console.warn('Slack notification failed:', slackError);
+          // Don't fail the check-in if Slack fails
+        }
+      } catch (slackError) {
+        console.warn('Slack notification error:', slackError);
+        // Don't fail the check-in if Slack fails
+      }
+
+      // Show success message
+      alert('Check-in successful! Your team has been notified.');
+      
+      // Reset form
+      setSelectedMine('');
+      setSelectedPurpose('');
+      setBackInOffice('');
+      setComments('');
+
+    } catch (error) {
+      console.error('Check-in failed:', error);
+      alert(`Check-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   if (loading) {

@@ -19,6 +19,7 @@ const EnvSchema = z.object({
   
   // Optional: Slack alerting
   SLACK_BOT_TOKEN: z.string().optional(),
+  SLACK_CHANNEL: z.string().default('#out-of-office'),
 });
 
 // Validate and parse environment variables
