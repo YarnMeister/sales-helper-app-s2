@@ -11,7 +11,8 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` and `sp
 
 ## Process for each new feature branch
 - Check that git is clean and ready to start 
-- Create new branch and update workflow_state.md using instructions in that doc
+- Create new feature branch: `git checkout -b feature/branch-name`
+- Update `workflow_state.md` in `docs` branch (see workflow_state.md instructions)
 - Update `workflow_state.md`:
 1. Clear `main` and comment from "Deployed to Production" row
 2. Add new feature branch to "In Progress / Local" row
@@ -30,7 +31,7 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` and `sp
    - Push feature branch to trigger Vercel preview deployment
    - Test functionality in preview environment
    - Verify all features work correctly
-   - Update `workflow_state.md`:
+   - Update `workflow_state.md` in `docs` branch:
    1.Update Workflow Kanban 
    2.Insert preview URL from Vercel dashboard into "Last Preview URL:" 
 
@@ -41,19 +42,19 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` and `sp
 
 
 **Production deployment process:**
-   - Merge feature branch to main (if not already done)
+   - Merge feature and `docs` branch to main (if not already done)
    - Push to main to trigger Vercel production deployment
    - **Monitor deployment via Vercel CLI:**
      - Run `vercel ls` to check deployment status
      - Run `vercel inspect [deployment-url]` to get detailed deployment info
-     - Run `vercel logs [deployment-url]` to check build logs for errors
+     - **Skip `vercel logs` - build errors are shown in deployment status**
    - Check that deployment completes with "Ready" status
    - Verify the deployed app is accessible and functional
    - Test critical user flows (create request, add contact, add line items)
 
 **Post-deployment verification:**
    - Confirm the app is live and working as expected
-   - Update workflow_state.md using instructions in that doc
+   - Update workflow_state.md in `docs` branch (see workflow_state.md instructions)
    - Document any deployment issues or required manual steps
 
 **Critical: Never declare deployment successful until all validation steps pass!**
@@ -62,8 +63,8 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` and `sp
 - **Always check Vercel deployment status via CLI** before declaring success:
   - Use `vercel ls` to see all deployments and their status
   - Use `vercel inspect [url]` to get detailed deployment information
-  - Use `vercel logs [url]` to check build and runtime logs for errors
-- **Monitor build logs** for TypeScript errors, missing dependencies, or environment issues
+  - **Skip `vercel logs` - build errors are shown in deployment status**
+- **Monitor deployment status** for TypeScript errors, missing dependencies, or environment issues
 - **Test the deployed application** to ensure functionality works in production
 - **Document any deployment failures** and their root causes
 - **Implement automated testing** in CI/CD pipeline when possible

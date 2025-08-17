@@ -18,11 +18,11 @@
 ---
 
 ## 📝 Recent Commits
+65ad52a Improve Submit process: Fix deal title format and add comment as note - Fix deal title format: Remove dashes, include all line items with short descriptions - Add comment as note to Pipedrive deal after submission - Add addNoteToDeal function to Pipedrive library - Update submit API to handle comment notes with error handling - All 157 tests passing
 93c5aa9 Update workflow state
 7f0005c Fix production build failure - env-check script now skips .env file loading in production - Prevents dotenv errors when environment variables are set via Vercel dashboard - Maintains local development functionality
 0549e7c Update workflow state - Add Contact UI improvements deployed to production successfully
 7669f9c Fix black background spinners in contact and line item selection - Replace black overlays with transparent white backgrounds in add-contact and add-line-items pages - Update loading overlays: bg-white bg-opacity-75 instead of bg-black bg-opacity-50 - Add border and center text alignment for better visual consistency - Maintain app visibility during contact and line item selection - All 157 tests passing
-c88bd8a Reduce Change button height by 50% in contact container - Update padding from py-1 to py-0.5 for reduced height - Add text-xs for smaller text size to match reduced height - All 157 tests passing
 
 
 
@@ -38,16 +38,17 @@ c88bd8a Reduce Change button height by 50% in contact container - Update padding
    - Date in "Last Updated" 
    - Branch name in "Current Branch"
    - Kanban board (move feature branch to correct state)
+   - Recent commits (replace with 5 most recent commits)
 
+3. **Docs Branch Workflow:**
+   - **NEVER push workflow_state.md changes to main** - this triggers production deployment
+   - Always update workflow_state.md in the `docs` branch only
+   - Use: `git checkout docs && git pull origin docs && [edit file] && git add . && git commit -m "Update workflow state" && git push origin docs`
 
 4. **Kanban progression:**
    - "No Feature Branch" → "In Progress / Local" → "Deployed to Preview" → "Deployed to Production"
    - Only one branch should be active at a time
    - Move branch name between rows as it progresses
-
-5. **Preview Deployemnts:**
-   
-
 
 **Example update pattern:**
 - Update date: `2025-08-16 14:54` → `2025-08-16 15:30`
