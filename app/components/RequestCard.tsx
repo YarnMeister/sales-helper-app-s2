@@ -52,6 +52,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   onViewDeal
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [optimisticQuantities, setOptimisticQuantities] = useState<{[key: number]: number}>({});
 
   // PRD: Submit enabled only when contact AND line items exist
   const canSubmit = request.contact && request.line_items.length > 0;
@@ -90,9 +91,33 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   const handleQuantityChange = async (itemIndex: number, newQuantity: number) => {
     if (!onUpdateInline) return;
 
-    const updatedItems = [...request.line_items];
-    updatedItems[itemIndex].quantity = newQuantity;
-    await onUpdateInline(request.id, 'line_items', updatedItems);
+    // Optimistic update - immediately update the UI
+    setOptimisticQuantities(prev => ({
+      ...prev,
+      [itemIndex]: newQuantity
+    }));
+    
+    // Then update the backend
+    try {
+      const updatedItems = [...request.line_items];
+      updatedItems[itemIndex].quantity = newQuantity;
+      await onUpdateInline(request.id, 'line_items', updatedItems);
+      
+      // Clear optimistic state on success
+      setOptimisticQuantities(prev => {
+        const newState = { ...prev };
+        delete newState[itemIndex];
+        return newState;
+      });
+    } catch (error) {
+      // If backend update fails, revert the optimistic update
+      setOptimisticQuantities(prev => {
+        const newState = { ...prev };
+        delete newState[itemIndex];
+        return newState;
+      });
+      console.error('Failed to update quantity:', error);
+    }
   };
 
   const getStatusConfig = (status: string) => {
@@ -261,8 +286,8 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleQuantityChange(index, Math.max(1, item.quantity - 1))}
-                        disabled={isSubmitted || item.quantity <= 1}
+                        onClick={() => handleQuantityChange(index, Math.max(1, (optimisticQuantities[index] ?? item.quantity) - 1))}
+                        disabled={isSubmitted || (optimisticQuantities[index] ?? item.quantity) <= 1}
                         className="text-red-600 hover:text-red-700 bg-white border border-red-300 hover:border-red-400 hover:bg-red-50 p-1 h-5 w-5 flex items-center justify-center rounded"
                         data-testid={`sh-decrease-quantity-${index}`}
                       >
@@ -270,7 +295,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                       </Button>
                       <input
                         type="number"
-                        value={item.quantity}
+                        value={optimisticQuantities[index] ?? item.quantity}
                         onChange={(e) => {
                           const newQuantity = parseInt(e.target.value) || 1;
                           handleQuantityChange(index, Math.max(1, newQuantity));
@@ -285,7 +310,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleQuantityChange(index, item.quantity + 1)}
+                        onClick={() => handleQuantityChange(index, (optimisticQuantities[index] ?? item.quantity) + 1)}
                         disabled={isSubmitted}
                         className="text-green-600 hover:text-green-700 bg-white border border-green-300 hover:border-green-400 hover:bg-green-50 p-1 h-5 w-5 flex items-center justify-center rounded"
                         data-testid={`sh-increase-quantity-${index}`}
@@ -296,7 +321,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                     <div className="text-sm text-gray-600">
                       {item.price && (
                         <span>
-                          R{(item.price * item.quantity).toFixed(2)}
+                          R{(item.price * (optimisticQuantities[index] ?? item.quantity)).toFixed(2)}
                         </span>
                       )}
                     </div>
