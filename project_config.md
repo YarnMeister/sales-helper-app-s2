@@ -24,7 +24,38 @@ For each new prompt, before making changes, review the instructions below and co
 
 
 ## Process for each deployment to prod
-2. Do the deployment
-3. Update workflow_state.md using instructions in that doc
+1. **Pre-deployment validation:**
+   - Run `npm run build` to ensure TypeScript compilation succeeds
+   - Run `npm test` to ensure all tests pass
+   - Check for any linting errors with `npm run lint` (if available)
+   - Verify environment variables are properly configured
+   - Ensure all dependencies are up to date
+
+2. **Deployment validation:**
+   - Monitor Vercel deployment logs for any build errors
+   - Check that deployment completes with "Ready" status
+   - Verify the deployed app is accessible and functional
+   - Test critical user flows (create request, add contact, add line items)
+
+3. **Post-deployment verification:**
+   - Confirm the app is live and working as expected
+   - Update workflow_state.md using instructions in that doc
+   - Document any deployment issues or required manual steps
+
+**Critical: Never declare deployment successful until all validation steps pass!**
+
+## Deployment Pipeline Monitoring
+- **Always check Vercel deployment status** before declaring success
+- **Monitor build logs** for TypeScript errors, missing dependencies, or environment issues
+- **Test the deployed application** to ensure functionality works in production
+- **Document any deployment failures** and their root causes
+- **Implement automated testing** in CI/CD pipeline when possible
+
+## Common Deployment Issues to Check
+1. **TypeScript compilation errors** - Most common cause of deployment failures
+2. **Missing environment variables** - Check Vercel environment configuration
+3. **Dependency issues** - Ensure package.json and package-lock.json are in sync
+4. **API route errors** - Verify all API endpoints are properly configured
+5. **Database connection issues** - Check Neon database connectivity in production
 
 
