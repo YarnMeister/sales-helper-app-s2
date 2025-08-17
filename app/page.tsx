@@ -146,6 +146,7 @@ export default function MainPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
         // Show success toast
+        console.log('🔍 Toast data:', data.data);
         toast({
           title: "New Request Created",
           description: `Request ${data.data.request_id} has been created successfully.`,
