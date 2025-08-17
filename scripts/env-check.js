@@ -3,9 +3,11 @@
 const path = require('path');
 const { config } = require('dotenv');
 
-// Load environment variables from .env.local first, then .env
-config({ path: path.resolve(process.cwd(), '.env.local') });
-config({ path: path.resolve(process.cwd(), '.env') });
+// Only load .env files in development
+if (process.env.NODE_ENV !== 'production') {
+  config({ path: path.resolve(process.cwd(), '.env.local') });
+  config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 async function checkEnvironment() {
   console.log('🔍 Validating environment configuration...\n');
