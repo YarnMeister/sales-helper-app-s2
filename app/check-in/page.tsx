@@ -221,7 +221,7 @@ export default function CheckInPage() {
                 key={name}
                 variant={selectedSalesperson === name ? 'default' : 'outline'}
                 size="sm"
-                className="flex-1"
+                className={`flex-1 ${selectedSalesperson === name ? 'text-white' : ''}`}
                 onClick={() => setSelectedSalesperson(name)}
               >
                 {name}
@@ -361,6 +361,7 @@ export default function CheckInPage() {
                 key={purpose}
                 variant={selectedPurpose === purpose ? 'default' : 'outline'}
                 size="sm"
+                className={selectedPurpose === purpose ? 'text-white' : ''}
                 onClick={() => setSelectedPurpose(purpose)}
               >
                 {purpose}
@@ -382,7 +383,7 @@ export default function CheckInPage() {
                 key={time}
                 variant={backInOffice === time ? 'default' : 'outline'}
                 size="sm"
-                className="flex-1"
+                className={`flex-1 ${backInOffice === time ? 'text-white' : ''}`}
                 onClick={() => setBackInOffice(time)}
               >
                 {time}
