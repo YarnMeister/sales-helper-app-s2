@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
       correlationId,
       operation: parsed.id ? 'update' : 'create',
       requestId: parsed.id,
-      userAgent: request.headers.get('user-agent')
+      userAgent: request.headers.get('user-agent'),
+      body: body  // Log the full request body
     });
     
         return await withTiming('POST /api/requests', async () => {
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
         
         if (parsed.comment !== undefined) {
           updates.comment = parsed.comment;
+          console.log('🔍 API: Will update comment:', parsed.comment);
         }
         
         if (parsed.salespersonFirstName !== undefined) {
@@ -106,7 +108,9 @@ export async function POST(request: NextRequest) {
           updates.salesperson_selection = parsed.salespersonSelection;
         }
         
+        console.log('🔍 API: About to call updateRequest with updates:', updates);
         const result = await updateRequest(parsed.id, updates);
+        console.log('🔍 API: updateRequest returned:', result);
         
         logInfo('Request updated successfully', { 
           correlationId,
