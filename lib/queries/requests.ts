@@ -127,12 +127,20 @@ export const updateRequestLineItems = async (id: string, lineItems: any[]) => {
 
 // Update request comment
 export const updateRequestComment = async (id: string, comment: string) => {
+  console.log('🔍 updateRequestComment called with:', { id, comment });
+  
+  // First, get the current state
+  const current = await sql`SELECT * FROM requests WHERE id = ${id}`;
+  console.log('🔍 Current state before update:', current[0]);
+  
   const result = await sql`
     UPDATE requests 
     SET comment = ${comment}, updated_at = ${new Date().toISOString()}
     WHERE id = ${id} 
     RETURNING *
   `;
+  
+  console.log('🔍 Result after update:', result[0]);
   
   return result[0];
 };
