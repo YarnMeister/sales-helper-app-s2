@@ -37,7 +37,10 @@ For each new prompt, before making changes, review the instructions below and co
 2. **Production deployment process:**
    - Merge feature branch to main (if not already done)
    - Push to main to trigger Vercel production deployment
-   - Monitor Vercel deployment logs for any build errors
+   - **Monitor deployment via Vercel CLI:**
+     - Run `vercel ls` to check deployment status
+     - Run `vercel inspect [deployment-url]` to get detailed deployment info
+     - Run `vercel logs [deployment-url]` to check build logs for errors
    - Check that deployment completes with "Ready" status
    - Verify the deployed app is accessible and functional
    - Test critical user flows (create request, add contact, add line items)
@@ -50,7 +53,10 @@ For each new prompt, before making changes, review the instructions below and co
 **Critical: Never declare deployment successful until all validation steps pass!**
 
 ## Deployment Pipeline Monitoring
-- **Always check Vercel deployment status** before declaring success
+- **Always check Vercel deployment status via CLI** before declaring success:
+  - Use `vercel ls` to see all deployments and their status
+  - Use `vercel inspect [url]` to get detailed deployment information
+  - Use `vercel logs [url]` to check build and runtime logs for errors
 - **Monitor build logs** for TypeScript errors, missing dependencies, or environment issues
 - **Test the deployed application** to ensure functionality works in production
 - **Document any deployment failures** and their root causes
