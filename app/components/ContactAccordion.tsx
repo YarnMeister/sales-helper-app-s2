@@ -86,7 +86,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
       }
       return acc;
     }, {} as ContactsHierarchy);
-  }, [contactsData, state.searchTerm]);
+  }, [contactsData, debouncedSearchTerm]);
 
   const toggleGroup = (group: string) => {
     setState(prev => {
@@ -188,7 +188,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
             <p className="text-sm text-gray-600">
               Found {Object.values(filteredContactsData).reduce((total, mines) => 
                 total + Object.values(mines).reduce((sum, contacts) => sum + contacts.length, 0), 0
-              )} contacts matching "{debouncedSearchTerm}"
+              )} contacts matching &quot;{debouncedSearchTerm}&quot;
             </p>
           </div>
         )}
@@ -302,24 +302,37 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                               >
                                 <div className="flex items-center justify-between w-full">
                                   <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
+                                    {/* Row 1: Name and Mine Group | Mine Name */}
+                                    <div className="flex items-center justify-between mb-2">
                                       <span className="font-medium text-gray-900">
                                         {contact.name}
                                       </span>
+                                      <span className="text-sm text-gray-600">
+                                        {contact.mineGroup} | {contact.mineName}
+                                      </span>
                                     </div>
                                     
-                                    <div className="space-y-1">
+                                    {/* Row 2: Email and Phone on same row */}
+                                    <div className="flex items-center gap-4">
                                       {contact.email && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <a 
+                                          href={`mailto:${contact.email}`}
+                                          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
                                           <Mail className="h-3 w-3" />
                                           <span>{contact.email}</span>
-                                        </div>
+                                        </a>
                                       )}
                                       {contact.phone && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <a 
+                                          href={`tel:${contact.phone}`}
+                                          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
                                           <Phone className="h-3 w-3" />
                                           <span>{contact.phone}</span>
-                                        </div>
+                                        </a>
                                       )}
                                     </div>
                                   </div>

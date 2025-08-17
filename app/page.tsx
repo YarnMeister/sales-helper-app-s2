@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RequestCard } from './components/RequestCard';
 import { BottomNavigation } from './components/BottomNavigation';
 import { useRouter } from 'next/navigation';
@@ -51,7 +51,7 @@ export default function MainPage() {
   const { toast } = useToast();
 
   // Fetch requests based on selected salesperson
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     console.log('Fetching requests for salesperson:', selectedSalesperson);
     setLoading(true);
     setError(null);
@@ -91,11 +91,11 @@ export default function MainPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSalesperson]);
 
   useEffect(() => {
     fetchRequests();
-  }, [selectedSalesperson]);
+  }, [selectedSalesperson, fetchRequests]);
 
   // Handle returning from contact/line items pages
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function MainPage() {
       sessionStorage.removeItem('shouldRefreshRequests');
       fetchRequests();
     }
-  }, []);
+  }, [fetchRequests]);
 
   // Debug logging for state changes
   useEffect(() => {

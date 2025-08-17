@@ -115,18 +115,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
   const statusConfig = getStatusConfig(request.status);
 
-  // Get service badge info from contact
-  const getServiceBadge = () => {
-    if (request.contact?.mineGroup) {
-      return {
-        text: request.contact.mineGroup,
-        color: request.contact.mineGroup.includes('Blue') ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-      };
-    }
-    return null;
-  };
 
-  const serviceBadge = getServiceBadge();
 
   return (
     <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 mb-4">
@@ -140,11 +129,6 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             >
               {request.request_id}
             </h2>
-            {serviceBadge && (
-              <Badge className={`${serviceBadge.color} border-0 text-xs font-medium`}>
-                {serviceBadge.text}
-              </Badge>
-            )}
           </div>
           <div className="flex items-center gap-2">
             <Badge 
@@ -164,42 +148,51 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             className="bg-blue-50 border border-blue-200 rounded-lg p-3"
             data-testid="sh-request-contact-display"
           >
-            <div className="flex items-start gap-2 mb-2">
+            <div className="flex items-start gap-2">
               <User className="h-4 w-4 text-blue-600 mt-1" />
               <div className="flex-1">
-                <div className="flex items-center justify-between">
+                {/* Row 1: Name and Mine Group | Mine Name */}
+                <div className="flex items-center justify-between mb-2">
                   <p className="font-medium text-blue-900">{request.contact.name}</p>
-                  {!isSubmitted && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onAddContact?.(request.id)}
-                      className="text-blue-700 hover:text-blue-900 p-1"
-                      data-testid="sh-request-change-contact"
-                    >
-                      Change
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {request.contact.mineGroup && request.contact.mineName && (
+                      <span className="text-sm text-blue-700">
+                        {request.contact.mineGroup} | {request.contact.mineName}
+                      </span>
+                    )}
+                    {!isSubmitted && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onAddContact?.(request.id)}
+                        className="text-blue-700 hover:text-blue-900 p-1"
+                        data-testid="sh-request-change-contact"
+                      >
+                        Change
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 
-                {request.contact.mineGroup && request.contact.mineName && (
-                  <p className="text-sm text-blue-700 mb-1">
-                    {request.contact.mineGroup} → {request.contact.mineName}
-                  </p>
-                )}
-                
-                <div className="space-y-1">
+                {/* Row 2: Email and Phone on same row */}
+                <div className="flex items-center gap-4">
                   {request.contact.email && (
-                    <p className="text-xs text-blue-600 flex items-center gap-1">
+                    <a 
+                      href={`mailto:${request.contact.email}`}
+                      className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                    >
                       <span>📧</span>
                       <span>{request.contact.email}</span>
-                    </p>
+                    </a>
                   )}
                   {request.contact.phone && (
-                    <p className="text-xs text-blue-600 flex items-center gap-1">
+                    <a 
+                      href={`tel:${request.contact.phone}`}
+                      className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                    >
                       <span>📞</span>
                       <span>{request.contact.phone}</span>
-                    </p>
+                    </a>
                   )}
                 </div>
               </div>

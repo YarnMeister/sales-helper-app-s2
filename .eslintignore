@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+*.config.js
+*.config.ts
+public/
+migrations/
+scripts/
+tests/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
