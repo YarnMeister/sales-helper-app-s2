@@ -11,13 +11,14 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     | `improve-line-items` | 🔧 Add spinner animation to (+) button, scroll to top after new request creation |
+| In Progress / Local     | `improve-line-items` | ✅ Complete: Spinner animation on (+) button, scroll to top after new request creation |
 | Deployed to Preview     |                       |                      |
 | Deployed to Production  | `main` | ✅ Complete: Supabase tech debt cleanup, line_items bug fix, pure Neon SQL implementation |
 
 ---
 
 ## 📝 Recent Commits
+1a7d751 Add spinner animation to (+) button and scroll to top functionality - add loading spinner to (+) button when creating new request - disable button during creation to prevent double-clicks - add smooth scroll to top after request creation - improve UX with polished animations and transitions
 705f3d9 Update documentation files
 c162a5b Update workflow state for production deployment - move cleanup-supabase-tech-debt to Deployed to Production - update recent commits with line_items bug fix - mark Supabase tech debt cleanup as complete
 bdefb82 Fix line_items clearing bug in comment updates - check raw request body instead of parsed values to avoid Zod defaults - only include fields that were explicitly sent in request - prevent line_items: [] from being added to comment-only updates - preserve existing line items when updating comments
