@@ -1,8 +1,8 @@
 # Workflow State Dashboard
 
-**Last Updated:** 2025-01-27 16:30  
+**Last Updated:** 2025-01-27 16:45  
 **Project:** sales-helper-app-s2  
-**Current Branch:** `improve-line-items`
+**Current Branch:** `main`
 
 ---
 
@@ -11,13 +11,15 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     | `improve-line-items` | ✅ Complete: Spinner animation, scroll to top, deployment pipeline investigation and fixes |
+| In Progress / Local     |                       |                      |
 | Deployed to Preview     |                       |                      |
-| Deployed to Production  | `main` | ✅ Complete: Supabase tech debt cleanup, line_items bug fix, pure Neon SQL implementation |
+| Deployed to Production  | `main` | ✅ Complete: Supabase tech debt cleanup, line_items bug fix, spinner animation, scroll to top, deployment pipeline fixes |
 
 ---
 
 ## 📝 Recent Commits
+ec3ec3c Enhance project configuration with proper deployment process - add feature branch preview deployment steps - clarify production deployment process (merge to main, push to trigger) - preserve all existing validation and monitoring steps - fix formatting and complete incomplete sections
+d576784 Update workflow state with deployment pipeline investigation - document TypeScript build error fix - add deployment validation requirements - mark improve-line-items feature as complete with fixes
 0f8f7ff Update project configuration with deployment validation requirements - add pre-deployment validation steps (build, test, lint) - add deployment monitoring and verification steps - document common deployment issues to check - ensure deployment pipeline quality and reliability
 47b7975 Fix TypeScript build error in add-contact page - remove invalid selectedContact prop from ContactAccordion - resolve deployment pipeline failure - ensure clean build before deployment
 91f43b4 Fix isCreating prop destructuring in BottomNavigation - add missing isCreating parameter to component props - resolve ReferenceError that was breaking the app
