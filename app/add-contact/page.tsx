@@ -121,7 +121,6 @@ export default function AddContactPage() {
         <div className="mb-6">
           <ContactAccordion
             onSelectContact={handleContactSelect}
-            selectedContact={null}
           />
         </div>
       </div>
