@@ -370,15 +370,18 @@ export default function MainPage() {
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="px-4 py-4">
           {/* Header with RTSE Logo and Title */}
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-2">
             <div className="flex-shrink-0">
               <RTSElogo size={32} />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Sales Helper</h1>
           </div>
 
+          {/* Horizontal line */}
+          <div className="border-b border-gray-300 mb-6"></div>
+
           {/* Salesperson Selectors */}
-          <div className="mb-4">
+          <div className="mb-2">
             <div className="flex gap-2">
               {['All requests', 'James', 'Luyanda', 'Stefan'].map((name) => (
                 <Button
