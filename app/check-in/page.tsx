@@ -62,6 +62,8 @@ export default function CheckInPage() {
 
   const handleMineSelect = (mineName: string) => {
     setSelectedMine(mineName);
+    // Collapse all accordion groups after selection
+    setExpandedGroups(new Set());
   };
 
   const handleCheckIn = async () => {
@@ -258,11 +260,19 @@ export default function CheckInPage() {
                     ) : (
                       <ChevronRight className="h-4 w-4 text-gray-500" />
                     )}
-                    <h3 className="font-medium text-gray-800">All mines</h3>
+                    <h3 className="font-medium text-gray-800">
+                      {selectedMine ? selectedMine : 'All mines'}
+                    </h3>
                   </div>
-                  <Badge variant="outline" className="text-xs">
-                    {Object.values(contactsData).reduce((total, mines) => total + Object.keys(mines).length, 0)} mines
-                  </Badge>
+                  {selectedMine ? (
+                    <Badge variant="default" className="text-xs">
+                      Selected
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      {Object.values(contactsData).reduce((total, mines) => total + Object.keys(mines).length, 0)} mines
+                    </Badge>
+                  )}
                 </div>
               </div>
               
