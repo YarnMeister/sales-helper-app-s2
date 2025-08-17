@@ -256,10 +256,14 @@ Skipped
   - [ ] Update `/app/add-line-items/page.tsx`
   - [ ] Manual validation: Test contact selector loads hierarchical data from cache
   - [ ] Test product selector loads categorized data from cache
-  - [ ] Verify offline mode displays stale data warning
+ 
   - [ ] Test search functionality works efficiently
   - [ ] Test quantity controls work properly for products
   - [ ] Verify navigation flow preserves request editing state
+
+  skipped
+ - [ ] Verify offline mode displays stale data warning (described partially in add-comments.md, let cursor review all 'section 6 - UI' docs to extract offline )
+
 
 ### 6.3 Performance Optimization & Testing Integration
 - [ ] Implement performance optimizations and comprehensive testing
@@ -280,11 +284,13 @@ Skipped
   - [ ] Run unit tests and verify all pass with `npm test`
 
 Todo on UI
-[ ] Add contact not saving, no way to select and save yet
+[ ] Add contact/line item not saving, no way to select and save yet
 [ ] Search top of Add Contact not working
 [ ] Moce telephone inline with email to make contact row less tall
 [ ] Deal Management title on main page
 [ ] bring back sales person picker
+[ ] proce is missing on line items
+[ ] remove "Null" product categories by looking at "Shoe on Helper App"
  
 ---
 
