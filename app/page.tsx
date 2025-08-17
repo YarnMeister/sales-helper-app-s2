@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RequestCard } from './components/RequestCard';
 import { BottomNavigation } from './components/BottomNavigation';
 import { SalespersonModal } from './components/SalespersonModal';
-import { RTSElogo } from './components/RTSElogo';
+import { CommonHeader } from './components/CommonHeader';
 import { useRouter } from 'next/navigation';
 import { useToast } from './hooks/use-toast';
 
@@ -366,38 +366,25 @@ export default function MainPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="px-4 py-4">
-          {/* Header with RTSE Logo and Title */}
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex-shrink-0">
-              <RTSElogo size={32} />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Sales Helper</h1>
+      {/* Common Header */}
+      <CommonHeader title="Sales Helper" showDivider={false} />
+
+      {/* Salesperson Selectors */}
+      <div className="px-4 py-4">
+        <div className="mb-2">
+          <div className="flex gap-2">
+            {['All requests', 'James', 'Luyanda', 'Stefan'].map((name) => (
+              <Button
+                key={name}
+                variant={selectedSalesperson === name ? 'default' : 'outline'}
+                size="sm"
+                className={`flex-1 ${selectedSalesperson === name ? 'text-white' : ''}`}
+                onClick={() => handleSalespersonChange(name)}
+              >
+                {name}
+              </Button>
+            ))}
           </div>
-
-          {/* Horizontal line with 3D effect */}
-          <div className="w-screen h-px bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 mb-6 shadow-[0_1px_2px_rgba(0,0,0,0.1)] -mx-4"></div>
-
-          {/* Salesperson Selectors */}
-          <div className="mb-2">
-            <div className="flex gap-2">
-              {['All requests', 'James', 'Luyanda', 'Stefan'].map((name) => (
-                <Button
-                  key={name}
-                  variant={selectedSalesperson === name ? 'default' : 'outline'}
-                  size="sm"
-                  className={`flex-1 ${selectedSalesperson === name ? 'text-white' : ''}`}
-                  onClick={() => handleSalespersonChange(name)}
-                >
-                  {name}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-
         </div>
       </div>
 

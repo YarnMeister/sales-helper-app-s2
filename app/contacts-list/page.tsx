@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { ContactAccordion } from '../components/ContactAccordion';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '../components/ui/button';
 import { useRouter } from 'next/navigation';
+import { CommonHeader } from '../components/CommonHeader';
+import { CommonFooter } from '../components/CommonFooter';
 
 export default function ContactsListPage() {
   const router = useRouter();
@@ -17,22 +17,8 @@ export default function ContactsListPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="p-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-          </div>
-        </div>
-      </div>
+      {/* Common Header */}
+      <CommonHeader title="Contacts" />
 
       {/* Main Content */}
       <div className="px-4 py-4">
@@ -42,6 +28,9 @@ export default function ContactsListPage() {
           viewOnly={true}
         />
       </div>
+
+      {/* Common Footer */}
+      <CommonFooter />
     </div>
   );
 }

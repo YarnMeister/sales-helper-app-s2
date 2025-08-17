@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { useRouter } from 'next/navigation';
 import { Contact, ContactsHierarchy } from '../types/contact';
+import { CommonHeader } from '../components/CommonHeader';
+import { CommonFooter } from '../components/CommonFooter';
 
 export default function CheckInPage() {
   const router = useRouter();
@@ -139,27 +141,14 @@ export default function CheckInPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-          <div className="px-4 py-4">
-            <div className="flex items-center gap-3 mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.back()}
-                className="p-2"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <h1 className="text-2xl font-bold text-gray-900">Check-in</h1>
-            </div>
-          </div>
-        </div>
+        <CommonHeader title="Check-in" />
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading mine groups...</p>
           </div>
         </div>
+        <CommonFooter />
       </div>
     );
   }
@@ -167,21 +156,7 @@ export default function CheckInPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-          <div className="px-4 py-4">
-            <div className="flex items-center gap-3 mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.back()}
-                className="p-2"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <h1 className="text-2xl font-bold text-gray-900">Check-in</h1>
-            </div>
-          </div>
-        </div>
+        <CommonHeader title="Check-in" />
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
@@ -190,28 +165,15 @@ export default function CheckInPage() {
             </Button>
           </div>
         </div>
+        <CommonFooter />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="p-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold text-gray-900">Check-in</h1>
-          </div>
-        </div>
-      </div>
+      {/* Common Header */}
+      <CommonHeader title="Check-in" />
 
       {/* Main Content */}
       <div className="px-4 py-4 space-y-6">
@@ -433,6 +395,9 @@ export default function CheckInPage() {
           </div>
         )}
       </div>
+
+      {/* Common Footer */}
+      <CommonFooter />
     </div>
   );
 }
