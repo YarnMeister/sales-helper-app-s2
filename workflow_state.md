@@ -11,13 +11,16 @@
 | State                  | Branch                | Notes                |
 |-------------------------|-----------------------|----------------------|
 | No Feature Branch       |                       |                      |
-| In Progress / Local     | `improve-line-items` | ✅ Complete: Spinner animation on (+) button, scroll to top after new request creation |
+| In Progress / Local     | `improve-line-items` | ✅ Complete: Spinner animation, scroll to top, deployment pipeline investigation and fixes |
 | Deployed to Preview     |                       |                      |
 | Deployed to Production  | `main` | ✅ Complete: Supabase tech debt cleanup, line_items bug fix, pure Neon SQL implementation |
 
 ---
 
 ## 📝 Recent Commits
+0f8f7ff Update project configuration with deployment validation requirements - add pre-deployment validation steps (build, test, lint) - add deployment monitoring and verification steps - document common deployment issues to check - ensure deployment pipeline quality and reliability
+47b7975 Fix TypeScript build error in add-contact page - remove invalid selectedContact prop from ContactAccordion - resolve deployment pipeline failure - ensure clean build before deployment
+91f43b4 Fix isCreating prop destructuring in BottomNavigation - add missing isCreating parameter to component props - resolve ReferenceError that was breaking the app
 1a7d751 Add spinner animation to (+) button and scroll to top functionality - add loading spinner to (+) button when creating new request - disable button during creation to prevent double-clicks - add smooth scroll to top after request creation - improve UX with polished animations and transitions
 705f3d9 Update documentation files
 c162a5b Update workflow state for production deployment - move cleanup-supabase-tech-debt to Deployed to Production - update recent commits with line_items bug fix - mark Supabase tech debt cleanup as complete
