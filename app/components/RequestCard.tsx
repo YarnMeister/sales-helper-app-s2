@@ -261,12 +261,12 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleQuantityChange(index, item.quantity + 1)}
-                        disabled={isSubmitted}
+                        onClick={() => handleQuantityChange(index, Math.max(1, item.quantity - 1))}
+                        disabled={isSubmitted || item.quantity <= 1}
                         className="text-red-600 hover:text-red-700 bg-white border border-red-300 hover:border-red-400 hover:bg-red-50 p-1 h-5 w-5 flex items-center justify-center rounded"
-                        data-testid={`sh-increase-quantity-${index}`}
+                        data-testid={`sh-decrease-quantity-${index}`}
                       >
-                        <Plus className="h-3 w-3" />
+                        <Minus className="h-3 w-3" />
                       </Button>
                       <input
                         type="number"
@@ -285,12 +285,12 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleQuantityChange(index, Math.max(1, item.quantity - 1))}
-                        disabled={isSubmitted || item.quantity <= 1}
-                        className="text-red-600 hover:text-red-700 bg-white border border-red-300 hover:border-red-400 hover:bg-red-50 p-1 h-5 w-5 flex items-center justify-center rounded"
-                        data-testid={`sh-decrease-quantity-${index}`}
+                        onClick={() => handleQuantityChange(index, item.quantity + 1)}
+                        disabled={isSubmitted}
+                        className="text-green-600 hover:text-green-700 bg-white border border-green-300 hover:border-green-400 hover:bg-green-50 p-1 h-5 w-5 flex items-center justify-center rounded"
+                        data-testid={`sh-increase-quantity-${index}`}
                       >
-                        <Minus className="h-3 w-3" />
+                        <Plus className="h-3 w-3" />
                       </Button>
                     </div>
                     <div className="text-sm text-gray-600">
