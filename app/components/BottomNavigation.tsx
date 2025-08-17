@@ -26,8 +26,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 ${
-            isActive('/') ? 'text-red-600' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 min-w-0 px-3 py-2 rounded-lg ${
+            isActive('/') ? 'bg-red-50 text-gray-900' : 'text-gray-600'
           }`}
           onClick={() => router.push('/')}
         >
@@ -39,8 +39,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 ${
-            isActive('/check-in') ? 'text-red-600' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 min-w-0 px-3 py-2 rounded-lg ${
+            isActive('/check-in') ? 'bg-red-50 text-gray-900' : 'text-gray-600'
           }`}
           onClick={() => router.push('/check-in')}
         >
@@ -66,8 +66,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 ${
-            isActive('/contacts-list') ? 'text-red-600' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 min-w-0 px-3 py-2 rounded-lg ${
+            isActive('/contacts-list') ? 'bg-red-50 text-gray-900' : 'text-gray-600'
           }`}
           onClick={() => router.push('/contacts-list')}
         >
@@ -79,8 +79,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 ${
-            isActive('/price-list') ? 'text-red-600' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 min-w-0 px-3 py-2 rounded-lg ${
+            isActive('/price-list') ? 'bg-red-50 text-gray-900' : 'text-gray-600'
           }`}
           onClick={() => router.push('/price-list')}
         >
