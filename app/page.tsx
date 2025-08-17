@@ -402,6 +402,16 @@ export default function MainPage() {
 
       {/* Bottom Navigation */}
       <BottomNavigation onNewRequest={handleNewRequest} isCreating={isCreating} />
+
+      {/* Loading Overlay for New Request Creation */}
+      {isCreating && (
+        <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 text-center">Creating new request...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
