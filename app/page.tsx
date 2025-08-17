@@ -307,7 +307,7 @@ export default function MainPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Deal Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Sales Helper</h1>
 
           {/* Search and Filters */}
           <div className="space-y-3">

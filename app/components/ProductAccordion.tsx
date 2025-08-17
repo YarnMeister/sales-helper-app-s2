@@ -11,12 +11,14 @@ interface ProductAccordionProps {
   onProductSelect: (product: LineItem) => void;
   existingItems: LineItem[];
   className?: string;
+  viewOnly?: boolean;
 }
 
 export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   onProductSelect,
   existingItems,
-  className = ''
+  className = '',
+  viewOnly = false
 }) => {
   const [productsData, setProductsData] = useState<ProductsHierarchy>({});
   const [loading, setLoading] = useState(true);
@@ -196,19 +198,29 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                     return (
                       <div
                         key={product.pipedriveProductId}
-                        className={`p-4 border-b border-gray-50 last:border-b-0 transition-colors cursor-pointer min-h-[44px] flex items-center ${
-                          isExisting ? 'bg-green-25' : 'hover:bg-gray-25 active:bg-gray-50'
+                        className={`p-4 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center ${
+                          viewOnly 
+                            ? 'cursor-default hover:bg-gray-25' 
+                            : isExisting 
+                              ? 'bg-green-25 cursor-default' 
+                              : 'cursor-pointer hover:bg-gray-25 active:bg-gray-50'
                         }`}
-                        onClick={() => !isExisting && handleProductSelect(product)}
+                        onClick={() => !viewOnly && !isExisting && handleProductSelect(product)}
                         onKeyDown={(e) => {
-                          if (!isExisting && (e.key === 'Enter' || e.key === ' ')) {
+                          if (!viewOnly && !isExisting && (e.key === 'Enter' || e.key === ' ')) {
                             e.preventDefault();
                             handleProductSelect(product);
                           }
                         }}
-                        tabIndex={isExisting ? -1 : 0}
-                        role={isExisting ? undefined : "button"}
-                        aria-label={isExisting ? `${product.name} already added` : `Add ${product.name} to request`}
+                        tabIndex={viewOnly || isExisting ? -1 : 0}
+                        role={viewOnly || isExisting ? undefined : "button"}
+                        aria-label={
+                          viewOnly 
+                            ? `View ${product.name}` 
+                            : isExisting 
+                              ? `${product.name} already added` 
+                              : `Add ${product.name} to request`
+                        }
                         data-testid={`sh-product-item-${product.pipedriveProductId}`}
                       >
                         <div className="flex items-start justify-between gap-4 w-full">

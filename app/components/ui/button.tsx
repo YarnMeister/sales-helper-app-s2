@@ -14,6 +14,8 @@ const buttonVariants = cva(
         secondary: "bg-rtse-yellow text-rtse-dark hover:bg-yellow-600",
         ghost: "hover:bg-gray-100 hover:text-gray-900",
         link: "text-rtse-red underline-offset-4 hover:underline",
+        active: "bg-green-100 border border-green-200 text-gray-700 hover:bg-green-150",
+        disabled: "bg-gray-50 border border-gray-100 text-gray-500 cursor-not-allowed",
       },
       size: {
         default: "h-10 px-4 py-2",

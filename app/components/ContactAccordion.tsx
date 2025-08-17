@@ -12,11 +12,13 @@ import { useDebounce } from '../hooks/useDebounce';
 interface ContactAccordionProps {
   onSelectContact: (contact: Contact) => void;
   className?: string;
+  viewOnly?: boolean;
 }
 
 export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   onSelectContact,
-  className = ''
+  className = '',
+  viewOnly = false
 }) => {
   const [contactsData, setContactsData] = useState<ContactsHierarchy>({});
   const [loading, setLoading] = useState(true);
@@ -277,17 +279,25 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                             {contacts.map((contact) => (
                               <div
                                 key={contact.personId}
-                                className="p-4 pl-12 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center hover:bg-gray-25 active:bg-gray-50"
-                                onClick={() => handleContactSelect(contact)}
+                                className={`p-4 pl-12 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center ${
+                                  viewOnly 
+                                    ? 'cursor-default hover:bg-gray-25' 
+                                    : 'cursor-pointer hover:bg-gray-25 active:bg-gray-50'
+                                }`}
+                                onClick={() => !viewOnly && handleContactSelect(contact)}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
+                                  if (!viewOnly && (e.key === 'Enter' || e.key === ' ')) {
                                     e.preventDefault();
                                     handleContactSelect(contact);
                                   }
                                 }}
-                                tabIndex={0}
-                                role="button"
-                                aria-label={`Select ${contact.name} from ${contact.mineName}, ${contact.mineGroup}. ${contact.email ? `Email: ${contact.email}. ` : ''}${contact.phone ? `Phone: ${contact.phone}` : ''}`}
+                                tabIndex={viewOnly ? -1 : 0}
+                                role={viewOnly ? undefined : "button"}
+                                aria-label={
+                                  viewOnly 
+                                    ? `View ${contact.name} from ${contact.mineName}, ${contact.mineGroup}. ${contact.email ? `Email: ${contact.email}. ` : ''}${contact.phone ? `Phone: ${contact.phone}` : ''}` 
+                                    : `Select ${contact.name} from ${contact.mineName}, ${contact.mineGroup}. ${contact.email ? `Email: ${contact.email}. ` : ''}${contact.phone ? `Phone: ${contact.phone}` : ''}`
+                                }
                                 data-testid={`sh-contact-person-${contact.personId}`}
                               >
                                 <div className="flex items-center justify-between w-full">
