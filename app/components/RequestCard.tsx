@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
-import { User, Package, ExternalLink, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Package, ExternalLink, Trash2, Plus, Minus } from 'lucide-react';
 import { CommentControl } from './CommentControl';
 
 interface Contact {
@@ -67,6 +67,21 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDeleteLineItem = async (itemIndex: number) => {
+    if (!onUpdateInline) return;
+    
+    const updatedItems = request.line_items.filter((_, index) => index !== itemIndex);
+    await onUpdateInline(request.id, 'line_items', updatedItems);
+  };
+
+  const handleQuantityChange = async (itemIndex: number, newQuantity: number) => {
+    if (!onUpdateInline) return;
+
+    const updatedItems = [...request.line_items];
+    updatedItems[itemIndex].quantity = newQuantity;
+    await onUpdateInline(request.id, 'line_items', updatedItems);
   };
 
   const getStatusConfig = (status: string) => {
@@ -206,34 +221,94 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
       {/* Line Items Section */}
       <div className="p-4 border-b border-gray-100">
-        {request.line_items.length > 0 ? (
+        {/* Display existing line items */}
+        {request.line_items.length > 0 && (
           <div 
-            className="bg-green-50 border border-green-200 rounded-lg p-3"
+            className="bg-white border border-green-200 rounded-lg p-3"
             data-testid="sh-request-items-display"
           >
-            <div className="flex items-start gap-2 mb-2">
-              <Package className="h-4 w-4 text-green-600 mt-1" />
-              <div className="flex-1">
-                <p className="font-medium text-green-900">
-                  Items: {request.line_items.length}
-                </p>
-              </div>
+            <div className="mb-2">
+              <p className="font-medium text-green-900">
+                Items: {request.line_items.length}
+              </p>
             </div>
-            <div className="space-y-1 ml-6">
+            <div className="space-y-2">
               {request.line_items.map((item, index) => (
-                <div key={index} className="text-sm text-green-800">
-                  <span className="font-medium">{item.name}</span>
-                  <span className="text-green-600 ml-2">Qty: {item.quantity}</span>
-                  {item.price && (
-                    <span className="text-green-600 ml-2">
-                      R{(item.price * item.quantity).toFixed(2)}
-                    </span>
-                  )}
+                <div key={index} className="bg-gray-50 rounded p-2">
+                  {/* Top row: Description spanning to delete button */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex-1 pr-2">
+                      <div className="text-sm text-gray-800">
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                    </div>
+                    {!isSubmitted && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteLineItem(index)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 flex-shrink-0"
+                        data-testid={`sh-delete-line-item-${index}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {/* Bottom row: Quantity controls and price */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleQuantityChange(index, item.quantity + 1)}
+                        disabled={isSubmitted}
+                        className="text-red-600 hover:text-red-700 bg-white border border-red-300 hover:border-red-400 hover:bg-red-50 p-1 h-5 w-5 flex items-center justify-center rounded"
+                        data-testid={`sh-increase-quantity-${index}`}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const newQuantity = parseInt(e.target.value) || 1;
+                          handleQuantityChange(index, Math.max(1, newQuantity));
+                        }}
+                        min="1"
+                        disabled={isSubmitted}
+                        className="w-16 text-center text-sm border border-gray-300 rounded px-1 py-1 bg-white h-8"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        data-testid={`sh-quantity-input-${index}`}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleQuantityChange(index, Math.max(1, item.quantity - 1))}
+                        disabled={isSubmitted || item.quantity <= 1}
+                        className="text-red-600 hover:text-red-700 bg-white border border-red-300 hover:border-red-400 hover:bg-red-50 p-1 h-5 w-5 flex items-center justify-center rounded"
+                        data-testid={`sh-decrease-quantity-${index}`}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {item.price && (
+                        <span>
+                          R{(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* Always show Add Line Items button */}
+        <div className="mt-3">
           <Button
             variant="outline"
             className="w-full border-green-200 text-green-700 hover:bg-green-50"
@@ -244,7 +319,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             <Package className="h-4 w-4 mr-2" />
             Add Line Items
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Enhanced Comment Section with Inline Editing */}
@@ -287,7 +362,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
           <div className="flex justify-end">
             <Button
               variant={canSubmit ? "active" : "disabled"}
-              className="w-full"
+              className={`w-full ${!canSubmit ? 'border-gray-300' : ''}`}
               onClick={handleSubmit}
               disabled={!canSubmit || isSubmitting}
               data-testid="sh-request-submit"
