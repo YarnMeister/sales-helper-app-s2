@@ -26,7 +26,6 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 }) => {
   const [value, setValue] = useState(initialValue);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasBlurred, setHasBlurred] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-focus when component mounts
@@ -46,18 +45,6 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [value]);
-
-  const handleBlur = async () => {
-    setHasBlurred(true);
-    
-    // PRD requirement: Save on focus loss unless empty
-    if (value.trim()) {
-      await handleSave();
-    } else {
-      // Empty comment - cancel editing
-      handleCancel();
-    }
-  };
 
   const handleSave = async () => {
     if (isSaving) return;
@@ -103,7 +90,6 @@ export const CommentInput: React.FC<CommentInputProps> = ({
           ref={textareaRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           maxLength={maxLength}
@@ -126,10 +112,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       {/* Character count and help text */}
       <div className="flex justify-between items-center text-xs text-gray-500">
         <span id={`comment-help-${requestId}`}>
-          {hasBlurred 
-            ? 'Comment will auto-save when you click outside this box'
-            : 'Comment will auto-save on focus loss • Ctrl+Enter to save • Esc to cancel'
-          }
+          Ctrl+Enter to save • Esc to cancel
         </span>
         {isNearLimit && (
           <span className={remainingChars < 0 ? 'text-red-600' : 'text-orange-600'}>
@@ -138,16 +121,16 @@ export const CommentInput: React.FC<CommentInputProps> = ({
         )}
       </div>
 
-      {/* Action buttons for mobile/explicit actions */}
-      <div className="flex gap-2 sm:hidden">
+      {/* Compact inline save/cancel buttons */}
+      <div className="flex gap-2">
         <Button
           size="sm"
           onClick={handleSave}
           disabled={!hasChanges || isSaving || remainingChars < 0}
-          className="flex-1"
+          className="flex items-center gap-1"
           data-testid="sh-comment-save"
         >
-          <Save className="h-3 w-3 mr-1" />
+          <Save className="h-3 w-3" />
           {isSaving ? 'Saving...' : 'Save'}
         </Button>
         <Button
@@ -157,7 +140,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
           disabled={isSaving}
           data-testid="sh-comment-cancel"
         >
-          <X className="h-3 w-3 mr-1" />
+          <X className="h-3 w-3" />
           Cancel
         </Button>
       </div>

@@ -40,7 +40,7 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
       tabIndex={disabled ? -1 : 0}
       role={disabled ? 'text' : 'button'}
       aria-label={disabled ? undefined : `Edit comment for request ${requestId}`}
-      data-testid={`sh-comment-display-${requestId}`}
+      data-testid={`sh-comment-display-content-${requestId}`}
     >
       <div className="flex items-start gap-2">
         <MessageSquare className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />

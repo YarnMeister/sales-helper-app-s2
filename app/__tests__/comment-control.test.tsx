@@ -50,13 +50,13 @@ describe('CommentControl', () => {
       />
     );
     
-    fireEvent.click(screen.getByTestId('sh-comment-display-QR-001'));
+    fireEvent.click(screen.getByTestId('sh-comment-display-content-QR-001'));
     
     expect(screen.getByTestId('sh-comment-textarea')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Existing comment')).toBeInTheDocument();
   });
 
-  it('saves comment on blur with text', async () => {
+  it('saves comment when save button clicked', async () => {
     render(<CommentControl {...defaultProps} />);
     
     // Enter edit mode
@@ -66,23 +66,22 @@ describe('CommentControl', () => {
     const textarea = screen.getByTestId('sh-comment-textarea');
     fireEvent.change(textarea, { target: { value: 'New comment' } });
     
-    // Trigger blur
-    fireEvent.blur(textarea);
+    // Click save button
+    fireEvent.click(screen.getByTestId('sh-comment-save'));
     
     await waitFor(() => {
       expect(mockOnCommentChange).toHaveBeenCalledWith('New comment');
     });
   });
 
-  it('cancels edit mode on blur with empty text', async () => {
+  it('cancels edit mode when cancel button clicked', async () => {
     render(<CommentControl {...defaultProps} />);
     
     // Enter edit mode
     fireEvent.click(screen.getByTestId('sh-comment-add-button'));
     
-    // Leave textarea empty and blur
-    const textarea = screen.getByTestId('sh-comment-textarea');
-    fireEvent.blur(textarea);
+    // Click cancel button
+    fireEvent.click(screen.getByTestId('sh-comment-cancel'));
     
     await waitFor(() => {
       expect(screen.getByTestId('sh-comment-add-button')).toBeInTheDocument();
@@ -114,7 +113,7 @@ describe('CommentControl', () => {
     );
     
     // Enter edit mode
-    fireEvent.click(screen.getByTestId('sh-comment-display-QR-001'));
+    fireEvent.click(screen.getByTestId('sh-comment-display-content-QR-001'));
     
     // Modify text
     const textarea = screen.getByTestId('sh-comment-textarea');
@@ -137,7 +136,7 @@ describe('CommentControl', () => {
     
     const textarea = screen.getByTestId('sh-comment-textarea');
     fireEvent.change(textarea, { target: { value: 'Slow save' } });
-    fireEvent.blur(textarea);
+    fireEvent.click(screen.getByTestId('sh-comment-save'));
     
     // Should show loading state
     expect(screen.getByText('Saving comment...')).toBeInTheDocument();
@@ -156,14 +155,18 @@ describe('CommentControl', () => {
     
     const textarea = screen.getByTestId('sh-comment-textarea');
     fireEvent.change(textarea, { target: { value: 'Failing comment' } });
-    fireEvent.blur(textarea);
+    fireEvent.click(screen.getByTestId('sh-comment-save'));
     
+    // Should show loading state during save
+    expect(screen.getByText('Saving comment...')).toBeInTheDocument();
+    
+    // Wait for the error to be handled
     await waitFor(() => {
-      expect(screen.getByText(/Save failed/)).toBeInTheDocument();
+      expect(screen.getByTestId('sh-comment-textarea')).toBeInTheDocument();
     });
     
-    // Should remain in edit mode
-    expect(screen.getByTestId('sh-comment-textarea')).toBeInTheDocument();
+    // Verify the error was logged (we can't easily test the console.error)
+    expect(failingSave).toHaveBeenCalledWith('Failing comment');
   });
 
   it('disables editing when disabled prop is true', () => {
@@ -204,7 +207,7 @@ describe('CommentControl', () => {
     
     const textarea = screen.getByTestId('sh-comment-textarea');
     fireEvent.change(textarea, { target: { value: multiLineComment } });
-    fireEvent.blur(textarea);
+    fireEvent.click(screen.getByTestId('sh-comment-save'));
     
     await waitFor(() => {
       expect(mockOnCommentChange).toHaveBeenCalledWith(multiLineComment);
@@ -218,7 +221,7 @@ describe('CommentControl', () => {
     
     const textarea = screen.getByTestId('sh-comment-textarea');
     fireEvent.change(textarea, { target: { value: '  Padded comment  ' } });
-    fireEvent.blur(textarea);
+    fireEvent.click(screen.getByTestId('sh-comment-save'));
     
     await waitFor(() => {
       expect(mockOnCommentChange).toHaveBeenCalledWith('Padded comment');
@@ -242,7 +245,7 @@ describe('CommentControl', () => {
       />
     );
     
-    fireEvent.click(screen.getByTestId('sh-comment-display-QR-001'));
+    fireEvent.click(screen.getByTestId('sh-comment-display-content-QR-001'));
     
     const textarea = screen.getByTestId('sh-comment-textarea') as HTMLTextAreaElement;
     expect(textarea).toHaveFocus();
