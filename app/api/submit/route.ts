@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
           return `[${shortDesc} x ${item.quantity}]`;
         }).join(' ');
         
-        const dealTitle = `[${requestData.request_id}][${requestData.contact.mineGroup || 'Unknown'}] [${requestData.contact.mineName || 'Unknown'}] ${lineItemsSummary}`;
+        const dealTitle = `[${requestData.request_id}] [${requestData.contact.mineGroup || 'Unknown'}] [${requestData.contact.mineName || 'Unknown'}] ${lineItemsSummary}`;
         
         const dealData = {
           title: dealTitle,
