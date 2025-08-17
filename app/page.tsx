@@ -377,8 +377,8 @@ export default function MainPage() {
             <h1 className="text-2xl font-bold text-gray-900">Sales Helper</h1>
           </div>
 
-          {/* Horizontal line */}
-          <div className="border-b border-gray-300 mb-6"></div>
+          {/* Horizontal line with 3D effect */}
+          <div className="w-full h-px bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 mb-6 shadow-[0_1px_2px_rgba(0,0,0,0.1)]"></div>
 
           {/* Salesperson Selectors */}
           <div className="mb-2">
