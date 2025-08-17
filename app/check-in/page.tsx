@@ -120,10 +120,11 @@ export default function CheckInPage() {
         // Don't fail the check-in if Slack fails
       }
 
-      // Show success message
-      alert('Check-in successful! Your team has been notified.');
+      // Navigate back to main page (Deals)
+      router.push('/');
       
-      // Reset form
+      // Reset form (this will happen when component unmounts)
+      setSelectedSalesperson('James');
       setSelectedMine('');
       setSelectedPurpose('');
       setBackInOffice('');
