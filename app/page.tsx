@@ -230,6 +230,10 @@ export default function MainPage() {
 
   const handleSubmitRequest = async (requestId: string) => {
     try {
+      // Find the request to get the QR-ID for the toast message
+      const request = requests.find(req => req.id === requestId);
+      const qrId = request?.request_id || requestId;
+      
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -239,10 +243,10 @@ export default function MainPage() {
       const data = await response.json();
       
       if (data.ok) {
-        // Show success toast
+        // Show success toast with QR-ID
         toast({
           title: "Deal Submitted Successfully",
-          description: `Deal ${requestId} has been submitted to Pipedrive.`,
+          description: `Deal ${qrId} has been submitted to Pipedrive.`,
         });
         
         // Refresh requests to get updated status
