@@ -7,7 +7,7 @@ import { SalespersonModal } from './components/SalespersonModal';
 import { RTSElogo } from './components/RTSElogo';
 import { useRouter } from 'next/navigation';
 import { useToast } from './hooks/use-toast';
-import { Filter } from 'lucide-react';
+
 import { Button } from './components/ui/button';
 
 interface Contact {
@@ -394,18 +394,7 @@ export default function MainPage() {
             </div>
           </div>
 
-          {/* Status Filter */}
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => setStatusFilter(statusFilter === 'all' ? 'draft' : 'all')}
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              {statusFilter === 'all' ? 'All Status' : 'Draft Only'}
-            </Button>
-          </div>
+
         </div>
       </div>
 
