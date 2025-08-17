@@ -26,11 +26,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 px-3 py-2 rounded-lg ${
-            isActive('/') ? 'bg-red-50 text-gray-900' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 min-w-0 relative ${
+            isActive('/') ? 'text-red-600' : 'text-gray-600'
           }`}
           onClick={() => router.push('/')}
         >
+          {isActive('/') && (
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
+          )}
           <List className="h-5 w-5" />
           <span className="text-xs">Deals</span>
         </Button>
@@ -39,11 +42,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 px-3 py-2 rounded-lg ${
-            isActive('/check-in') ? 'bg-red-50 text-gray-900' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 min-w-0 relative ${
+            isActive('/check-in') ? 'text-red-600' : 'text-gray-600'
           }`}
           onClick={() => router.push('/check-in')}
         >
+          {isActive('/check-in') && (
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
+          )}
           <CheckSquare className="h-5 w-5" />
           <span className="text-xs">Check-in</span>
         </Button>
@@ -66,11 +72,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 px-3 py-2 rounded-lg ${
-            isActive('/contacts-list') ? 'bg-red-50 text-gray-900' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 min-w-0 relative ${
+            isActive('/contacts-list') ? 'text-red-600' : 'text-gray-600'
           }`}
           onClick={() => router.push('/contacts-list')}
         >
+          {isActive('/contacts-list') && (
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
+          )}
           <User className="h-5 w-5" />
           <span className="text-xs">Contacts</span>
         </Button>
@@ -79,11 +88,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`flex flex-col items-center gap-1 min-w-0 px-3 py-2 rounded-lg ${
-            isActive('/price-list') ? 'bg-red-50 text-gray-900' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 min-w-0 relative ${
+            isActive('/price-list') ? 'text-red-600' : 'text-gray-600'
           }`}
           onClick={() => router.push('/price-list')}
         >
+          {isActive('/price-list') && (
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
+          )}
           <Package className="h-5 w-5" />
           <span className="text-xs">Price List</span>
         </Button>
