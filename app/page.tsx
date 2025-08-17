@@ -175,17 +175,21 @@ export default function MainPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           id: requestId, 
-          [field]: value 
+          [field]: value
         })
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to update request');
+      }
+
+      const result = await response.json();
       
-      const data = await response.json();
-      
-      if (data.ok) {
-        // Update the specific request in state
+      // Use the complete API response data instead of manual state update
+      if (result.ok && result.data) {
         setRequests(prev => prev.map(req => 
           req.id === requestId 
-            ? { ...req, [field]: value, updated_at: new Date().toISOString() }
+            ? result.data  // ← Use complete API response!
             : req
         ));
         
@@ -200,12 +204,11 @@ export default function MainPage() {
             return newSet;
           });
         }, 3000);
-        
       } else {
-        console.error('Failed to update request:', data.message);
+        console.error('Failed to update request:', result.message);
         // For comments, we might want to show a more specific error
         if (field === 'comment') {
-          throw new Error(data.message || 'Failed to save comment');
+          throw new Error(result.message || 'Failed to save comment');
         }
       }
     } catch (error) {
