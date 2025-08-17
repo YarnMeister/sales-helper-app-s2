@@ -32,7 +32,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           onClick={() => router.push('/')}
         >
           {isActive('/') && (
-            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
           )}
           <List className="h-5 w-5" />
           <span className="text-xs">Deals</span>
@@ -48,7 +48,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           onClick={() => router.push('/check-in')}
         >
           {isActive('/check-in') && (
-            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
           )}
           <CheckSquare className="h-5 w-5" />
           <span className="text-xs">Check-in</span>
@@ -57,14 +57,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         {/* New Request Button */}
         <Button
           size="sm"
-          className="bg-red-600 hover:bg-red-700 text-white rounded-full h-12 w-12 flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.3),0_2px_4px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_12px_rgba(0,0,0,0.4),0_3px_6px_rgba(0,0,0,0.3)] transition-all duration-200 transform hover:scale-105"
+          className="bg-red-600 hover:bg-red-700 text-white rounded-full h-12 w-12 flex items-center justify-center shadow-[0_6px_12px_rgba(0,0,0,0.4),0_3px_6px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.5),0_4px_8px_rgba(0,0,0,0.4),0_2px_4px_rgba(0,0,0,0.3)] transition-all duration-200 transform hover:scale-105"
           onClick={onNewRequest}
           disabled={isCreating}
         >
           {isCreating ? (
             <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
           ) : (
-            <Plus className="h-6 w-6 drop-shadow-sm" />
+            <Plus className="h-6 w-6 drop-shadow-md" />
           )}
         </Button>
 
@@ -78,7 +78,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           onClick={() => router.push('/contacts-list')}
         >
           {isActive('/contacts-list') && (
-            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
           )}
           <User className="h-5 w-5" />
           <span className="text-xs">Contacts</span>
@@ -94,7 +94,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           onClick={() => router.push('/price-list')}
         >
           {isActive('/price-list') && (
-            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
           )}
           <Package className="h-5 w-5" />
           <span className="text-xs">Price List</span>
