@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { env } from '@/lib/env';
 import { logInfo, logError } from '@/lib/log';
-import { generateCorrelationId } from '@/lib/utils';
+import { generateCorrelationId } from '@/lib/log';
 import { withTiming } from '@/lib/log';
 
 // Validation schema for check-in notification data
