@@ -107,8 +107,14 @@ export const updateRequest = async (id: string, updates: {
       fields: Object.keys(updates),
       hasContact: updates.contact !== undefined,
       hasLineItems: updates.line_items !== undefined,
-      hasComment: updates.comment !== undefined
+      hasComment: updates.comment !== undefined,
+      currentLineItemsCount: currentRequest.line_items?.length || 0,
+      updatedLineItemsCount: updatedData.line_items?.length || 0
     });
+    
+    // Debug: Log the data being updated
+    console.log('🔍 About to update, current line_items:', currentRequest.line_items);
+    console.log('🔍 Updated data line_items:', updatedData.line_items);
     
     const result = await sql`
       UPDATE requests 
@@ -124,6 +130,8 @@ export const updateRequest = async (id: string, updates: {
       WHERE id = ${id} 
       RETURNING *
     `;
+    
+    console.log('🔍 Result after update:', result[0]);
     
     return result[0];
   }, 'updateRequest');
