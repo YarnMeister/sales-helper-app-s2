@@ -302,13 +302,10 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                               >
                                 <div className="flex items-center justify-between w-full">
                                   <div className="flex-1">
-                                    {/* Row 1: Name and Mine Group | Mine Name */}
-                                    <div className="flex items-center justify-between mb-2">
+                                    {/* Row 1: Name only */}
+                                    <div className="mb-2">
                                       <span className="font-medium text-gray-900">
                                         {contact.name}
-                                      </span>
-                                      <span className="text-sm text-gray-600">
-                                        {contact.mineGroup} | {contact.mineName}
                                       </span>
                                     </div>
                                     

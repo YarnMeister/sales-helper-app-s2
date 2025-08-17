@@ -145,34 +145,31 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       <div className="p-4 border-b border-gray-100">
         {request.contact ? (
           <div 
-            className="bg-blue-50 border border-blue-200 rounded-lg p-3"
+            className="bg-white border border-blue-200 rounded-lg p-3"
             data-testid="sh-request-contact-display"
           >
-            <div className="flex items-start gap-2">
-              <User className="h-4 w-4 text-blue-600 mt-1" />
-              <div className="flex-1">
-                {/* Row 1: Name and Mine Group | Mine Name */}
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium text-blue-900">{request.contact.name}</p>
-                  <div className="flex items-center gap-2">
-                    {request.contact.mineGroup && request.contact.mineName && (
-                      <span className="text-sm text-blue-700">
-                        {request.contact.mineGroup} | {request.contact.mineName}
-                      </span>
-                    )}
-                    {!isSubmitted && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onAddContact?.(request.id)}
-                        className="text-blue-700 hover:text-blue-900 p-1"
-                        data-testid="sh-request-change-contact"
-                      >
-                        Change
-                      </Button>
-                    )}
-                  </div>
+            <div className="flex-1">
+              {/* Row 1: Name and Mine Group | Mine Name */}
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-medium text-blue-900">{request.contact.name}</p>
+                <div className="flex items-center gap-2">
+                  {request.contact.mineGroup && request.contact.mineName && (
+                    <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
+                      {request.contact.mineGroup} | {request.contact.mineName}
+                    </Badge>
+                  )}
+                  {!isSubmitted && (
+                    <Button
+                      size="sm"
+                      onClick={() => onAddContact?.(request.id)}
+                      className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-1"
+                      data-testid="sh-request-change-contact"
+                    >
+                      Change
+                    </Button>
+                  )}
                 </div>
+                              </div>
                 
                 {/* Row 2: Email and Phone on same row */}
                 <div className="flex items-center gap-4">
@@ -196,7 +193,6 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                   )}
                 </div>
               </div>
-            </div>
           </div>
         ) : (
           <Button
