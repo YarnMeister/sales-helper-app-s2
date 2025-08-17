@@ -36,6 +36,7 @@ export const withDbErrorHandling = async <T>(
 
 // CRUD operations for requests
 export const createRequest = async (data: {
+  request_id?: string;
   salesperson_first_name?: string;
   salesperson_selection?: string;
   mine_group?: string;
@@ -57,7 +58,7 @@ export const createRequest = async (data: {
         comment,
         status
       ) VALUES (
-        NULL,
+        ${data.request_id || null},
         ${data.salesperson_first_name || null},
         ${data.salesperson_selection || null},
         ${data.mine_group || null},

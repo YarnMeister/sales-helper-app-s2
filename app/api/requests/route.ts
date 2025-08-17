@@ -118,7 +118,10 @@ export async function POST(request: NextRequest) {
         
       } else {
         // Create new request
+        const requestId = await generateRequestId();
+        
         const result = await createRequest({
+          request_id: requestId,
           salesperson_first_name: parsed.salespersonFirstName,
           salesperson_selection: parsed.salespersonSelection,
           mine_group: parsed.mineGroup,
