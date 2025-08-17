@@ -16,9 +16,10 @@ vi.mock('@/lib/log', () => ({
 }));
 
 describe('Site Visits API', () => {
-  const mockSql = vi.mocked(await import('@/lib/db')).sql;
+  let mockSql: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    mockSql = vi.mocked(await import('@/lib/db')).sql;
     vi.clearAllMocks();
   });
 
