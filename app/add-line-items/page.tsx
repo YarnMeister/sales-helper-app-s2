@@ -131,10 +131,10 @@ export default function AddLineItemsPage() {
 
         {/* Loading Overlay */}
         {saving && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Saving line item...</p>
+              <p className="text-gray-600 text-center">Saving line item...</p>
             </div>
           </div>
         )}
