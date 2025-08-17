@@ -319,16 +319,16 @@ export default function CheckInPage() {
                                 <div className="flex items-center justify-between w-full">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                      <span className="font-medium text-gray-900">
-                                        {mine}
-                                      </span>
+                                                                      <span className={`font-medium ${selectedMine === mine ? 'text-white' : 'text-gray-900'}`}>
+                                  {mine}
+                                </span>
                                       {selectedMine === mine && (
                                         <Badge variant="default" className="text-xs">
                                           Selected
                                         </Badge>
                                       )}
                                     </div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className={`text-sm ${selectedMine === mine ? 'text-white' : 'text-gray-600'}`}>
                                       {contacts.length} contacts
                                     </div>
                                   </div>
