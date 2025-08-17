@@ -417,6 +417,7 @@ export default function CheckInPage() {
         <div className="pt-4">
           <Button
             onClick={handleCheckIn}
+            variant={selectedMine && selectedPurpose && backInOffice ? "active" : "disabled"}
             className="w-full h-12 text-lg font-medium"
             disabled={!selectedMine || !selectedPurpose || !backInOffice}
           >
