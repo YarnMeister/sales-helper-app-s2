@@ -67,8 +67,44 @@ async function runMigrations() {
         console.log(`✅ Migration ${version} applied successfully`);
         appliedCount++;
         
+        // Verify the migration actually worked by checking for expected tables
+        if (name === 'create_mock_tables') {
+          console.log('🔍 Verifying mock tables were created...');
+          const mockRequestsExists = await sql`
+            SELECT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_schema = 'public' 
+              AND table_name = 'mock_requests'
+            )
+          `;
+          
+          const mockSiteVisitsExists = await sql`
+            SELECT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_schema = 'public' 
+              AND table_name = 'mock_site_visits'
+            )
+          `;
+          
+          if (!mockRequestsExists[0].exists || !mockSiteVisitsExists[0].exists) {
+            console.error('❌ Migration marked as successful but tables are missing!');
+            console.error('This indicates a silent failure in the migration system.');
+            console.error('Tables that should exist:');
+            console.error(`  - mock_requests: ${mockRequestsExists[0].exists ? '✅' : '❌'}`);
+            console.error(`  - mock_site_visits: ${mockSiteVisitsExists[0].exists ? '✅' : '❌'}`);
+            
+            // Rollback the migration record
+            await sql`DELETE FROM schema_migrations WHERE version = ${version}`;
+            throw new Error('Migration verification failed - tables not created');
+          } else {
+            console.log('✅ Mock tables verified successfully');
+          }
+        }
+        
       } catch (error) {
         await sql`ROLLBACK`;
+        console.error(`❌ Migration ${version} failed:`, error.message);
+        console.error('Full error:', error);
         throw error;
       }
     }

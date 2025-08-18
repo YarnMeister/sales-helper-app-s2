@@ -38,22 +38,41 @@ export async function POST(req: NextRequest) {
       });
       
       // Insert into database using Neon SQL template
-      const result = await sql`
-        INSERT INTO site_visits (
-          salesperson, 
-          planned_mines, 
-          main_purpose, 
-          availability, 
-          comments
-        ) VALUES (
-          ${validatedData.salesperson},
-          ${validatedData.planned_mines},
-          ${validatedData.main_purpose},
-          ${validatedData.availability},
-          ${validatedData.comments || null}
-        )
-        RETURNING id, date, created_at
-      `;
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      
+      const result = isDevelopment
+        ? await sql`
+          INSERT INTO mock_site_visits (
+            salesperson, 
+            planned_mines, 
+            main_purpose, 
+            availability, 
+            comments
+          ) VALUES (
+            ${validatedData.salesperson},
+            ${validatedData.planned_mines},
+            ${validatedData.main_purpose},
+            ${validatedData.availability},
+            ${validatedData.comments || null}
+          )
+          RETURNING id, date, created_at
+        `
+        : await sql`
+          INSERT INTO site_visits (
+            salesperson, 
+            planned_mines, 
+            main_purpose, 
+            availability, 
+            comments
+          ) VALUES (
+            ${validatedData.salesperson},
+            ${validatedData.planned_mines},
+            ${validatedData.main_purpose},
+            ${validatedData.availability},
+            ${validatedData.comments || null}
+          )
+          RETURNING id, date, created_at
+        `;
       
       const savedVisit = result[0];
       
@@ -112,33 +131,62 @@ export async function GET(req: NextRequest) {
       
       let result;
       
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      
       if (salesperson && date) {
-        result = await sql`
-          SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
-          FROM site_visits
-          WHERE salesperson = ${salesperson} AND date = ${date}
-          ORDER BY created_at DESC
-        `;
+        result = isDevelopment
+          ? await sql`
+            SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+            FROM mock_site_visits
+            WHERE salesperson = ${salesperson} AND date = ${date}
+            ORDER BY created_at DESC
+          `
+          : await sql`
+            SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+            FROM site_visits
+            WHERE salesperson = ${salesperson} AND date = ${date}
+            ORDER BY created_at DESC
+          `;
       } else if (salesperson) {
-        result = await sql`
-          SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
-          FROM site_visits
-          WHERE salesperson = ${salesperson}
-          ORDER BY created_at DESC
-        `;
+        result = isDevelopment
+          ? await sql`
+            SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+            FROM mock_site_visits
+            WHERE salesperson = ${salesperson}
+            ORDER BY created_at DESC
+          `
+          : await sql`
+            SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+            FROM site_visits
+            WHERE salesperson = ${salesperson}
+            ORDER BY created_at DESC
+          `;
       } else if (date) {
-        result = await sql`
-          SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
-          FROM site_visits
-          WHERE date = ${date}
-          ORDER BY created_at DESC
-        `;
+        result = isDevelopment
+          ? await sql`
+            SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+            FROM mock_site_visits
+            WHERE date = ${date}
+            ORDER BY created_at DESC
+          `
+          : await sql`
+            SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+            FROM site_visits
+            WHERE date = ${date}
+            ORDER BY created_at DESC
+          `;
       } else {
-        result = await sql`
-          SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
-          FROM site_visits
-          ORDER BY created_at DESC
-        `;
+        result = isDevelopment
+          ? await sql`
+            SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+            FROM mock_site_visits
+            ORDER BY created_at DESC
+          `
+          : await sql`
+            SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at
+            FROM site_visits
+            ORDER BY created_at DESC
+          `;
       }
       
       logInfo('Site visits fetched successfully', { 

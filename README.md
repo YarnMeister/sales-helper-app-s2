@@ -33,12 +33,42 @@ A Next.js application for managing sales contacts, line items, and check-ins usi
 - `PIPEDRIVE_BASE_URL` - Pipedrive API base URL
 - `PIPEDRIVE_SUBMIT_MODE` - 'mock' or 'live' (defaults to 'mock')
 - `SLACK_BOT_TOKEN` - Optional Slack bot token for alerts
+- `SLACK_CHANNEL` - Slack channel for notifications (defaults to '#out-of-office')
+
+## Environment-Based Behavior
+
+The app uses different strategies for local development vs production to prevent test data from affecting production users:
+
+### **Pipedrive Submissions**
+- **Control**: `PIPEDRIVE_SUBMIT_MODE` environment variable
+- **Development**: `PIPEDRIVE_SUBMIT_MODE=mock` → Saves to `mock_pipedrive_submissions` table
+- **Production**: `PIPEDRIVE_SUBMIT_MODE=live` → Submits to actual Pipedrive API
+- **No environment variable changes needed** - uses existing configuration
+
+### **Slack Notifications**
+- **Control**: `NODE_ENV` environment variable
+- **Development**: `NODE_ENV=development` → Posts to `#sales-helper-test` channel
+- **Production**: `NODE_ENV=production` → Posts to `SLACK_CHANNEL` (defaults to '#out-of-office')
+- **No environment variable changes needed** - automatic based on deployment environment
+
+### **Database Tables (Requests & Site Visits)**
+- **Control**: `NODE_ENV` environment variable
+- **Development**: `NODE_ENV=development` → Uses `mock_requests` and `mock_site_visits` tables
+- **Production**: `NODE_ENV=production` → Uses `requests` and `site_visits` tables
+- **No environment variable changes needed** - automatic based on deployment environment
+
+### **Contacts & Line Items**
+- **Read-only reference tables** - No environment-based switching
+- **Shared between environments** - Used for product catalog and contact lookup
 
 ## Database Schema
 
 The app uses a flat JSONB structure:
 - `requests` - Main requests table with JSONB contact and line_items
-- `mock_pipedrive_submissions` - Testing support table
+- `mock_requests` - Development requests table (identical structure)
+- `site_visits` - Site visit check-ins for Slack notifications
+- `mock_site_visits` - Development site visits table (identical structure)
+- `mock_pipedrive_submissions` - Testing support table for Pipedrive submissions
 
 ## Development
 

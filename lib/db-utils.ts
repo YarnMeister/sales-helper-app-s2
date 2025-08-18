@@ -1,6 +1,38 @@
 import { sql } from './db';
 import { logInfo, logError, withPerformanceLogging } from './log';
 
+/**
+ * Get the appropriate table name based on environment
+ * Development uses mock tables, production uses real tables
+ */
+export const getTableName = (baseTableName: string): string => {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const tableName = isDevelopment ? `mock_${baseTableName}` : baseTableName;
+  
+  logInfo('Table name selected', { 
+    environment: process.env.NODE_ENV,
+    baseTableName,
+    selectedTableName: tableName,
+    isMock: isDevelopment
+  });
+  
+  return tableName;
+};
+
+/**
+ * Get requests table name (requests or mock_requests)
+ */
+export const getRequestsTableName = (): string => {
+  return getTableName('requests');
+};
+
+/**
+ * Get site visits table name (site_visits or mock_site_visits)
+ */
+export const getSiteVisitsTableName = (): string => {
+  return getTableName('site_visits');
+};
+
 export async function dbHealth() {
   return withPerformanceLogging('dbHealth', 'database', async () => {
     const rows = await sql`select 1 as up`;
