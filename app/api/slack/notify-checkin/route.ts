@@ -53,12 +53,17 @@ export async function POST(req: NextRequest) {
       // Validate request body
       const validatedData = CheckInNotificationSchema.parse(body);
       
+      // Determine channel based on environment
+      const channel = process.env.NODE_ENV === 'development' 
+        ? '#sales-helper-test' 
+        : (env.SLACK_CHANNEL || '#out-of-office');
+      
       logInfo('Check-in notification data validated', { 
         correlationId,
         salesperson: validatedData.salesperson,
         minesCount: validatedData.planned_mines.length,
         purpose: validatedData.main_purpose,
-        channel: env.SLACK_CHANNEL || '#out-of-office'
+        channel: channel
       });
       
       // Format message for Slack
@@ -66,7 +71,7 @@ export async function POST(req: NextRequest) {
       
       // Prepare Slack API request
       const slackMessage = {
-        channel: env.SLACK_CHANNEL || '#out-of-office',
+        channel: channel,
         text: messageText,
         unfurl_links: false,
         unfurl_media: false
@@ -74,7 +79,7 @@ export async function POST(req: NextRequest) {
       
       logInfo('Sending message to Slack', { 
         correlationId,
-        channel: env.SLACK_CHANNEL || '#out-of-office',
+        channel: channel,
         messageLength: messageText.length
       });
       
@@ -101,14 +106,14 @@ export async function POST(req: NextRequest) {
       
       logInfo('Slack notification sent successfully', { 
         correlationId,
-        channel: env.SLACK_CHANNEL || '#out-of-office',
+        channel: channel,
         messageTs: result.ts
       });
       
       return NextResponse.json({
         ok: true,
         data: {
-          channel: env.SLACK_CHANNEL || '#out-of-office',
+          channel: channel,
           message_ts: result.ts,
           message: messageText
         }
