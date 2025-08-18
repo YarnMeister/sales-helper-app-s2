@@ -21,11 +21,13 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` and `sp
 
 ## Process for each commit
 - Commit to current working feature branch 
-- Ensure commited changes are running locally on http://localhost:3000 foribly kill all othe rlocal servers and start on port:3000
+- Ensure commited changes are running locally on http://localhost:3000 foribly kill all other local servers and start lacal sever on port:3000
 - Check for any linting errors with `npm run lint` and fix
 - Ensure all dependencies are up to date
 - Then run `npm test`
 - Ensure all tests pass, fix any issues, even if they are unrelated to your change
+- Include any untracked/recent changes to `project_confg.md` (this file) in the commit so no changes are lost
+
 
 ## Process for each deployment to preview
  **Feature branch preview deployment:**
