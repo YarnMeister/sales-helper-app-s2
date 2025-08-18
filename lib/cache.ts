@@ -70,7 +70,7 @@ export class KVCache {
         stale: isStale,
         source: 'redis'
       };
-    }, { key });
+    });
   }
   
   async set<T = any>(key: string, value: T, ttlSeconds?: number): Promise<void> {
@@ -89,7 +89,7 @@ export class KVCache {
         ttl_seconds: ttl,
         size_estimate: JSON.stringify(cacheValue).length 
       });
-    }, { key, ttl_seconds: ttlSeconds || CACHE_MAX_AGE_SECONDS });
+    });
   }
   
   async bust(key: string): Promise<void> {
@@ -97,7 +97,7 @@ export class KVCache {
       const result = await this.redis.del(key);
       
       logInfo('Cache busted', { key, existed: result > 0 });
-    }, { key });
+    });
   }
   
   async bustPattern(pattern: string): Promise<number> {
@@ -118,7 +118,7 @@ export class KVCache {
       
       logInfo('Cache pattern busted', { pattern, count: keys.length });
       return keys.length;
-    }, { pattern });
+    });
   }
   
   async getStats(): Promise<{

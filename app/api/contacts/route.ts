@@ -95,5 +95,5 @@ export async function GET(request: NextRequest) {
       // No cache available, return error
       throw new ExternalError('Unable to fetch contacts and no cached data available');
     }
-  }, { correlationId });
+  });
 }
