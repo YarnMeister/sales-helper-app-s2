@@ -46,6 +46,7 @@ export const ContactJSON = z.object({
 // Request upsert schema for API operations with mobile-first validations
 export const RequestUpsert = z.object({
   id: z.string().uuid("Invalid UUID format").optional(),
+  request_id: z.string().regex(/^QR-\d{3}$/, "Invalid request ID format").optional(),
   salespersonFirstName: z.string().min(1, "Salesperson first name is required").optional(),
   salespersonSelection: SalespersonSelection.optional(),
   mineGroup: z.string().optional(),

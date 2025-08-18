@@ -8,6 +8,7 @@ import { CommonHeader } from './components/CommonHeader';
 import { CommonFooter } from './components/CommonFooter';
 import { useRouter } from 'next/navigation';
 import { useToast } from './hooks/use-toast';
+import { generateQRId, initializeQRCounter } from '@/lib/client-qr-generator';
 
 import { Button } from './components/ui/button';
 
@@ -99,6 +100,11 @@ export default function MainPage() {
     fetchRequests();
   }, [selectedSalesperson, fetchRequests]);
 
+  // Initialize QR counter on component mount
+  useEffect(() => {
+    initializeQRCounter();
+  }, []);
+
   // Handle salesperson selection from other pages
   useEffect(() => {
     const storedSalesperson = sessionStorage.getItem('selectedSalesperson');
@@ -140,12 +146,17 @@ export default function MainPage() {
 
     setIsCreating(true);
     try {
+      // Generate QR-ID client-side
+      const requestId = generateQRId();
+      console.log('🔍 Generated client-side QR-ID:', requestId);
+
       const response = await fetch('/api/requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          request_id: requestId, // Send the client-generated ID
           salespersonFirstName: selectedSalesperson,
         }),
       });
@@ -163,7 +174,7 @@ export default function MainPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
         // Success - no toast to avoid distraction
-        console.log('🔍 Request created:', data.data);
+        console.log('🔍 Request created with client-side ID:', data.data);
       } else {
         throw new Error(data.message || 'Failed to create request');
       }
@@ -185,12 +196,17 @@ export default function MainPage() {
   const handleNewRequestWithSalesperson = async (salesperson: string) => {
     setIsCreating(true);
     try {
+      // Generate QR-ID client-side
+      const requestId = generateQRId();
+      console.log('🔍 Generated client-side QR-ID for salesperson:', requestId, salesperson);
+
       const response = await fetch('/api/requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          request_id: requestId, // Send the client-generated ID
           salespersonFirstName: salesperson,
         }),
       });
@@ -208,6 +224,7 @@ export default function MainPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
         // Success - no toast to avoid distraction
+        console.log('🔍 Request created with client-side ID:', data.data);
       } else {
         throw new Error(data.message || 'Failed to create request');
       }

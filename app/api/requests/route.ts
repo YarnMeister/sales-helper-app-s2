@@ -124,7 +124,14 @@ export async function POST(request: NextRequest) {
         
       } else {
         // Create new request
-        const requestId = await generateRequestId();
+        // Use client-provided request_id if available, otherwise fall back to database generation
+        let requestId = parsed.request_id;
+        if (!requestId) {
+          requestId = await generateRequestId();
+          logInfo('Using database-generated request ID', { correlationId, request_id: requestId });
+        } else {
+          logInfo('Using client-provided request ID', { correlationId, request_id: requestId });
+        }
         
         const result = await createRequest({
           request_id: requestId,
@@ -140,7 +147,8 @@ export async function POST(request: NextRequest) {
         logInfo('Request created successfully', { 
           correlationId,
           request_id: result.request_id, 
-          inline_update: false 
+          inline_update: false,
+          idSource: parsed.request_id ? 'client' : 'database'
         });
         
         return Response.json({ ok: true, data: result });
