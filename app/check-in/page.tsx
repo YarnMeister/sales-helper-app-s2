@@ -228,7 +228,7 @@ export default function CheckInPage() {
                     </h3>
                   </div>
                   {selectedMine ? (
-                    <Badge variant="default" className="text-xs">
+                    <Badge className="bg-red-600 text-white border-0 text-xs">
                       Selected
                     </Badge>
                   ) : (
@@ -296,7 +296,7 @@ export default function CheckInPage() {
                                   {mine}
                                 </span>
                                       {selectedMine === mine && (
-                                        <Badge variant="default" className="text-xs">
+                                        <Badge className="bg-red-600 text-white border-0 text-xs">
                                           Selected
                                         </Badge>
                                       )}
@@ -334,7 +334,7 @@ export default function CheckInPage() {
                 key={purpose}
                 variant={selectedPurpose === purpose ? 'default' : 'outline'}
                 size="sm"
-                className={selectedPurpose === purpose ? 'text-white' : ''}
+                className={selectedPurpose === purpose ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
                 onClick={() => setSelectedPurpose(purpose)}
               >
                 {purpose}
@@ -356,7 +356,7 @@ export default function CheckInPage() {
                 key={time}
                 variant={backInOffice === time ? 'default' : 'outline'}
                 size="sm"
-                className={`flex-1 ${backInOffice === time ? 'text-white' : ''}`}
+                className={`flex-1 ${backInOffice === time ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
                 onClick={() => setBackInOffice(time)}
               >
                 {time}
