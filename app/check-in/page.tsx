@@ -247,10 +247,10 @@ export default function CheckInPage() {
                     const totalMines = Object.keys(mines).length;
                     
                     return (
-                      <div key={group} className="border-b border-gray-50 last:border-b-0">
+                      <div key={group} className="border-b border-gray-200 last:border-b-0">
                         {/* Mine Group Header */}
                         <div
-                          className="p-4 pl-8 cursor-pointer hover:bg-gray-25 transition-colors active:bg-gray-100 min-h-[44px] flex items-center"
+                          className="p-4 pl-8 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors active:bg-gray-200 min-h-[44px] flex items-center"
                           onClick={() => toggleGroup(group)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
