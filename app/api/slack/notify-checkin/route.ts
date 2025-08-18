@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { env } from '@/lib/env';
+import { env } from '@/lib/env.server';
 import { withPerformanceLogging, logInfo, logError, generateCorrelationId } from '@/lib/log';
 
 const CheckInNotificationSchema = z.object({
@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
         : (validatedData.submit_mode || 'live');
       
       const targetChannel = submitMode === 'mock' 
-        ? (env.SLACK_CHANNEL_MOCK || '#sales-checkins-test')
-        : (env.SLACK_CHANNEL_LIVE || '#sales-checkins');
+        ? env.SLACK_CHANNEL_MOCK
+        : env.SLACK_CHANNEL_LIVE;
       
       // Format message
       const messageText = formatCheckInMessage({

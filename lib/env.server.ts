@@ -1,7 +1,14 @@
 import { z } from 'zod';
 import { logInfo, logError } from './log';
 
-// Simplified environment schema for Neon + Upstash
+// Only for tests and local dev we explicitly load .env files.
+// In production (Vercel), env is injected by the platform.
+if (process.env.VITEST || process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
+  // Load .env.local for tests and local dev
+  // eslint-disable-next-line
+  require('dotenv').config({ path: '.env.local' });
+}
+
 const EnvSchema = z.object({
   APP_ENV: z.enum(['development', 'production', 'test']).default('development'),
   
@@ -22,21 +29,16 @@ const EnvSchema = z.object({
   
   // Slack Configuration
   SLACK_BOT_TOKEN: z.string().optional(),
-  SLACK_CHANNEL_LIVE: z.string().min(1, 'SLACK_CHANNEL_LIVE is required').default('#out-of-office'),
-  SLACK_CHANNEL_MOCK: z.string().min(1, 'SLACK_CHANNEL_MOCK is required').default('#sales-helper-test'),
+  SLACK_CHANNEL_LIVE: z.string().default('#sales-checkins'),
+  SLACK_CHANNEL_MOCK: z.string().default('#sales-checkins-test'),
+
+  // Frontend-visible flag (but ok to read on server too)
+  NEXT_PUBLIC_SUBMIT_MODE: z.enum(['mock', 'live']).default('mock'),
 });
 
-// Validate and parse environment variables
+// Validate and parse environment variables with better error handling
 const validateEnv = () => {
   try {
-    // Debug: Log what we're trying to validate
-    console.log('Environment validation input:', {
-      SLACK_CHANNEL_LIVE: process.env.SLACK_CHANNEL_LIVE || 'undefined',
-      SLACK_CHANNEL_MOCK: process.env.SLACK_CHANNEL_MOCK || 'undefined',
-      EXTERNAL_SUBMIT_MODE: process.env.EXTERNAL_SUBMIT_MODE || 'undefined',
-      NODE_ENV: process.env.NODE_ENV || 'undefined'
-    });
-    
     return EnvSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { validateEnvironment } from '@/lib/env'
+import { validateEnvironment } from '@/lib/env.server'
 import { checkDbHealth } from '@/lib/db-utils'
 import { cache, warmCache } from '@/lib/cache'
 import { logInfo, logError, generateCorrelationId } from '@/lib/log'

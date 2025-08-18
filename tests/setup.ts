@@ -1,7 +1,21 @@
 import { vi, beforeAll, afterAll, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
+import { fetch, Headers, Request, Response } from 'undici';
 import { setupTestDatabase, teardownTestDatabase } from './_setup/setup-test-db';
 import { testDataManager } from './_utils/test-helpers';
+
+// Polyfill WHATWG fetch/Response in node test env
+// @ts-ignore
+if (!global.fetch) global.fetch = fetch as any;
+// @ts-ignore
+if (!global.Headers) global.Headers = Headers as any;
+// @ts-ignore
+if (!global.Request) global.Request = Request as any;
+// @ts-ignore
+if (!global.Response) global.Response = Response as any;
+
+// Load .env for tests (env.server.ts also loads, but this helps early)
+import 'dotenv/config';
 
 // Mock environment variables for tests
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';

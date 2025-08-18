@@ -7,6 +7,7 @@ import CheckInPage from '../check-in/page';
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
+  usePathname: vi.fn(() => '/check-in'),
 }));
 
 // Mock fetch

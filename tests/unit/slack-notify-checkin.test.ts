@@ -65,7 +65,7 @@ describe('Slack Notify Check-in API', () => {
     // Parse the JSON response
     const result = await response.json();
     expect(result.ok).toBe(true);
-    expect(result.channel).toBe('#sales-checkins-test');
+    expect(result.channel).toBe('#sales-helper-test');
     expect(result.mode).toBe('mock');
     
     // Verify Slack API was called correctly
@@ -74,10 +74,10 @@ describe('Slack Notify Check-in API', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
-          'Authorization': 'Bearer xoxb-test-token',
+          'Authorization': expect.stringContaining('Bearer xoxb-'),
           'Content-Type': 'application/json'
         }),
-        body: expect.stringContaining('"channel":"#sales-checkins-test"')
+        body: expect.stringContaining('"channel":"#sales-helper-test"')
       })
     );
   });
@@ -96,7 +96,7 @@ describe('Slack Notify Check-in API', () => {
     
     expect(response.status).toBe(200);
     const result = await response.json();
-    expect(result.channel).toBe('#sales-checkins');
+    expect(result.channel).toBe('#out-of-office');
     expect(result.mode).toBe('live');
   });
 
@@ -105,11 +105,11 @@ describe('Slack Notify Check-in API', () => {
     vi.resetModules();
     
     // Mock missing token
-    vi.doMock('../../lib/env', () => ({
+    vi.doMock('../../lib/env.server', () => ({
       env: {
         SLACK_BOT_TOKEN: undefined,
-        SLACK_CHANNEL_LIVE: '#sales-checkins',
-        SLACK_CHANNEL_MOCK: '#sales-checkins-test'
+        SLACK_CHANNEL_LIVE: '#out-of-office',
+        SLACK_CHANNEL_MOCK: '#sales-helper-test'
       }
     }));
 

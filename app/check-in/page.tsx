@@ -77,9 +77,10 @@ export default function CheckInPage() {
       }
 
       // Get submit mode from environment
+      // Get submit mode from environment (will be passed to both APIs)
       const submitMode = process.env.NODE_ENV === 'production' 
         ? 'live' 
-        : (process.env.NEXT_PUBLIC_SUBMIT_MODE || 'live');
+        : (process.env.NEXT_PUBLIC_SUBMIT_MODE ?? 'mock');
       
       const checkInData = {
         salesperson: selectedSalesperson,
