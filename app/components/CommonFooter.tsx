@@ -50,13 +50,9 @@ export const CommonFooter: React.FC<CommonFooterProps> = ({
       onSalespersonChange(salesperson);
     }
     
-    // Create the request with the selected salesperson
+    // Create the request with the selected salesperson immediately
     if (onNewRequest) {
-      // We need to trigger the request creation with the new salesperson
-      // This will be handled by the main page's logic
-      setTimeout(() => {
-        onNewRequest();
-      }, 100);
+      onNewRequest();
     }
   };
 

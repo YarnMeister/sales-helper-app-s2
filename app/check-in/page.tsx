@@ -372,7 +372,7 @@ export default function CheckInPage() {
         </Card>
 
         {/* Check-in Button */}
-        <div className="pt-4 pb-8">
+        <div className="pt-4 pb-20">
           <Button
             onClick={handleCheckIn}
             variant={selectedMine && selectedPurpose && backInOffice ? "active" : "disabled"}

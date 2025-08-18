@@ -12,6 +12,7 @@ export default function AddContactPage() {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,11 +20,26 @@ export default function AddContactPage() {
     const requestId = sessionStorage.getItem('editingRequestId');
     if (requestId) {
       setEditingRequestId(requestId);
+      // Fetch the current request to get the selected contact
+      fetchCurrentRequest(requestId);
     } else {
       // No request to edit, redirect back to main page
       router.push('/');
     }
   }, [router]);
+
+  const fetchCurrentRequest = async (requestId: string) => {
+    try {
+      const response = await fetch(`/api/requests?id=${requestId}`);
+      const data = await response.json();
+      
+      if (data.ok && data.data?.[0]?.contact) {
+        setSelectedContact(data.data[0].contact);
+      }
+    } catch (error) {
+      console.error('Error fetching current request:', error);
+    }
+  };
 
   const handleContactSelect = async (contact: Contact) => {
     if (!editingRequestId) return;
@@ -65,7 +81,7 @@ export default function AddContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" data-testid="sh-add-contact-page">
+    <div className="min-h-screen bg-gray-50 pb-20" data-testid="sh-add-contact-page">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="px-4 py-3">
@@ -121,6 +137,7 @@ export default function AddContactPage() {
         <div className="mb-6">
           <ContactAccordion
             onSelectContact={handleContactSelect}
+            selectedContact={selectedContact}
           />
         </div>
       </div>

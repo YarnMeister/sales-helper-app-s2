@@ -13,12 +13,14 @@ interface ContactAccordionProps {
   onSelectContact: (contact: Contact) => void;
   className?: string;
   viewOnly?: boolean;
+  selectedContact?: Contact | null;
 }
 
 export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   onSelectContact,
   className = '',
-  viewOnly = false
+  viewOnly = false,
+  selectedContact = null
 }) => {
   const [contactsData, setContactsData] = useState<ContactsHierarchy>({});
   const [loading, setLoading] = useState(true);
@@ -200,6 +202,12 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
           const isGroupExpanded = state.expandedGroups.has(group);
           const totalContacts = Object.values(mines).reduce((sum, contacts) => sum + contacts.length, 0);
           
+          // Check if selected contact is in this group
+          const hasSelectedContactInGroup = selectedContact && 
+            Object.values(mines).some(contacts => 
+              contacts.some(contact => contact.personId === selectedContact.personId)
+            );
+          
           return (
             <Card key={group} className="overflow-hidden shadow-sm">
               {/* Mine Group Header */}
@@ -227,9 +235,16 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                     )}
                     <h3 className="font-semibold text-lg text-gray-900">{group}</h3>
                   </div>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    {totalContacts} contacts
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {hasSelectedContactInGroup && (
+                      <Badge variant="default" className="bg-green-600">
+                        Selected
+                      </Badge>
+                    )}
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                      {totalContacts} contacts
+                    </Badge>
+                  </div>
                 </div>
               </div>
               
@@ -239,6 +254,10 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                   {Object.entries(mines).sort(([a], [b]) => a.localeCompare(b)).map(([mine, contacts]) => {
                     const mineKey = `${group}-${mine}`;
                     const isMineExpanded = state.expandedMines.has(mineKey);
+                    
+                    // Check if selected contact is in this mine
+                    const hasSelectedContactInMine = selectedContact && 
+                      contacts.some(contact => contact.personId === selectedContact.personId);
                     
                     return (
                       <div key={mine} className="border-b border-gray-100 last:border-b-0">
@@ -267,75 +286,97 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                               )}
                               <h4 className="font-medium text-gray-800">{mine}</h4>
                             </div>
-                            <Badge variant="outline" className="text-xs">
-                              {contacts.length}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              {hasSelectedContactInMine && (
+                                <Badge variant="default" className="bg-green-600 text-xs">
+                                  Selected
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="text-xs">
+                                {contacts.length}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                         
                         {/* Contacts List */}
                         {isMineExpanded && (
                           <div className="bg-white">
-                            {contacts.sort((a, b) => a.name.localeCompare(b.name)).map((contact) => (
-                              <div
-                                key={contact.personId}
-                                className={`p-4 pl-12 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center ${
-                                  viewOnly 
-                                    ? 'cursor-default hover:bg-gray-25' 
-                                    : 'cursor-pointer hover:bg-gray-25 active:bg-gray-50'
-                                }`}
-                                onClick={() => !viewOnly && handleContactSelect(contact)}
-                                onKeyDown={(e) => {
-                                  if (!viewOnly && (e.key === 'Enter' || e.key === ' ')) {
-                                    e.preventDefault();
-                                    handleContactSelect(contact);
+                            {contacts.sort((a, b) => a.name.localeCompare(b.name)).map((contact) => {
+                              const isSelected = selectedContact && contact.personId === selectedContact.personId;
+                              
+                              return (
+                                <div
+                                  key={contact.personId}
+                                  className={`p-4 pl-12 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center ${
+                                    viewOnly 
+                                      ? 'cursor-default hover:bg-gray-25' 
+                                      : isSelected
+                                        ? 'bg-green-25 cursor-default'
+                                        : 'cursor-pointer hover:bg-gray-25 active:bg-gray-50'
+                                  }`}
+                                  onClick={() => !viewOnly && !isSelected && handleContactSelect(contact)}
+                                  onKeyDown={(e) => {
+                                    if (!viewOnly && !isSelected && (e.key === 'Enter' || e.key === ' ')) {
+                                      e.preventDefault();
+                                      handleContactSelect(contact);
+                                    }
+                                  }}
+                                  tabIndex={viewOnly || isSelected ? -1 : 0}
+                                  role={viewOnly || isSelected ? undefined : "button"}
+                                  aria-label={
+                                    viewOnly 
+                                      ? `View ${contact.name} from ${contact.mineName}, ${contact.mineGroup}. ${contact.email ? `Email: ${contact.email}. ` : ''}${contact.phone ? `Phone: ${contact.phone}` : ''}` 
+                                      : isSelected
+                                        ? `${contact.name} already selected`
+                                        : `Select ${contact.name} from ${contact.mineName}, ${contact.mineGroup}. ${contact.email ? `Email: ${contact.email}. ` : ''}${contact.phone ? `Phone: ${contact.phone}` : ''}`
                                   }
-                                }}
-                                tabIndex={viewOnly ? -1 : 0}
-                                role={viewOnly ? undefined : "button"}
-                                aria-label={
-                                  viewOnly 
-                                    ? `View ${contact.name} from ${contact.mineName}, ${contact.mineGroup}. ${contact.email ? `Email: ${contact.email}. ` : ''}${contact.phone ? `Phone: ${contact.phone}` : ''}` 
-                                    : `Select ${contact.name} from ${contact.mineName}, ${contact.mineGroup}. ${contact.email ? `Email: ${contact.email}. ` : ''}${contact.phone ? `Phone: ${contact.phone}` : ''}`
-                                }
-                                data-testid={`sh-contact-person-${contact.personId}`}
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <div className="flex-1">
-                                    {/* Row 1: Name only */}
-                                    <div className="mb-2">
-                                      <span className="font-medium text-gray-900">
-                                        {contact.name}
-                                      </span>
-                                    </div>
-                                    
-                                    {/* Row 2: Email and Phone on same row */}
-                                    <div className="flex items-center gap-4">
-                                      {contact.email && (
-                                        <a 
-                                          href={`mailto:${contact.email}`}
-                                          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <Mail className="h-3 w-3" />
-                                          <span>{contact.email}</span>
-                                        </a>
-                                      )}
-                                      {contact.phone && (
-                                        <a 
-                                          href={`tel:${contact.phone}`}
-                                          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <Phone className="h-3 w-3" />
-                                          <span>{contact.phone}</span>
-                                        </a>
-                                      )}
+                                  data-testid={`sh-contact-person-${contact.personId}`}
+                                >
+                                  <div className="flex items-center justify-between w-full">
+                                    <div className="flex-1">
+                                      {/* Row 1: Name only */}
+                                      <div className="mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium text-gray-900">
+                                            {contact.name}
+                                          </span>
+                                          {isSelected && (
+                                            <Badge variant="default" className="bg-green-600 text-xs">
+                                              Selected
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Row 2: Email and Phone on same row */}
+                                      <div className="flex items-center gap-4">
+                                        {contact.email && (
+                                          <a 
+                                            href={`mailto:${contact.email}`}
+                                            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <Mail className="h-3 w-3" />
+                                            <span>{contact.email}</span>
+                                          </a>
+                                        )}
+                                        {contact.phone && (
+                                          <a 
+                                            href={`tel:${contact.phone}`}
+                                            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <Phone className="h-3 w-3" />
+                                            <span>{contact.phone}</span>
+                                          </a>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>
