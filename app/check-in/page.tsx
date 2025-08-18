@@ -178,7 +178,7 @@ export default function CheckInPage() {
       {/* Main Content */}
       <div className="px-4 py-4 pb-24">
         {/* Salesperson Selection */}
-        <div className="mb-6">
+        <div className="mb-3">
           <h2 className="text-lg font-medium text-gray-900 mb-3">Select name</h2>
           <div className="flex gap-2">
             {['James', 'Luyanda', 'Stefan'].map((name) => (
@@ -196,7 +196,7 @@ export default function CheckInPage() {
         </div>
 
         {/* Mine Selection */}
-        <div className="mb-6">
+        <div className="mb-3">
           <h2 className="text-lg font-medium text-gray-900 mb-3">Select visiting mine</h2>
           <div className="space-y-3">
             {/* All Mines Top Level */}
@@ -315,7 +315,7 @@ export default function CheckInPage() {
         </div>
 
         {/* Purpose Selection */}
-        <Card className="p-4 mb-6">
+        <Card className="p-4 mb-3">
           <h3 className="text-lg font-medium text-gray-900 mb-3">Purpose</h3>
           <div className="flex flex-wrap gap-2">
             {[
@@ -339,7 +339,7 @@ export default function CheckInPage() {
         </Card>
 
         {/* Back in Office Selection */}
-        <Card className="p-4 mb-6">
+        <Card className="p-4 mb-3">
           <h3 className="text-lg font-medium text-gray-900 mb-3">Back in office</h3>
           <div className="flex gap-2">
             {[
@@ -361,7 +361,7 @@ export default function CheckInPage() {
         </Card>
 
         {/* Comments */}
-        <Card className="p-4 mb-6">
+        <Card className="p-4 mb-3">
           <h3 className="text-lg font-medium text-gray-900 mb-3">Comments</h3>
           <Textarea
             placeholder="Enter any additional comments..."
