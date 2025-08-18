@@ -6,14 +6,15 @@ import { POST } from '../../app/api/slack/notify-checkin/route';
 vi.mock('@/lib/env', () => ({
   env: {
     SLACK_BOT_TOKEN: 'xoxb-test-token',
-    SLACK_CHANNEL: '#out-of-office'
+    SLACK_CHANNEL: '#out-of-office',
+    NODE_ENV: 'test'
   }
 }));
 
 // Mock logging
 vi.mock('@/lib/log', () => ({
   generateCorrelationId: vi.fn(() => 'test-correlation-id'),
-  withPerformanceLogging: vi.fn((fn) => fn),
+  withPerformanceLogging: vi.fn((operation, context, fn) => fn()),
   logInfo: vi.fn(),
   logError: vi.fn()
 }));
@@ -21,9 +22,10 @@ vi.mock('@/lib/log', () => ({
 // Mock global fetch
 global.fetch = vi.fn();
 
-// Helper function to parse response
+// Helper function to parse response - simplified for testing
 const parseResponse = (response: any) => {
-  return typeof response === 'string' ? JSON.parse(response) : response;
+  // In tests, we'll directly call response.json() where needed
+  return response;
 };
 
 describe('Slack Notify Check-in API', () => {
@@ -57,7 +59,7 @@ describe('Slack Notify Check-in API', () => {
     });
 
     const response = await POST(request);
-    const result = parseResponse(response);
+    const result = await response.json();
 
     expect(result.ok).toBe(true);
     expect(result.data.channel).toBe('#out-of-office');
