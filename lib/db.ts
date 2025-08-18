@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { logInfo, logError } from './log';
 import { AppError } from './errors';
+import { getRequestsTableName } from './db-utils';
 
 // Get Neon connection
 const sql = neon(process.env.DATABASE_URL!);
@@ -46,32 +47,61 @@ export const createRequest = async (data: {
   comment?: string;
 }) => {
   return withDbErrorHandling(async () => {
-    const result = await sql`
-      INSERT INTO requests (
-        request_id,
-        salesperson_first_name,
-        salesperson_selection, 
-        mine_group,
-        mine_name,
-        contact,
-        line_items,
-        comment,
-        status
-      ) VALUES (
-        ${data.request_id || null},
-        ${data.salesperson_first_name || null},
-        ${data.salesperson_selection || null},
-        ${data.mine_group || null},
-        ${data.mine_name || null},
-        ${JSON.stringify(data.contact || null)},
-        ${JSON.stringify(data.line_items || [])},
-        ${data.comment || null},
-        'draft'
-      )
-      RETURNING *
-    `;
+    const isDevelopment = process.env.NODE_ENV === 'development';
     
-    return result[0];
+    if (isDevelopment) {
+      const result = await sql`
+        INSERT INTO mock_requests (
+          request_id,
+          salesperson_first_name,
+          salesperson_selection, 
+          mine_group,
+          mine_name,
+          contact,
+          line_items,
+          comment,
+          status
+        ) VALUES (
+          ${data.request_id || null},
+          ${data.salesperson_first_name || null},
+          ${data.salesperson_selection || null},
+          ${data.mine_group || null},
+          ${data.mine_name || null},
+          ${JSON.stringify(data.contact || null)},
+          ${JSON.stringify(data.line_items || [])},
+          ${data.comment || null},
+          'draft'
+        )
+        RETURNING *
+      `;
+      return result[0];
+    } else {
+      const result = await sql`
+        INSERT INTO requests (
+          request_id,
+          salesperson_first_name,
+          salesperson_selection, 
+          mine_group,
+          mine_name,
+          contact,
+          line_items,
+          comment,
+          status
+        ) VALUES (
+          ${data.request_id || null},
+          ${data.salesperson_first_name || null},
+          ${data.salesperson_selection || null},
+          ${data.mine_group || null},
+          ${data.mine_name || null},
+          ${JSON.stringify(data.contact || null)},
+          ${JSON.stringify(data.line_items || [])},
+          ${data.comment || null},
+          'draft'
+        )
+        RETURNING *
+      `;
+      return result[0];
+    }
   }, 'createRequest');
 };
 
@@ -85,8 +115,12 @@ export const updateRequest = async (id: string, updates: {
   pipedrive_deal_id?: number;
 }) => {
   return withDbErrorHandling(async () => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
     // Get current request to merge updates
-    const current = await sql`SELECT * FROM requests WHERE id = ${id}`;
+    const current = isDevelopment 
+      ? await sql`SELECT * FROM mock_requests WHERE id = ${id}`
+      : await sql`SELECT * FROM requests WHERE id = ${id}`;
     if (current.length === 0) {
       throw new Error('Request not found');
     }
@@ -116,20 +150,35 @@ export const updateRequest = async (id: string, updates: {
     console.log('🔍 About to update, current line_items:', currentRequest.line_items);
     console.log('🔍 Updated data line_items:', updatedData.line_items);
     
-    const result = await sql`
-      UPDATE requests 
-      SET 
-        contact = ${JSON.stringify(updatedData.contact)},
-        line_items = ${JSON.stringify(updatedData.line_items)},
-        comment = ${updatedData.comment},
-        salesperson_first_name = ${updatedData.salesperson_first_name},
-        salesperson_selection = ${updatedData.salesperson_selection},
-        status = ${updatedData.status},
-        pipedrive_deal_id = ${updatedData.pipedrive_deal_id},
-        updated_at = ${new Date().toISOString()}
-      WHERE id = ${id} 
-      RETURNING *
-    `;
+    const result = isDevelopment 
+      ? await sql`
+        UPDATE mock_requests 
+        SET 
+          contact = ${JSON.stringify(updatedData.contact)},
+          line_items = ${JSON.stringify(updatedData.line_items)},
+          comment = ${updatedData.comment},
+          salesperson_first_name = ${updatedData.salesperson_first_name},
+          salesperson_selection = ${updatedData.salesperson_selection},
+          status = ${updatedData.status},
+          pipedrive_deal_id = ${updatedData.pipedrive_deal_id},
+          updated_at = ${new Date().toISOString()}
+        WHERE id = ${id} 
+        RETURNING *
+      `
+      : await sql`
+        UPDATE requests 
+        SET 
+          contact = ${JSON.stringify(updatedData.contact)},
+          line_items = ${JSON.stringify(updatedData.line_items)},
+          comment = ${updatedData.comment},
+          salesperson_first_name = ${updatedData.salesperson_first_name},
+          salesperson_selection = ${updatedData.salesperson_selection},
+          status = ${updatedData.status},
+          pipedrive_deal_id = ${updatedData.pipedrive_deal_id},
+          updated_at = ${new Date().toISOString()}
+        WHERE id = ${id} 
+        RETURNING *
+      `;
     
     console.log('🔍 Result after update:', result[0]);
     
@@ -139,9 +188,11 @@ export const updateRequest = async (id: string, updates: {
 
 export const getRequestById = async (id: string) => {
   return withDbErrorHandling(async () => {
-    const result = await sql`
-      SELECT * FROM requests WHERE id = ${id}
-    `;
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    const result = isDevelopment
+      ? await sql`SELECT * FROM mock_requests WHERE id = ${id}`
+      : await sql`SELECT * FROM requests WHERE id = ${id}`;
     
     return result[0] || null;
   }, 'getRequestById');
@@ -153,44 +204,77 @@ export const getRequests = async (filters: {
   limit?: number;
 }) => {
   return withDbErrorHandling(async () => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const tableName = isDevelopment ? 'mock_requests' : 'requests';
+    
     // Simple implementation - can be enhanced later
     if (filters.status && filters.salesperson && filters.salesperson !== 'all') {
-      return await sql`
-        SELECT * FROM requests 
-        WHERE status = ${filters.status} 
-        AND salesperson_first_name = ${filters.salesperson}
-        ORDER BY created_at DESC 
-        LIMIT ${filters.limit || 50}
-      `;
+      return isDevelopment
+        ? await sql`
+          SELECT * FROM mock_requests 
+          WHERE status = ${filters.status} 
+          AND salesperson_first_name = ${filters.salesperson}
+          ORDER BY created_at DESC 
+          LIMIT ${filters.limit || 50}
+        `
+        : await sql`
+          SELECT * FROM requests 
+          WHERE status = ${filters.status} 
+          AND salesperson_first_name = ${filters.salesperson}
+          ORDER BY created_at DESC 
+          LIMIT ${filters.limit || 50}
+        `;
     } else if (filters.status) {
-      return await sql`
-        SELECT * FROM requests 
-        WHERE status = ${filters.status}
-        ORDER BY created_at DESC 
-        LIMIT ${filters.limit || 50}
-      `;
+      return isDevelopment
+        ? await sql`
+          SELECT * FROM mock_requests 
+          WHERE status = ${filters.status}
+          ORDER BY created_at DESC 
+          LIMIT ${filters.limit || 50}
+        `
+        : await sql`
+          SELECT * FROM requests 
+          WHERE status = ${filters.status}
+          ORDER BY created_at DESC 
+          LIMIT ${filters.limit || 50}
+        `;
     } else if (filters.salesperson && filters.salesperson !== 'all') {
-      return await sql`
-        SELECT * FROM requests 
-        WHERE salesperson_first_name = ${filters.salesperson}
-        ORDER BY created_at DESC 
-        LIMIT ${filters.limit || 50}
-      `;
+      return isDevelopment
+        ? await sql`
+          SELECT * FROM mock_requests 
+          WHERE salesperson_first_name = ${filters.salesperson}
+          ORDER BY created_at DESC 
+          LIMIT ${filters.limit || 50}
+        `
+        : await sql`
+          SELECT * FROM requests 
+          WHERE salesperson_first_name = ${filters.salesperson}
+          ORDER BY created_at DESC 
+          LIMIT ${filters.limit || 50}
+        `;
     } else {
-      return await sql`
-        SELECT * FROM requests 
-        ORDER BY created_at DESC 
-        LIMIT ${filters.limit || 50}
-      `;
+      return isDevelopment
+        ? await sql`
+          SELECT * FROM mock_requests 
+          ORDER BY created_at DESC 
+          LIMIT ${filters.limit || 50}
+        `
+        : await sql`
+          SELECT * FROM requests 
+          ORDER BY created_at DESC 
+          LIMIT ${filters.limit || 50}
+        `;
     }
   }, 'getRequests');
 };
 
 export const deleteRequest = async (id: string) => {
   return withDbErrorHandling(async () => {
-    const result = await sql`
-      DELETE FROM requests WHERE id = ${id} RETURNING *
-    `;
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    const result = isDevelopment
+      ? await sql`DELETE FROM mock_requests WHERE id = ${id} RETURNING *`
+      : await sql`DELETE FROM requests WHERE id = ${id} RETURNING *`;
     
     return result[0] || null;
   }, 'deleteRequest');
