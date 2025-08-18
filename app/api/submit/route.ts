@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         throw new ValidationError('Request must have at least one line item before submission');
       }
       
-      const submitMode = process.env.PIPEDRIVE_SUBMIT_MODE || 'real';
+      const submitMode = process.env.EXTERNAL_SUBMIT_MODE || 'mock';
       
       if (submitMode === 'mock') {
         // Mock submission

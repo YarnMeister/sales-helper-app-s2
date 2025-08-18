@@ -1,29 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { env } from '@/lib/env';
-import { logInfo, logError } from '@/lib/log';
-import { generateCorrelationId, withPerformanceLogging } from '@/lib/log';
+import { withPerformanceLogging, logInfo, logError, generateCorrelationId } from '@/lib/log';
 
-// Validation schema for check-in notification data
 const CheckInNotificationSchema = z.object({
-  salesperson: z.enum(['James', 'Luyanda', 'Stefan'], {
-    errorMap: () => ({ message: "Salesperson must be one of: James, Luyanda, Stefan" })
-  }),
-  planned_mines: z.array(z.string().min(1)).min(1, "At least one mine must be selected"),
-  main_purpose: z.enum(['Quote follow-up', 'Delivery', 'Site check', 'Installation support', 'General sales visit'], {
-    errorMap: () => ({ message: "Invalid purpose selected" })
-  }),
-  availability: z.enum(['Later this morning', 'In the afternoon', 'Tomorrow'], {
-    errorMap: () => ({ message: "Invalid availability selected" })
-  }),
+  salesperson: z.string().min(1, 'Salesperson is required'),
+  planned_mines: z.array(z.string().min(1)).min(1, 'At least one mine is required'),
+  main_purpose: z.string().min(1, 'Main purpose is required'),
+  availability: z.string().min(1, 'Availability is required'),
   comments: z.string().optional(),
+  submit_mode: z.enum(['mock', 'live']).default('live')
 });
 
-// Format check-in message for Slack
 function formatCheckInMessage(data: z.infer<typeof CheckInNotificationSchema>): string {
   const mineNames = data.planned_mines.join(', ');
   
   let message = `Hi, this is *${data.salesperson}*, today I'll be visiting *${mineNames}*. The main purpose of the visit is: *${data.main_purpose}*. I'll be available on mobile throughout the day and I'll be back in office *${data.availability}*.`;
+  
+  if (data.submit_mode === 'mock') {
+    message += `\n\n*[TEST MODE - ${data.submit_mode.toUpperCase()}]*`;
+  }
   
   if (data.comments && data.comments.trim()) {
     message += `\n\nAdditional comments: ${data.comments}`;
@@ -33,49 +29,42 @@ function formatCheckInMessage(data: z.infer<typeof CheckInNotificationSchema>): 
 }
 
 export async function POST(req: NextRequest) {
-  const correlationId = generateCorrelationId();
-  
-  return await withPerformanceLogging('POST /api/slack/notify-checkin', 'api', async () => {
+  return withPerformanceLogging('POST /api/slack/notify-checkin', 'api', async () => {
+    const correlationId = generateCorrelationId();
+    
     try {
-      logInfo('Slack check-in notification request started', { correlationId });
-      
       // Check if Slack is configured
       if (!env.SLACK_BOT_TOKEN) {
-        logError('Slack notification failed - SLACK_BOT_TOKEN not configured', { correlationId });
-        return NextResponse.json({
+        logError('Slack integration not configured', { correlationId });
+        return Response.json({
           ok: false,
           error: 'Slack integration not configured'
         }, { status: 503 });
       }
       
+      // Parse and validate request body
       const body = await req.json();
-      
-      // Validate request body
       const validatedData = CheckInNotificationSchema.parse(body);
       
-      logInfo('Check-in notification data validated', { 
-        correlationId,
-        salesperson: validatedData.salesperson,
-        minesCount: validatedData.planned_mines.length,
-        purpose: validatedData.main_purpose,
-        channel: env.SLACK_CHANNEL || '#out-of-office'
+      // Determine submit mode and channel
+      const submitMode = process.env.NODE_ENV === 'production' 
+        ? 'live'
+        : (validatedData.submit_mode || 'live');
+      
+      const targetChannel = submitMode === 'mock' 
+        ? (env.SLACK_CHANNEL_MOCK || '#sales-checkins-test')
+        : (env.SLACK_CHANNEL_LIVE || '#sales-checkins');
+      
+      // Format message
+      const messageText = formatCheckInMessage({
+        ...validatedData,
+        submit_mode: submitMode
       });
       
-      // Format message for Slack
-      const messageText = formatCheckInMessage(validatedData);
-      
-      // Prepare Slack API request
-      const slackMessage = {
-        channel: env.SLACK_CHANNEL || '#out-of-office',
-        text: messageText,
-        unfurl_links: false,
-        unfurl_media: false
-      };
-      
-      logInfo('Sending message to Slack', { 
+      logInfo('Sending Slack notification', { 
         correlationId,
-        channel: env.SLACK_CHANNEL || '#out-of-office',
-        messageLength: messageText.length
+        channel: targetChannel, 
+        mode: submitMode 
       });
       
       // Send to Slack API
@@ -85,52 +74,63 @@ export async function POST(req: NextRequest) {
           'Authorization': `Bearer ${env.SLACK_BOT_TOKEN}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(slackMessage)
+        body: JSON.stringify({
+          channel: targetChannel,
+          text: messageText,
+          unfurl_links: false,
+          unfurl_media: false
+        })
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Slack API error: ${response.status} ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const result = await response.json();
       
       if (!result.ok) {
-        throw new Error(`Slack API error: ${result.error}`);
+        logError('Slack API error', { 
+          correlationId,
+          error: result.error, 
+          channel: targetChannel 
+        });
+        return Response.json({
+          ok: false,
+          error: `Slack API error: ${result.error}`,
+          channel: targetChannel
+        }, { status: 500 });
       }
       
       logInfo('Slack notification sent successfully', { 
         correlationId,
-        channel: env.SLACK_CHANNEL || '#out-of-office',
-        messageTs: result.ts
+        channel: targetChannel, 
+        timestamp: result.ts 
       });
       
-      return NextResponse.json({
-        ok: true,
-        data: {
-          channel: env.SLACK_CHANNEL || '#out-of-office',
-          message_ts: result.ts,
-          message: messageText
-        }
+      return Response.json({ 
+        ok: true, 
+        channel: targetChannel,
+        mode: submitMode,
+        timestamp: result.ts 
       });
       
     } catch (error) {
       logError('Slack notification failed', { 
         correlationId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error) 
       });
       
       if (error instanceof z.ZodError) {
-        return NextResponse.json({
+        return Response.json({
           ok: false,
-          error: 'Validation failed',
-          details: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
-        }, { status: 400 });
+          error: 'Invalid request data',
+          details: error.errors
+        }, { status: 422 });
       }
       
-      return NextResponse.json({
+      return Response.json({
         ok: false,
-        error: `Failed to send Slack notification: ${error instanceof Error ? error.message : String(error)}`
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
       }, { status: 500 });
     }
   });

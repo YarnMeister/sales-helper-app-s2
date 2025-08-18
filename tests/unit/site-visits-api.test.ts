@@ -7,13 +7,15 @@ vi.mock('@/lib/db', () => ({
   sql: vi.fn()
 }));
 
-// Mock logging
-vi.mock('@/lib/log', () => ({
-  generateCorrelationId: vi.fn(() => 'test-correlation-id'),
-  withPerformanceLogging: vi.fn((fn) => fn),
-  logInfo: vi.fn(),
-  logError: vi.fn()
-}));
+// Mock the log function
+vi.mock('@/lib/log', async () => {
+  const actual = await vi.importActual('@/lib/log');
+  return {
+    ...actual,
+    log: vi.fn(),
+    generateCorrelationId: () => 'test-correlation-id'
+  };
+});
 
 describe('Site Visits API', () => {
   let mockSql: any;

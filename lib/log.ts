@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+
 export type LogLevel = 'ERROR' | 'WARN' | 'INFO' | 'DEBUG';
 
 export interface LogMetadata {
@@ -42,44 +44,47 @@ export const logDebug = (msg: string, meta?: LogMetadata) => log('DEBUG', msg, m
 export const withPerformanceLogging = async <T>(
   operation: string,
   context: string,
-  fn: () => Promise<T>,
-  meta?: Omit<LogMetadata, 'duration' | 'operation' | 'context'>
+  fn: () => Promise<T>
 ): Promise<T> => {
   const startTime = Date.now();
-  const correlationId = Math.random().toString(36).substring(2, 15);
+  const correlationId = generateCorrelationId();
+  
+  logInfo(`Starting ${operation}`, { context, correlationId });
   
   try {
-    logInfo(`Operation started: ${operation}`, { 
-      operation, 
-      context, 
-      correlationId,
-      ...meta 
-    });
-    
     const result = await fn();
     const duration = Date.now() - startTime;
     
-    logInfo(`Operation completed: ${operation}`, { 
-      operation, 
+    // CRITICAL: Preserve Response and NextResponse objects completely
+    if (result instanceof Response || result instanceof NextResponse) {
+      logInfo(`${operation} completed`, { 
+        context, 
+        correlationId,
+        duration,
+        status: result.status,
+        success: true 
+      });
+      return result; // Return the Response object as-is
+    }
+    
+    // For non-Response objects, log and return normally
+    logInfo(`${operation} completed`, { 
       context, 
       correlationId,
       duration,
-      ...meta 
+      success: true 
     });
-    
     return result;
+    
   } catch (error) {
     const duration = Date.now() - startTime;
-    
-    logError(`Operation failed: ${operation}`, { 
-      operation, 
-      context, 
+    logError(`${operation} failed`, { 
+      context,
       correlationId,
       duration,
-      error: error instanceof Error ? error.message : String(error),
-      ...meta 
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
     });
-    
     throw error;
   }
 };

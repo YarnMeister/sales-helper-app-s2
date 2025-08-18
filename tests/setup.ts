@@ -9,7 +9,7 @@ process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io';
 process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token';
 process.env.PIPEDRIVE_API_TOKEN = 'test-token';
 process.env.PIPEDRIVE_BASE_URL = 'https://api.pipedrive.com/v1';
-process.env.PIPEDRIVE_SUBMIT_MODE = 'mock';
+process.env.EXTERNAL_SUBMIT_MODE = 'mock';
 process.env.APP_ENV = 'test'; // Set to test environment
 
 // Mock the environment validation
@@ -21,7 +21,7 @@ vi.mock('../../lib/env', () => ({
     UPSTASH_REDIS_REST_TOKEN: 'test-token',
     PIPEDRIVE_API_TOKEN: 'test-token',
     PIPEDRIVE_BASE_URL: 'https://api.pipedrive.com/v1',
-    PIPEDRIVE_SUBMIT_MODE: 'mock',
+    EXTERNAL_SUBMIT_MODE: 'mock',
     APP_ENV: 'test'
   }
 }));

@@ -48,7 +48,7 @@ async function checkEnvironment() {
     console.log('✅ Environment validation successful!');
     console.log('\n📋 Configuration Summary:');
     console.log(`   Environment: ${process.env.APP_ENV || 'development'}`);
-    console.log(`   Pipedrive Mode: ${process.env.PIPEDRIVE_SUBMIT_MODE || 'mock'}`);
+    console.log(`   External Submit Mode: ${process.env.EXTERNAL_SUBMIT_MODE || 'mock'}`);
     console.log(`   Database: ${maskUrl(process.env.DATABASE_URL)}`);
     console.log(`   Cache: ${maskUrl(process.env.UPSTASH_REDIS_REST_URL)}`);
     console.log(`   Slack Bot: ${process.env.SLACK_BOT_TOKEN ? 'Enabled' : 'Disabled'}`);

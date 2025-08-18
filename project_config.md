@@ -13,6 +13,7 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` and `sp
 1. Are they clear?
 2. Any gaps?  
 3. Call out any parts we can skip
+- DO NOT start with changes UNITL user gave feedback on gaps/skip sections
 
 ## Process for each new feature branch
 - Check that git is clean and ready to start 

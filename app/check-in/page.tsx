@@ -76,12 +76,18 @@ export default function CheckInPage() {
         return;
       }
 
+      // Get submit mode from environment
+      const submitMode = process.env.NODE_ENV === 'production' 
+        ? 'live' 
+        : (process.env.NEXT_PUBLIC_SUBMIT_MODE || 'live');
+      
       const checkInData = {
         salesperson: selectedSalesperson,
         planned_mines: [selectedMine], // Convert single mine to array
         main_purpose: selectedPurpose,
         availability: backInOffice,
-        comments: comments.trim() || undefined
+        comments: comments.trim() || undefined,
+        submit_mode: submitMode // Include submit mode
       };
 
       console.log('Submitting check-in data:', checkInData);

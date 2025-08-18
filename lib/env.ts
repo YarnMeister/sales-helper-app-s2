@@ -12,14 +12,17 @@ const EnvSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url('Invalid UPSTASH_REDIS_REST_URL'),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1, 'UPSTASH_REDIS_REST_TOKEN is required'),
   
-  // Pipedrive Configuration (unchanged)
+  // Pipedrive Configuration
   PIPEDRIVE_API_TOKEN: z.string().min(1),
   PIPEDRIVE_BASE_URL: z.string().url().default('https://api.pipedrive.com/v1'),
-  PIPEDRIVE_SUBMIT_MODE: z.enum(['live', 'mock']).default('mock'),
   
-  // Optional: Slack alerting
+  // External Submit Mode - drives both Slack and Pipedrive submissions
+  EXTERNAL_SUBMIT_MODE: z.enum(['live', 'mock']).default('mock'),
+  
+  // Slack Configuration
   SLACK_BOT_TOKEN: z.string().optional(),
-  SLACK_CHANNEL: z.string().default('#out-of-office'),
+  SLACK_CHANNEL_LIVE: z.string().default('#sales-checkins'),
+  SLACK_CHANNEL_MOCK: z.string().default('#sales-checkins-test'),
 });
 
 // Validate and parse environment variables
@@ -63,7 +66,7 @@ export const validateEnvironment = () => {
     
     logInfo(`Environment validated successfully`, { 
       environment: env.APP_ENV,
-      pipedriveMode: env.PIPEDRIVE_SUBMIT_MODE,
+      externalSubmitMode: env.EXTERNAL_SUBMIT_MODE,
       hasDatabase: !!dbConfig.url,
       hasCache: !!cacheConfig.url
     });

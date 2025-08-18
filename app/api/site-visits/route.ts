@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { sql } from '@/lib/db';
 import { logInfo, logError, generateCorrelationId, withPerformanceLogging } from '@/lib/log';
@@ -16,12 +16,12 @@ const CheckInSchema = z.object({
     errorMap: () => ({ message: "Invalid availability selected" })
   }),
   comments: z.string().optional(),
+  submit_mode: z.enum(['mock', 'live']).default('live'),
 });
 
 export async function POST(req: NextRequest) {
-  const correlationId = generateCorrelationId();
-  
-  return await withPerformanceLogging('POST /api/site-visits', 'api', async () => {
+  return withPerformanceLogging('POST /api/site-visits', 'api', async () => {
+    const correlationId = generateCorrelationId();
     try {
       logInfo('Site visit check-in request started', { correlationId });
       
@@ -44,15 +44,17 @@ export async function POST(req: NextRequest) {
           planned_mines, 
           main_purpose, 
           availability, 
-          comments
+          comments,
+          submit_mode
         ) VALUES (
           ${validatedData.salesperson},
           ${validatedData.planned_mines},
           ${validatedData.main_purpose},
           ${validatedData.availability},
-          ${validatedData.comments || null}
+          ${validatedData.comments || null},
+          ${validatedData.submit_mode}
         )
-        RETURNING id, date, created_at
+        RETURNING id, date, created_at, submit_mode
       `;
       
       const savedVisit = result[0];
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
         date: savedVisit.date
       });
       
-      return NextResponse.json({
+      return Response.json({
         ok: true,
         data: {
           id: savedVisit.id,
@@ -73,6 +75,7 @@ export async function POST(req: NextRequest) {
           main_purpose: validatedData.main_purpose,
           availability: validatedData.availability,
           comments: validatedData.comments,
+          submit_mode: savedVisit.submit_mode,
           created_at: savedVisit.created_at
         }
       });
@@ -84,14 +87,14 @@ export async function POST(req: NextRequest) {
       });
       
       if (error instanceof z.ZodError) {
-        return NextResponse.json({
+        return Response.json({
           ok: false,
           error: 'Validation failed',
           details: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
         }, { status: 400 });
       }
       
-      return NextResponse.json({
+      return Response.json({
         ok: false,
         error: 'Failed to save site visit'
       }, { status: 500 });
@@ -100,9 +103,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const correlationId = generateCorrelationId();
-  
-  return await withPerformanceLogging('GET /api/site-visits', 'api', async () => {
+  return withPerformanceLogging('GET /api/site-visits', 'api', async () => {
+    const correlationId = generateCorrelationId();
     try {
       logInfo('Site visits fetch request started', { correlationId });
       
@@ -146,7 +148,7 @@ export async function GET(req: NextRequest) {
         count: result.length
       });
       
-      return NextResponse.json({
+      return Response.json({
         ok: true,
         data: result
       });
@@ -157,7 +159,7 @@ export async function GET(req: NextRequest) {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      return NextResponse.json({
+      return Response.json({
         ok: false,
         error: 'Failed to fetch site visits'
       }, { status: 500 });
