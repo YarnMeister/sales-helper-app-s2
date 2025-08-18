@@ -7,19 +7,23 @@ import CheckInPage from '../check-in/page';
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
+  usePathname: vi.fn(() => '/check-in'),
 }));
 
 // Mock fetch
 global.fetch = vi.fn();
 
-// Mock the contacts data
+// Mock global.alert
+global.alert = vi.fn();
+
+// Mock the contacts data - fix structure to match ContactsHierarchy
 const mockContactsData = {
   'Group A': {
-    'Mine Alpha': { personId: 1, name: 'John Doe', email: 'john@minealpha.com' },
-    'Mine Beta': { personId: 2, name: 'Jane Smith', email: 'jane@minebeta.com' }
+    'Mine Alpha': [{ personId: 1, name: 'John Doe', email: 'john@minealpha.com', mineGroup: 'Group A', mineName: 'Mine Alpha' }],
+    'Mine Beta': [{ personId: 2, name: 'Jane Smith', email: 'jane@minebeta.com', mineGroup: 'Group A', mineName: 'Mine Beta' }]
   },
   'Group B': {
-    'Mine Gamma': { personId: 3, name: 'Bob Wilson', email: 'bob@minegamma.com' }
+    'Mine Gamma': [{ personId: 3, name: 'Bob Wilson', email: 'bob@minegamma.com', mineGroup: 'Group B', mineName: 'Mine Gamma' }]
   }
 };
 
@@ -62,10 +66,19 @@ describe('CheckInPage', () => {
       back: mockBack
     });
     
-    // Mock successful fetch for contacts
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ ok: true, data: mockContactsData })
+    // Default mock for contacts API - can be overridden in individual tests
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url.includes('/api/contacts')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: mockContactsData })
+        });
+      }
+      // Default mock for other API calls
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: {} })
+      });
     });
   });
 
@@ -78,7 +91,7 @@ describe('CheckInPage', () => {
     });
 
     // Check for main sections
-    expect(screen.getByText('Check-in')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Check-in' })).toBeInTheDocument();
     expect(screen.getByText('Select name')).toBeInTheDocument();
     expect(screen.getByText('Select visiting mine')).toBeInTheDocument();
     expect(screen.getByText('Purpose')).toBeInTheDocument();
@@ -198,7 +211,7 @@ describe('CheckInPage', () => {
       expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
     });
 
-    const commentsTextarea = screen.getByPlaceholderText('Add any additional comments...');
+    const commentsTextarea = screen.getByPlaceholderText('Enter any additional comments...');
     expect(commentsTextarea).toBeInTheDocument();
 
     fireEvent.change(commentsTextarea, { target: { value: 'Test comment' } });
@@ -223,19 +236,44 @@ describe('CheckInPage', () => {
   });
 
   it('shows error state when contacts fetch fails', async () => {
-    (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+    // Override the default mock for this test
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url.includes('/api/contacts')) {
+        return Promise.reject(new Error('Network error'));
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: {} })
+      });
+    });
 
     render(<CheckInPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Failed to load contacts')).toBeInTheDocument();
+      expect(screen.getByText('Unable to load contacts. Please check your connection.')).toBeInTheDocument();
     });
   });
 
   it('submits check-in data successfully', async () => {
-    (global.fetch as any)
-      .mockResolvedValueOnce(mockSiteVisitResponse)
-      .mockResolvedValueOnce(mockSlackResponse);
+    // Override the default mock for this test
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url.includes('/api/contacts')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: mockContactsData })
+        });
+      }
+      if (url.includes('/api/site-visits')) {
+        return Promise.resolve(mockSiteVisitResponse);
+      }
+      if (url.includes('/api/slack/notify-checkin')) {
+        return Promise.resolve(mockSlackResponse);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: {} })
+      });
+    });
 
     render(<CheckInPage />);
     
@@ -247,7 +285,13 @@ describe('CheckInPage', () => {
     const allMinesButton = screen.getByText('All mines');
     fireEvent.click(allMinesButton);
     
-    // Wait for mine options to appear and select one
+    // Wait for mine groups to appear and expand Group A
+    await waitFor(() => {
+      const groupAButton = screen.getByText('Group A');
+      fireEvent.click(groupAButton);
+    });
+    
+    // Wait for individual mines to appear and select Mine Alpha
     await waitFor(() => {
       const mineAlphaButton = screen.getByText('Mine Alpha');
       fireEvent.click(mineAlphaButton);
@@ -262,7 +306,7 @@ describe('CheckInPage', () => {
     fireEvent.click(morningButton);
 
     // Add comments
-    const commentsTextarea = screen.getByPlaceholderText('Add any additional comments...');
+    const commentsTextarea = screen.getByPlaceholderText('Enter any additional comments...');
     fireEvent.change(commentsTextarea, { target: { value: 'Test comment' } });
 
     // Submit check-in
@@ -305,9 +349,24 @@ describe('CheckInPage', () => {
   });
 
   it('handles site visit API error gracefully', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Database error' })
+    // Override the default mock for this test
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url.includes('/api/contacts')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: mockContactsData })
+        });
+      }
+      if (url.includes('/api/site-visits')) {
+        return Promise.resolve({
+          ok: false,
+          json: () => Promise.resolve({ error: 'Database error' })
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: {} })
+      });
     });
 
     render(<CheckInPage />);
@@ -320,6 +379,13 @@ describe('CheckInPage', () => {
     const allMinesButton = screen.getByText('All mines');
     fireEvent.click(allMinesButton);
     
+    // Wait for mine groups to appear and expand Group A
+    await waitFor(() => {
+      const groupAButton = screen.getByText('Group A');
+      fireEvent.click(groupAButton);
+    });
+    
+    // Wait for individual mines to appear and select Mine Alpha
     await waitFor(() => {
       const mineAlphaButton = screen.getByText('Mine Alpha');
       fireEvent.click(mineAlphaButton);
@@ -342,12 +408,28 @@ describe('CheckInPage', () => {
   });
 
   it('handles Slack API error gracefully without failing check-in', async () => {
-    (global.fetch as any)
-      .mockResolvedValueOnce(mockSiteVisitResponse)
-      .mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Slack API error' })
+    // Override the default mock for this test
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url.includes('/api/contacts')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: mockContactsData })
+        });
+      }
+      if (url.includes('/api/site-visits')) {
+        return Promise.resolve(mockSiteVisitResponse);
+      }
+      if (url.includes('/api/slack/notify-checkin')) {
+        return Promise.resolve({
+          ok: false,
+          json: () => Promise.resolve({ error: 'Slack API error' })
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: {} })
       });
+    });
 
     render(<CheckInPage />);
     
@@ -359,6 +441,13 @@ describe('CheckInPage', () => {
     const allMinesButton = screen.getByText('All mines');
     fireEvent.click(allMinesButton);
     
+    // Wait for mine groups to appear and expand Group A
+    await waitFor(() => {
+      const groupAButton = screen.getByText('Group A');
+      fireEvent.click(groupAButton);
+    });
+    
+    // Wait for individual mines to appear and select Mine Alpha
     await waitFor(() => {
       const mineAlphaButton = screen.getByText('Mine Alpha');
       fireEvent.click(mineAlphaButton);
