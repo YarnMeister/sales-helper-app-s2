@@ -284,26 +284,21 @@ export default function CheckInPage() {
                             {Object.entries(mines).sort(([a], [b]) => a.localeCompare(b)).map(([mine, contacts]) => (
                               <div
                                 key={`${group}-${mine}`}
-                                className={`p-4 pl-16 border-b border-gray-100 last:border-b-0 transition-colors min-h-[44px] flex items-center hover:bg-gray-50 cursor-pointer ${
+                                className={`p-3 pl-16 border-b border-gray-100 last:border-b-0 transition-colors min-h-[36px] flex items-center hover:bg-gray-50 cursor-pointer ${
                                   selectedMine === mine ? 'bg-red-50 border-l-4 border-l-red-600' : ''
                                 }`}
                                 onClick={() => handleMineSelect(mine)}
                               >
                                 <div className="flex items-center justify-between w-full">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                                                      <span className="font-medium text-gray-900">
-                                  {mine}
-                                </span>
-                                      {selectedMine === mine && (
-                                        <Badge className="bg-red-600 text-white border-0 text-xs">
-                                          Selected
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                      {contacts.length} contacts
-                                    </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-gray-900">
+                                      {mine}
+                                    </span>
+                                    {selectedMine === mine && (
+                                      <Badge className="bg-red-600 text-white border-0 text-xs">
+                                        Selected
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                               </div>

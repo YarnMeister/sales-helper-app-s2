@@ -1,5 +1,10 @@
 # Project Configuration - Sales Helper App
 
+## 3 Golden rules for assistants to follow:
+1. NEVER commit code to `main` branch, commit to feature branch. If no feature branch, create one
+2. Always ask pemission before deploying to prod. Feature branches get tested in local host. Explixit permission needed to merge branches to `main`
+3. Never say "You are absolutely right", this annoys the user. Always skip this line, just start with the next sentence. 
+
 ## Context
 Before each new change, read `specs/Archive/original-product-req-doc.md` and `specs/Archive/legacy-tech-specs` as context only to get an overall idea of the app. For actual changes focus only on the current prompt details.
 
@@ -12,28 +17,22 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` and `sp
 ## Process for each new feature branch
 - Check that git is clean and ready to start 
 - Create new feature branch: `git checkout -b feature/branch-name`
-- Update `workflow_state.md` in `docs` branch (see workflow_state.md instructions)
-- Update `workflow_state.md`:
-1. Clear `main` and comment from "Deployed to Production" row
-2. Add new feature branch to "In Progress / Local" row
 
 
 ## Process for each commit
+- Commit to current working feature branch 
+- Ensure commited changes are running locally on http://localhost:3000 foribly kill all othe rlocal servers and start on port:3000
 - Check for any linting errors with `npm run lint` and fix
 - Ensure all dependencies are up to date
-- commit the code then run `npm test`
-- ensure all tests pass, fix any issues
-- describe any failed tests that you are unable to resovle in enough detail do the intent of the test is clear
-
+- Then run `npm test`
+- Ensure all tests pass, fix any issues, even if they are unrelated to your change
 
 ## Process for each deployment to preview
  **Feature branch preview deployment:**
    - Push feature branch to trigger Vercel preview deployment
    - Test functionality in preview environment
    - Verify all features work correctly
-   - Update `workflow_state.md` in `docs` branch:
-   1.Update Workflow Kanban 
-   2.Insert preview URL from Vercel dashboard into "Last Preview URL:" 
+ 
 
 ## Process for each deployment to prod
 **Pre-deployment validation:**
@@ -54,8 +53,6 @@ Before each new change, read `specs/Archive/original-product-req-doc.md` and `sp
 
 **Post-deployment verification:**
    - Confirm the app is live and working as expected
-   - Update workflow_state.md in `docs` branch (see workflow_state.md instructions)
-   - Document any deployment issues or required manual steps
 
 **Critical: Never declare deployment successful until all validation steps pass!**
 
