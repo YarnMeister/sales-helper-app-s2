@@ -47,9 +47,7 @@ export async function POST(req: NextRequest) {
       const validatedData = CheckInNotificationSchema.parse(body);
       
       // Determine submit mode and channel
-      const submitMode = process.env.NODE_ENV === 'production' 
-        ? 'live'
-        : (validatedData.submit_mode || 'live');
+      const submitMode = validatedData.submit_mode || 'live';
       
       const targetChannel = submitMode === 'mock' 
         ? env.SLACK_CHANNEL_MOCK
