@@ -10,7 +10,7 @@ vi.mock('@/lib/db', () => ({
 // Mock logging
 vi.mock('@/lib/log', () => ({
   generateCorrelationId: vi.fn(() => 'test-correlation-id'),
-  withPerformanceLogging: vi.fn((fn) => fn),
+  withPerformanceLogging: vi.fn((operation, context, fn) => fn()),
   logInfo: vi.fn(),
   logError: vi.fn()
 }));
@@ -19,7 +19,8 @@ describe('Site Visits API', () => {
   let mockSql: any;
 
   beforeEach(async () => {
-    mockSql = vi.mocked(await import('@/lib/db')).sql;
+    const { sql } = await import('@/lib/db');
+    mockSql = vi.mocked(sql);
     vi.clearAllMocks();
   });
 
@@ -36,13 +37,7 @@ describe('Site Visits API', () => {
       const mockInsertResult = [{
         id: 'test-id-123',
         date: '2025-01-17',
-        salesperson: 'James',
-        planned_mines: ['Mine Alpha'],
-        main_purpose: 'Quote follow-up',
-        availability: 'Later this morning',
-        comments: 'Test comment',
-        created_at: '2025-01-17T10:00:00Z',
-        updated_at: '2025-01-17T10:00:00Z'
+        created_at: '2025-01-17T10:00:00Z'
       }];
 
       mockSql.mockResolvedValueOnce(mockInsertResult);
@@ -58,9 +53,26 @@ describe('Site Visits API', () => {
 
       expect(response.status).toBe(200);
       expect(result.ok).toBe(true);
-      expect(result.data).toEqual(mockInsertResult[0]);
+      expect(result.data).toMatchObject({
+        id: 'test-id-123',
+        date: '2025-01-17',
+        salesperson: 'James',
+        planned_mines: ['Mine Alpha'],
+        main_purpose: 'Quote follow-up',
+        availability: 'Later this morning',
+        comments: 'Test comment',
+        created_at: '2025-01-17T10:00:00Z'
+      });
       expect(mockSql).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO site_visits')
+        expect.arrayContaining([
+          expect.stringContaining('INSERT INTO site_visits'),
+          expect.stringContaining('RETURNING id, date, created_at')
+        ]),
+        'James',
+        ['Mine Alpha'],
+        'Quote follow-up',
+        'Later this morning',
+        'Test comment'
       );
     });
 
@@ -83,7 +95,8 @@ describe('Site Visits API', () => {
 
       expect(response.status).toBe(400);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain('planned_mines');
+      expect(result.error).toBe('Validation failed');
+      expect(result.details).toEqual(['planned_mines: Required']);
     });
 
     it('should validate salesperson values', async () => {
@@ -105,7 +118,8 @@ describe('Site Visits API', () => {
 
       expect(response.status).toBe(400);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain('Invalid enum value');
+      expect(result.error).toBe('Validation failed');
+      expect(result.details).toEqual(['salesperson: Salesperson must be one of: James, Luyanda, Stefan']);
     });
 
     it('should validate purpose values', async () => {
@@ -127,7 +141,8 @@ describe('Site Visits API', () => {
 
       expect(response.status).toBe(400);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain('Invalid enum value');
+      expect(result.error).toBe('Validation failed');
+      expect(result.details).toEqual(['main_purpose: Invalid purpose selected']);
     });
 
     it('should validate availability values', async () => {
@@ -149,7 +164,8 @@ describe('Site Visits API', () => {
 
       expect(response.status).toBe(400);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain('Invalid enum value');
+      expect(result.error).toBe('Validation failed');
+      expect(result.details).toEqual(['availability: Invalid availability selected']);
     });
 
     it('should handle database errors gracefully', async () => {
@@ -173,7 +189,7 @@ describe('Site Visits API', () => {
 
       expect(response.status).toBe(500);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain('Database connection failed');
+      expect(result.error).toBe('Failed to save site visit');
     });
   });
 
@@ -203,7 +219,11 @@ describe('Site Visits API', () => {
       expect(result.ok).toBe(true);
       expect(result.data).toEqual(mockVisits);
       expect(mockSql).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT * FROM site_visits')
+        expect.arrayContaining([
+          expect.stringContaining('SELECT id, date, salesperson, planned_mines, main_purpose, availability, comments, created_at, updated_at'),
+          expect.stringContaining('FROM site_visits'),
+          expect.stringContaining('ORDER BY created_at DESC')
+        ])
       );
     });
 
@@ -232,7 +252,11 @@ describe('Site Visits API', () => {
       expect(result.ok).toBe(true);
       expect(result.data).toEqual(mockVisits);
       expect(mockSql).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE salesperson =')
+        expect.arrayContaining([
+          expect.stringContaining('WHERE salesperson ='),
+          expect.stringContaining('ORDER BY created_at DESC')
+        ]),
+        'James'
       );
     });
 
@@ -261,7 +285,11 @@ describe('Site Visits API', () => {
       expect(result.ok).toBe(true);
       expect(result.data).toEqual(mockVisits);
       expect(mockSql).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE date =')
+        expect.arrayContaining([
+          expect.stringContaining('WHERE date ='),
+          expect.stringContaining('ORDER BY created_at DESC')
+        ]),
+        '2025-01-17'
       );
     });
 
@@ -290,10 +318,13 @@ describe('Site Visits API', () => {
       expect(result.ok).toBe(true);
       expect(result.data).toEqual(mockVisits);
       expect(mockSql).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE salesperson =')
-      );
-      expect(mockSql).toHaveBeenCalledWith(
-        expect.stringContaining('AND date =')
+        expect.arrayContaining([
+          expect.stringContaining('WHERE salesperson ='),
+          expect.stringContaining('AND date ='),
+          expect.stringContaining('ORDER BY created_at DESC')
+        ]),
+        'James',
+        '2025-01-17'
       );
     });
 
@@ -306,7 +337,7 @@ describe('Site Visits API', () => {
 
       expect(response.status).toBe(500);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain('Database connection failed');
+      expect(result.error).toBe('Failed to fetch site visits');
     });
   });
 });
