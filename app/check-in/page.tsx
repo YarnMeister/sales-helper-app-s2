@@ -291,7 +291,7 @@ export default function CheckInPage() {
                               >
                                 <div className="flex items-center justify-between w-full">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-medium text-gray-900">
+                                    <span className="text-sm text-gray-600">
                                       {mine}
                                     </span>
                                     {selectedMine === mine && (
