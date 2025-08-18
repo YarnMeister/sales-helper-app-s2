@@ -242,7 +242,7 @@ export default function CheckInPage() {
               {/* All Mine Groups */}
               {expandedGroups.has('all-mines') && (
                 <div className="bg-white">
-                  {Object.entries(contactsData).map(([group, mines]) => {
+                  {Object.entries(contactsData).sort(([a], [b]) => a.localeCompare(b)).map(([group, mines]) => {
                     const isGroupExpanded = expandedGroups.has(group);
                     const totalMines = Object.keys(mines).length;
                     
@@ -281,7 +281,7 @@ export default function CheckInPage() {
                         {/* Mines List */}
                         {isGroupExpanded && (
                           <div className="bg-gray-25">
-                            {Object.entries(mines).map(([mine, contacts]) => (
+                            {Object.entries(mines).sort(([a], [b]) => a.localeCompare(b)).map(([mine, contacts]) => (
                               <div
                                 key={`${group}-${mine}`}
                                 className={`p-4 pl-16 border-b border-gray-100 last:border-b-0 transition-colors min-h-[44px] flex items-center hover:bg-gray-50 cursor-pointer ${
