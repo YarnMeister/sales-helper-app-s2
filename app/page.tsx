@@ -186,8 +186,12 @@ export default function MainPage() {
     }
   };
 
+  const handleShowSalespersonModal = () => {
+    setShowSalespersonModal(true);
+  };
+
   const handleSalespersonSelect = (salesperson: string) => {
-    setSelectedSalesperson(salesperson);
+    setShowSalespersonModal(false);
     
     // Create the request with the selected salesperson
     handleNewRequestWithSalesperson(salesperson);
@@ -467,6 +471,7 @@ export default function MainPage() {
         isCreating={isCreating}
         selectedSalesperson={selectedSalesperson}
         onSalespersonChange={handleSalespersonChange}
+        onShowSalespersonModal={handleShowSalespersonModal}
       />
 
       {/* Loading Overlay for New Request Creation */}
