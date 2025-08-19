@@ -122,6 +122,11 @@ The app uses a flat JSONB structure:
 - Vercel automatically deploys from main branch
 - All changes must go through feature branch → pull request → merge workflow
 
+### Preview Deployments (Disabled)
+- Preview deployments have been disabled due to Vercel infrastructure issues
+- All testing should be done locally or via production deployment
+- Git integration has been disconnected to prevent automatic preview deployments
+
 ## Emergency Override (Use with extreme caution)
 If you absolutely need to bypass the git hooks (emergency only):
 ```bash
