@@ -14,7 +14,7 @@ interface CommonFooterProps {
 export const CommonFooter: React.FC<CommonFooterProps> = ({ 
   onNewRequest, 
   isCreating = false,
-  selectedSalesperson = 'James',
+  selectedSalesperson = 'All requests',
   onSalespersonChange,
   onShowSalespersonModal
 }) => {

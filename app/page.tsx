@@ -41,8 +41,8 @@ interface Request {
 }
 
 export default function MainPage() {
-  // PRD: Default to specific salesperson, not "all"
-  const [selectedSalesperson, setSelectedSalesperson] = useState('James');
+  // PRD: Default to "All requests" to show all requests by default
+  const [selectedSalesperson, setSelectedSalesperson] = useState('All requests');
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

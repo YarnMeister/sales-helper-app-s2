@@ -74,9 +74,9 @@ describe('MainPage', () => {
     expect(screen.getByText('Contacts')).toBeInTheDocument();
     expect(screen.getByText('Price List')).toBeInTheDocument();
 
-    // Check that James is selected by default
-    const jamesButton = screen.getByText('James');
-    expect(jamesButton).toHaveClass('bg-red-600');
+    // Check that All requests is selected by default
+    const allRequestsButton = screen.getByText('All requests');
+    expect(allRequestsButton).toHaveClass('bg-red-600');
   });
 
   it('should filter requests by salesperson', async () => {
@@ -110,7 +110,7 @@ describe('MainPage', () => {
 
     // Wait for initial load
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/requests?salesperson=James');
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests?showAll=true');
     });
 
     // Click on Stefan (to avoid conflicts with RequestCard content)
@@ -122,49 +122,37 @@ describe('MainPage', () => {
     });
   });
 
-  it('should create new request when plus button is clicked', async () => {
-    const mockNewRequest = { 
-      id: '1', 
-      request_id: 'QR-001', 
-      status: 'draft', 
-      salesperson_first_name: 'James',
-      line_items: [],
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z'
-    };
-    
-    (global.fetch as any)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ ok: true, data: [] })
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ ok: true, data: mockNewRequest })
-      });
+  it('should show salesperson modal when plus button is clicked with "All requests" selected', async () => {
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, data: [] })
+    });
 
     render(<MainPage />);
 
     // Wait for initial load
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/requests?salesperson=James');
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests?showAll=true');
     });
 
     // Click the plus button (New Request) - use a more specific selector
     const plusButton = screen.getByRole('button', { name: '' }); // The plus button has no accessible name
     fireEvent.click(plusButton);
 
-    // Wait for the new request to be created
+    // Wait for the modal to appear
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          request_id: 'QR-001',
-          salespersonFirstName: 'James'
-        })
-      });
+      expect(screen.getByText("Who's requesting?")).toBeInTheDocument();
     });
+
+    // Check salesperson options in modal - use getAllByText since there are multiple instances
+    const jamesButtons = screen.getAllByText('James');
+    const luyandaButtons = screen.getAllByText('Luyanda');
+    const stefanButtons = screen.getAllByText('Stefan');
+    
+    // Should have at least one of each (main page + modal)
+    expect(jamesButtons.length).toBeGreaterThan(0);
+    expect(luyandaButtons.length).toBeGreaterThan(0);
+    expect(stefanButtons.length).toBeGreaterThan(0);
   });
 
   it('should show salesperson modal when "All requests" is selected and plus is clicked', async () => {
@@ -230,7 +218,7 @@ describe('MainPage', () => {
 
     // Wait for requests to load
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/requests?salesperson=James');
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests?showAll=true');
     });
 
     // Find and click submit button (this would be in RequestCard component)

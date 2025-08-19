@@ -19,7 +19,7 @@ export default function CheckInPage() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   
   // New state for check-in form
-  const [selectedSalesperson, setSelectedSalesperson] = useState('James');
+  const [selectedSalesperson, setSelectedSalesperson] = useState('All requests');
   const [selectedMine, setSelectedMine] = useState('');
   const [selectedPurpose, setSelectedPurpose] = useState('');
   const [backInOffice, setBackInOffice] = useState('');
@@ -126,7 +126,7 @@ export default function CheckInPage() {
       router.push('/');
       
       // Reset form (this will happen when component unmounts)
-      setSelectedSalesperson('James');
+      setSelectedSalesperson('All requests');
       setSelectedMine('');
       setSelectedPurpose('');
       setBackInOffice('');

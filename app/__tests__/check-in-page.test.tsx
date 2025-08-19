@@ -122,8 +122,8 @@ describe('CheckInPage', () => {
     const jamesButton = screen.getByText('James');
     const luyandaButton = screen.getByText('Luyanda');
 
-    // Initially James should be selected (default)
-    expect(jamesButton).toHaveClass('text-white');
+    // Initially no salesperson should be selected (default is "All requests" but not shown in UI)
+    expect(jamesButton).not.toHaveClass('text-white');
     expect(luyandaButton).not.toHaveClass('text-white');
 
     // Click Luyanda
@@ -319,7 +319,7 @@ describe('CheckInPage', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salesperson: 'James',
+          salesperson: 'All requests',
           planned_mines: ['Mine Alpha'],
           main_purpose: 'Quote follow-up',
           availability: 'Later this morning',
@@ -333,7 +333,7 @@ describe('CheckInPage', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salesperson: 'James',
+          salesperson: 'All requests',
           planned_mines: ['Mine Alpha'],
           main_purpose: 'Quote follow-up',
           availability: 'Later this morning',
