@@ -186,16 +186,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             <div className="flex-1">
               {/* Mobile Layout: 3 separate rows */}
               <div className="md:hidden">
-                {/* Row 1: Mine Group | Mine Name */}
-                {request.contact.mineGroup && request.contact.mineName && (
-                  <div className="mb-2">
-                    <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
-                      {request.contact.mineGroup} <span className="text-blue-400">|</span> {request.contact.mineName}
-                    </Badge>
-                  </div>
-                )}
-                  
-                {/* Row 2: Contact Name with Change button */}
+                {/* Row 1: Contact Name with Change button */}
                 <div className="flex items-center justify-between mb-2">
                   <p className="font-medium text-blue-900">{request.contact.name}</p>
                   {!isSubmitted && (
@@ -210,6 +201,15 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                     </Button>
                   )}
                 </div>
+                
+                {/* Row 2: Mine Group | Mine Name */}
+                {request.contact.mineGroup && request.contact.mineName && (
+                  <div className="mb-2">
+                    <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
+                      {request.contact.mineGroup} <span className="text-blue-400">|</span> {request.contact.mineName}
+                    </Badge>
+                  </div>
+                )}
                   
                 {/* Row 3: Email and Phone */}
                 <div className="space-y-1">
