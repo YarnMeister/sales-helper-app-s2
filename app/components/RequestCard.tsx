@@ -4,6 +4,7 @@ import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { User, Package, ExternalLink, Trash2, Plus, Minus, Mail, Phone } from 'lucide-react';
 import { CommentControl } from './CommentControl';
+import { LineItemCard } from './LineItemCard';
 
 interface Contact {
   personId: number;
@@ -17,8 +18,10 @@ interface Contact {
 interface LineItem {
   pipedriveProductId: number;
   name: string;
+  code?: string;
   quantity: number;
   price?: number;
+  shortDescription?: string;
 }
 
 interface Request {
@@ -318,87 +321,17 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         )}
         {/* Display existing line items */}
         {request.line_items.length > 0 && (
-          <div 
-            className="bg-white border border-green-700 rounded-lg p-3"
-            data-testid="sh-request-items-display"
-          >
-            <div className="mb-2">
-              <p className="font-medium text-green-900">
-                Items: {request.line_items.length}
-              </p>
-            </div>
-            <div className="space-y-2">
-              {request.line_items.map((item, index) => (
-                <div key={index} className="bg-gray-50 rounded p-2">
-                  {/* Top row: Description spanning to delete button */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex-1 pr-2">
-                      <div className="text-sm text-gray-800">
-                        <span className="font-medium">{item.name}</span>
-                      </div>
-                    </div>
-                    {!isSubmitted && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteLineItem(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 flex-shrink-0"
-                        data-testid={`sh-delete-line-item-${index}`}
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {/* Bottom row: Quantity controls and price */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleQuantityChange(index, Math.max(1, (optimisticQuantities[index] ?? item.quantity) - 1))}
-                        disabled={isSubmitted || (optimisticQuantities[index] ?? item.quantity) <= 1}
-                        className="text-red-600 hover:text-red-700 bg-gray-50 hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
-                        data-testid={`sh-decrease-quantity-${index}`}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <input
-                        type="number"
-                        value={optimisticQuantities[index] ?? item.quantity}
-                        onChange={(e) => {
-                          const newQuantity = parseInt(e.target.value) || 1;
-                          handleQuantityChange(index, Math.max(1, newQuantity));
-                        }}
-                        min="1"
-                        disabled={isSubmitted}
-                        className="w-16 text-center text-sm border border-gray-300 rounded px-1 py-1 bg-white h-8"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        data-testid={`sh-quantity-input-${index}`}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleQuantityChange(index, (optimisticQuantities[index] ?? item.quantity) + 1)}
-                        disabled={isSubmitted}
-                        className="text-red-600 hover:text-red-700 bg-gray-50 hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
-                        data-testid={`sh-increase-quantity-${index}`}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {item.price && (
-                        <span>
-                          R{(item.price * (optimisticQuantities[index] ?? item.quantity)).toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-3" data-testid="sh-request-items-display">
+            {request.line_items.map((item, index) => (
+              <LineItemCard
+                key={index}
+                item={item}
+                index={index}
+                isSubmitted={isSubmitted}
+                onQuantityChange={handleQuantityChange}
+                onDelete={handleDeleteLineItem}
+              />
+            ))}
           </div>
         )}
 

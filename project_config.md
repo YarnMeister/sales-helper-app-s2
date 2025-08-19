@@ -35,6 +35,7 @@
 - Run `npm run lint` and fix all errors.
 - Ensure dependencies are up to date (`npm outdated` → update safe packages).
 - Run `npm test` and fix failing tests (even if unrelated).
+- Do a comprehensive review of the change to check if any new tests should be added for this commit, then do it
 - Include any changes to `project_config.md` or `/specs/*` in the commit.
 **For and DB changes and migrations**
 - Always verify migrations actually worked - don't trust the "applied" status
@@ -62,14 +63,12 @@
 **Pre-deploy validation**
 - Run `npm run build` to confirm TypeScript compiles cleanly.
 - Check environment variables in Vercel are set and correct.
-
 **Deploy**
 - Merge approved feature branch into `main`.
 - Vercel auto-triggers production deployment.
 - Monitor via CLI:
   - `vercel ls` → confirm production build in progress.
   - `vercel inspect <deployment-url>` → verify logs.
-
 **Post-deploy checks**
 - Confirm “Ready” status.
 - Verify app is live at production URL.
