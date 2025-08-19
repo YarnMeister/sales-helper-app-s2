@@ -202,14 +202,19 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                   )}
                 </div>
                 
-                {/* Row 2: Mine Group | Mine Name */}
-                {request.contact.mineGroup && request.contact.mineName && (
-                  <div className="mb-2">
+                {/* Row 2: Mine Group and Mine Name as separate badges */}
+                <div className="mb-2 flex gap-2">
+                  {request.contact.mineGroup && (
                     <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
-                      {request.contact.mineGroup} <span className="text-blue-400"> | </span> {request.contact.mineName}
+                      {request.contact.mineGroup}
                     </Badge>
-                  </div>
-                )}
+                  )}
+                  {request.contact.mineName && (
+                    <Badge className="bg-green-100 text-green-800 border-0 text-xs font-medium">
+                      {request.contact.mineName}
+                    </Badge>
+                  )}
+                </div>
                   
                 {/* Row 3: Email and Phone */}
                 <div className="space-y-1">
@@ -240,11 +245,18 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <p className="font-medium text-blue-900">{request.contact.name}</p>
                   <div className="flex items-center gap-2">
-                    {request.contact.mineGroup && request.contact.mineName && (
-                      <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
-                        {request.contact.mineGroup} <span className="text-blue-400"> | </span> {request.contact.mineName}
-                      </Badge>
-                    )}
+                    <div className="flex gap-2">
+                      {request.contact.mineGroup && (
+                        <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
+                          {request.contact.mineGroup}
+                        </Badge>
+                      )}
+                      {request.contact.mineName && (
+                        <Badge className="bg-green-100 text-green-800 border-0 text-xs font-medium">
+                          {request.contact.mineName}
+                        </Badge>
+                      )}
+                    </div>
                     {!isSubmitted && (
                       <Button
                         variant="ghost"

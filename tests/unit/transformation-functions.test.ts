@@ -13,8 +13,11 @@ const transformContactsHierarchy = (persons: any[], organizations: any[]) => {
     const org = orgMap.get(person.org_id?.value);
     // PRD requirement: Group by Mine Group > Mine Name > Persons
     // Use correct Pipedrive field ID from legacy tech specs
-    const mineGroup = org?.[MINE_GROUP_FIELD_ID] || 'Unknown Group';
-    const mineName = person.org_id?.name || 'Unknown Mine';
+    const rawMineGroup = org?.[MINE_GROUP_FIELD_ID] || 'Unknown Group';
+    const orgName = person.org_id?.name || 'Unknown Mine';
+    
+    const mineGroup = rawMineGroup;
+    const mineName = orgName;
     
     if (!acc[mineGroup]) acc[mineGroup] = {};
     if (!acc[mineGroup][mineName]) acc[mineGroup][mineName] = [];
