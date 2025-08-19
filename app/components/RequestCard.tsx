@@ -184,15 +184,20 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             data-testid="sh-request-contact-display"
           >
             <div className="flex-1">
-              {/* Row 1: Name and Mine Group | Mine Name */}
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-medium text-blue-900">{request.contact.name}</p>
-                <div className="flex items-center gap-2">
-                  {request.contact.mineGroup && request.contact.mineName && (
+              {/* Mobile Layout: 3 separate rows */}
+              <div className="md:hidden">
+                {/* Row 1: Mine Group | Mine Name */}
+                {request.contact.mineGroup && request.contact.mineName && (
+                  <div className="mb-2">
                     <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
                       {request.contact.mineGroup} <span className="text-blue-400">|</span> {request.contact.mineName}
                     </Badge>
-                  )}
+                  </div>
+                )}
+                  
+                {/* Row 2: Contact Name with Change button */}
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-medium text-blue-900">{request.contact.name}</p>
                   {!isSubmitted && (
                     <Button
                       variant="ghost"
@@ -205,8 +210,55 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                     </Button>
                   )}
                 </div>
-                              </div>
-                
+                  
+                {/* Row 3: Email and Phone */}
+                <div className="space-y-1">
+                  {request.contact.email && (
+                    <a 
+                      href={`mailto:${request.contact.email}`}
+                      className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                    >
+                      <Mail className="h-3 w-3" />
+                      <span>{request.contact.email}</span>
+                    </a>
+                  )}
+                  {request.contact.phone && (
+                    <a 
+                      href={`tel:${request.contact.phone}`}
+                      className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                    >
+                      <Phone className="h-3 w-3" />
+                      <span>{request.contact.phone}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Desktop Layout: Original compact layout */}
+              <div className="hidden md:block">
+                {/* Row 1: Name and Mine Group | Mine Name */}
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-medium text-blue-900">{request.contact.name}</p>
+                  <div className="flex items-center gap-2">
+                    {request.contact.mineGroup && request.contact.mineName && (
+                      <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
+                        {request.contact.mineGroup} <span className="text-blue-400">|</span> {request.contact.mineName}
+                      </Badge>
+                    )}
+                    {!isSubmitted && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onAddContact?.(request.id)}
+                        className="text-red-600 hover:text-red-700 text-xs"
+                        data-testid="sh-request-change-contact-desktop"
+                      >
+                        Change
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                  
                 {/* Row 2: Email and Phone on same row */}
                 <div className="flex items-center gap-4">
                   {request.contact.email && (
@@ -229,6 +281,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                   )}
                 </div>
               </div>
+            </div>
           </div>
         ) : (
           <Button
