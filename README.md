@@ -2,6 +2,34 @@
 
 A Next.js application for managing sales contacts, line items, and check-ins using Neon Postgres and Upstash Redis.
 
+## 🚨 Branch Protection
+
+This repository has **mandatory branch protection** to prevent accidental commits to the main branch:
+
+### Git Hooks
+- **Pre-commit hook**: Blocks any commits to the `main` branch
+- **Pre-push hook**: Blocks pushing directly to the `main` branch
+- Both hooks provide clear error messages and instructions
+
+### Why This Was Necessary
+- **Production Safety**: Prevents accidental deployment of incomplete features
+- **Workflow Enforcement**: Ensures all changes go through feature branches and pull requests
+- **Team Protection**: Guards against human error and automated tool mistakes
+- **CI/CD Safety**: Prevents broken builds from reaching production
+
+### Working with Protected Branches
+```bash
+# ✅ Correct workflow
+git checkout -b feature/your-feature-name
+# ... make changes ...
+git commit -m "feat: your changes"
+git push origin feature/your-feature-name
+
+# ❌ This will be blocked
+git checkout main
+git commit -m "direct commit"  # ERROR: Commits to main branch are not allowed!
+```
+
 ## Setup
 
 1. **Install dependencies:**
@@ -78,4 +106,27 @@ The app uses a flat JSONB structure:
 - `npm run lint` - Run ESLint
 - `npm run db:migrate` - Run database migrations
 - `npm run env:check` - Validate environment configuration
-# Trigger deployment
+
+## Deployment Workflow
+
+### Feature Development
+1. Create feature branch: `git checkout -b feature/descriptive-name`
+2. Make changes and test locally
+3. Commit to feature branch (git hooks will prevent main branch commits)
+4. Push to GitHub: `git push origin feature/your-branch`
+5. Create pull request for review
+6. Merge to main only after approval
+
+### Production Deployment
+- Only merged pull requests trigger production deployment
+- Vercel automatically deploys from main branch
+- All changes must go through feature branch → pull request → merge workflow
+
+## Emergency Override (Use with extreme caution)
+If you absolutely need to bypass the git hooks (emergency only):
+```bash
+git commit --no-verify  # Skip pre-commit hook
+git push --no-verify    # Skip pre-push hook
+```
+
+**⚠️ Warning**: Only use these commands in true emergencies. The hooks exist to protect production.
