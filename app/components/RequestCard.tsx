@@ -206,7 +206,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                 {request.contact.mineGroup && request.contact.mineName && (
                   <div className="mb-2">
                     <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
-                      {request.contact.mineGroup} <span className="text-blue-400">|</span> {request.contact.mineName}
+                      {request.contact.mineGroup} <span className="text-blue-400"> | </span> {request.contact.mineName}
                     </Badge>
                   </div>
                 )}
@@ -242,7 +242,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                   <div className="flex items-center gap-2">
                     {request.contact.mineGroup && request.contact.mineName && (
                       <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
-                        {request.contact.mineGroup} <span className="text-blue-400">|</span> {request.contact.mineName}
+                        {request.contact.mineGroup} <span className="text-blue-400"> | </span> {request.contact.mineName}
                       </Badge>
                     )}
                     {!isSubmitted && (
