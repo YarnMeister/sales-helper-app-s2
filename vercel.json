@@ -1,16 +1,13 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "functions": {
-    "app/api/**/*.ts": {
-      "maxDuration": 30
-    }
-  },
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "preview": false
+      "feature/*": false,
+      "develop": false,
+      "staging": false
     }
-  }
+  },
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs"
 }
