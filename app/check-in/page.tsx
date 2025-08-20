@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { ContactsHierarchy } from '../types/contact';
 import { CommonHeader } from '../components/CommonHeader';
 import { CommonFooter } from '../components/CommonFooter';
+import { SalespersonModal } from '../components/SalespersonModal';
 
 export default function CheckInPage() {
   const router = useRouter();
@@ -19,12 +20,14 @@ export default function CheckInPage() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   
   // Check-in form state
+  const [selectedSalesperson, setSelectedSalesperson] = useState('');
   const [selectedMine, setSelectedMine] = useState('');
   const [selectedPurpose, setSelectedPurpose] = useState('');
   const [backInOffice, setBackInOffice] = useState('');
   const [comments, setComments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showSalespersonModal, setShowSalespersonModal] = useState(false);
 
   const fetchContacts = async () => {
     try {
@@ -69,7 +72,16 @@ export default function CheckInPage() {
     setExpandedGroups(new Set());
   };
 
-  const handleCheckIn = async () => {
+  const handleSalespersonSelect = (salesperson: string) => {
+    setSelectedSalesperson(salesperson);
+    setShowSalespersonModal(false);
+    // Trigger the actual check-in process after salesperson is selected
+    setTimeout(() => {
+      performCheckIn(salesperson);
+    }, 100);
+  };
+
+  const performCheckIn = async (salesperson: string) => {
     try {
       setIsSubmitting(true);
       
@@ -78,10 +90,6 @@ export default function CheckInPage() {
         console.error('Missing required fields');
         return;
       }
-
-      // For now, we'll use a default salesperson name
-      // In a real app, this would come from user authentication
-      const salesperson = 'Current User';
 
       const checkInData = {
         salesperson: salesperson,
@@ -149,6 +157,17 @@ export default function CheckInPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCheckIn = async () => {
+    // If no salesperson is selected, show the modal first
+    if (!selectedSalesperson) {
+      setShowSalespersonModal(true);
+      return;
+    }
+
+    // If salesperson is already selected, perform the check-in
+    await performCheckIn(selectedSalesperson);
   };
 
   if (loading) {
@@ -394,6 +413,14 @@ export default function CheckInPage() {
             {isSubmitting ? 'Checking in...' : 'Check in Now'}
           </Button>
         </div>
+
+        {/* Salesperson Modal */}
+        <SalespersonModal
+          isOpen={showSalespersonModal}
+          onClose={() => setShowSalespersonModal(false)}
+          onSelect={handleSalespersonSelect}
+          title="Who is checking in?"
+        />
 
         {/* No Results */}
         {Object.keys(contactsData).length === 0 && (

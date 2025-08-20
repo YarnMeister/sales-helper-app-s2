@@ -34,7 +34,7 @@ const mockSiteVisitResponse = {
     ok: true,
     data: {
       id: 'test-id-123',
-      salesperson: 'Current User',
+      salesperson: 'James',
       planned_mines: ['Mine Alpha'],
       main_purpose: 'Quote follow-up',
       availability: 'Later this morning',
@@ -99,19 +99,44 @@ describe('CheckInPage', () => {
     expect(screen.getByText('Check in Now')).toBeInTheDocument();
   });
 
-  it('does not display salesperson selection UI', async () => {
+  it('shows salesperson modal when check-in button is clicked without salesperson selected', async () => {
     render(<CheckInPage />);
     
     await waitFor(() => {
       expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
     });
 
-    // Should not have salesperson selection
-    expect(screen.queryByText('Select name')).not.toBeInTheDocument();
-    expect(screen.queryByText('James')).not.toBeInTheDocument();
-    expect(screen.queryByText('Luyanda')).not.toBeInTheDocument();
-    expect(screen.queryByText('Stefan')).not.toBeInTheDocument();
-    expect(screen.queryByText('Please select a salesperson to continue')).not.toBeInTheDocument();
+    // Fill in all required fields
+    const allMinesButton = screen.getByText('All mines');
+    fireEvent.click(allMinesButton);
+    
+    await waitFor(() => {
+      const groupAButton = screen.getByText('Group A');
+      fireEvent.click(groupAButton);
+    });
+    
+    await waitFor(() => {
+      const mineAlphaButton = screen.getByText('Mine Alpha');
+      fireEvent.click(mineAlphaButton);
+    });
+
+    const quoteButton = screen.getByText('Quote follow-up');
+    fireEvent.click(quoteButton);
+
+    const morningButton = screen.getByText('Later this morning');
+    fireEvent.click(morningButton);
+
+    // Click check-in button
+    const checkInButton = screen.getByText('Check in Now');
+    fireEvent.click(checkInButton);
+
+    // Should show salesperson modal
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+      expect(screen.getByText('James')).toBeInTheDocument();
+      expect(screen.getByText('Luyanda')).toBeInTheDocument();
+      expect(screen.getByText('Stefan')).toBeInTheDocument();
+    });
   });
 
   it('displays purpose selection buttons', async () => {
@@ -251,7 +276,7 @@ describe('CheckInPage', () => {
     const morningButton = screen.getByText('Later this morning');
     fireEvent.click(morningButton);
 
-    // Now the check-in button should be enabled
+    // Now the check-in button should be enabled (salesperson is not required for button to be enabled)
     const checkInButton = screen.getByText('Check in Now');
     expect(checkInButton).not.toBeDisabled();
   });
@@ -336,9 +361,17 @@ describe('CheckInPage', () => {
     const commentsTextarea = screen.getByPlaceholderText('Enter any additional comments...');
     fireEvent.change(commentsTextarea, { target: { value: 'Test comment' } });
 
-    // Submit check-in
+    // Submit check-in (this will show the salesperson modal)
     const checkInButton = screen.getByText('Check in Now');
     fireEvent.click(checkInButton);
+
+    // Wait for salesperson modal to appear and select James
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+    });
+
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
 
     // Wait for API calls
     await waitFor(() => {
@@ -346,7 +379,7 @@ describe('CheckInPage', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salesperson: 'Current User',
+          salesperson: 'James',
           planned_mines: ['Mine Alpha'],
           main_purpose: 'Quote follow-up',
           availability: 'Later this morning',
@@ -360,7 +393,7 @@ describe('CheckInPage', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salesperson: 'Current User',
+          salesperson: 'James',
           planned_mines: ['Mine Alpha'],
           main_purpose: 'Quote follow-up',
           availability: 'Later this morning',
