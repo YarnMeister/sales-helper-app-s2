@@ -32,7 +32,21 @@ describe('AddContactPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useRouter as any).mockReturnValue(mockRouter);
-    mockSessionStorage.getItem.mockReturnValue('test-request-id');
+    
+    // Mock sessionStorage to return different values for different keys
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === 'editingRequestId') {
+        return 'test-request-id';
+      }
+      if (key === 'currentContactInfo') {
+        return JSON.stringify({
+          name: 'John Smith',
+          mineGroup: 'Anglo American',
+          mineName: 'Zibulo Mine'
+        });
+      }
+      return null;
+    });
   });
 
   afterEach(() => {
@@ -51,12 +65,37 @@ describe('AddContactPage', () => {
     expect(screen.getByTestId('sh-add-contact-back')).toBeInTheDocument();
   });
 
+  it('should display current contact info when available', () => {
+    render(<AddContactPage />);
+
+    // Should show current contact info
+    expect(screen.getByText('Currently Selected Contact')).toBeInTheDocument();
+    expect(screen.getByText('John Smith')).toBeInTheDocument();
+    expect(screen.getByText('Anglo American | Zibulo Mine')).toBeInTheDocument();
+  });
+
   it('should redirect to main page if no request ID in session storage', () => {
     mockSessionStorage.getItem.mockReturnValue(null);
 
     render(<AddContactPage />);
 
     expect(mockRouter.push).toHaveBeenCalledWith('/');
+  });
+
+  it('should not display current contact info when not available', () => {
+    // Mock sessionStorage to not return currentContactInfo
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === 'editingRequestId') {
+        return 'test-request-id';
+      }
+      return null;
+    });
+
+    render(<AddContactPage />);
+
+    // Should not show current contact info
+    expect(screen.queryByText('Currently Selected Contact')).not.toBeInTheDocument();
+    expect(screen.queryByText('John Smith')).not.toBeInTheDocument();
   });
 
   it('should handle contact selection successfully', async () => {

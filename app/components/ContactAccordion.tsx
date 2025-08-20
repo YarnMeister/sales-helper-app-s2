@@ -30,7 +30,6 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   const [state, setState] = useState<ContactSelectionState>({
     expandedGroups: new Set(),
     expandedMines: new Set(),
-    selectedContact: null,
     searchTerm: ''
   });
 
