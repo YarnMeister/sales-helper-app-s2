@@ -12,7 +12,12 @@ export default function AddLineItemsPage() {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [existingItems, setExistingItems] = useState<LineItem[]>([]);
+  const [currentLineItemsInfo, setCurrentLineItemsInfo] = useState<{
+    code: string;
+    name: string;
+    description: string;
+    quantity: number;
+  }[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -21,26 +26,22 @@ export default function AddLineItemsPage() {
     
     if (requestId) {
       setEditingRequestId(requestId);
-      loadExistingLineItems(requestId);
+      
+      // Get current line items info from sessionStorage
+      const lineItemsInfoStr = sessionStorage.getItem('currentLineItemsInfo');
+      if (lineItemsInfoStr) {
+        try {
+          const lineItemsInfo = JSON.parse(lineItemsInfoStr);
+          setCurrentLineItemsInfo(lineItemsInfo);
+        } catch (error) {
+          console.error('Error parsing current line items info:', error);
+        }
+      }
     } else {
       // No request to edit, redirect back to main page
       router.push('/');
     }
   }, [router]);
-
-  const loadExistingLineItems = async (requestId: string) => {
-    try {
-      const response = await fetch(`/api/requests?id=${requestId}`);
-      const data = await response.json();
-      
-      if (data.ok && data.data?.[0]?.line_items) {
-        const existing = data.data[0].line_items;
-        setExistingItems(existing);
-      }
-    } catch (error) {
-      console.error('Error loading existing line items:', error);
-    }
-  };
 
   const handleProductSelect = async (product: LineItem) => {
     if (!editingRequestId) {
@@ -52,8 +53,19 @@ export default function AddLineItemsPage() {
     setError(null);
 
     try {
-      // Add the new product to existing items
-      const updatedLineItems = [...existingItems, product];
+      // First, fetch the current request to get existing line items
+      const currentResponse = await fetch(`/api/requests?id=${editingRequestId}`);
+      const currentData = await currentResponse.json();
+      
+      if (!currentData.ok || !currentData.data || !currentData.data[0]) {
+        throw new Error('Failed to fetch current request data');
+      }
+      
+      const currentRequest = currentData.data[0];
+      const existingLineItems = currentRequest.line_items || [];
+      
+      // Append the new product to existing line items
+      const updatedLineItems = [...existingLineItems, product];
 
       const response = await fetch('/api/requests', {
         method: 'POST',
@@ -67,9 +79,10 @@ export default function AddLineItemsPage() {
       const data = await response.json();
 
       if (data.ok) {
-        // Mark for refresh on main page
-        sessionStorage.setItem('shouldRefreshRequests', 'true');
+        // Clear the editing session and return to main page
         sessionStorage.removeItem('editingRequestId');
+        sessionStorage.removeItem('currentLineItemsInfo');
+        sessionStorage.setItem('shouldRefreshRequests', 'true');
         router.push('/');
       } else {
         setError(data.message || 'Failed to save line item');
@@ -83,6 +96,7 @@ export default function AddLineItemsPage() {
 
   const handleCancel = () => {
     sessionStorage.removeItem('editingRequestId');
+    sessionStorage.removeItem('currentLineItemsInfo');
     router.push('/');
   };
 
@@ -139,11 +153,34 @@ export default function AddLineItemsPage() {
           </div>
         )}
 
+        {/* Current Line Items Display */}
+        {currentLineItemsInfo.length > 0 && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-sm font-semibold text-blue-900 mb-3">Currently Selected Line Items</h3>
+            <div className="space-y-2">
+              {currentLineItemsInfo.map((item, index) => (
+                <div key={index} className="text-sm text-blue-800 p-2 bg-blue-100 rounded">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-blue-600 text-xs">
+                        Code: {item.code} | Qty: {item.quantity}
+                      </p>
+                      {item.description && item.description !== item.name && (
+                        <p className="text-blue-600 text-xs mt-1">{item.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Product Selection */}
         <div className="mb-6">
           <ProductAccordion
             onProductSelect={handleProductSelect}
-            existingItems={existingItems}
           />
         </div>
       </div>

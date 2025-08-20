@@ -1,10 +1,13 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "feature/*": false,
+      "develop": false,
+      "staging": false
+    }
+  },
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "functions": {
-    "app/api/**/*.ts": {
-      "maxDuration": 30
-    }
-  }
+  "framework": "nextjs"
 }

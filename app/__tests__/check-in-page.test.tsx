@@ -92,46 +92,51 @@ describe('CheckInPage', () => {
 
     // Check for main sections
     expect(screen.getByRole('heading', { level: 1, name: 'Check-in' })).toBeInTheDocument();
-    expect(screen.getByText('Select name')).toBeInTheDocument();
     expect(screen.getByText('Select visiting mine')).toBeInTheDocument();
     expect(screen.getByText('Purpose')).toBeInTheDocument();
     expect(screen.getByText('Back in office')).toBeInTheDocument();
     expect(screen.getByText('Comments')).toBeInTheDocument();
-    expect(screen.getByText('Check-in Now')).toBeInTheDocument();
+    expect(screen.getByText('Check in Now')).toBeInTheDocument();
   });
 
-  it('displays salesperson selection buttons', async () => {
+  it('shows salesperson modal when check-in button is clicked without salesperson selected', async () => {
     render(<CheckInPage />);
     
     await waitFor(() => {
       expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText('James')).toBeInTheDocument();
-    expect(screen.getByText('Luyanda')).toBeInTheDocument();
-    expect(screen.getByText('Stefan')).toBeInTheDocument();
-  });
-
-  it('allows selecting a salesperson', async () => {
-    render(<CheckInPage />);
+    // Fill in all required fields
+    const allMinesButton = screen.getByText('All mines');
+    fireEvent.click(allMinesButton);
     
     await waitFor(() => {
-      expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
+      const groupAButton = screen.getByText('Group A');
+      fireEvent.click(groupAButton);
+    });
+    
+    await waitFor(() => {
+      const mineAlphaButton = screen.getByText('Mine Alpha');
+      fireEvent.click(mineAlphaButton);
     });
 
-    const jamesButton = screen.getByText('James');
-    const luyandaButton = screen.getByText('Luyanda');
+    const quoteButton = screen.getByText('Quote follow-up');
+    fireEvent.click(quoteButton);
 
-    // Initially James should be selected (default)
-    expect(jamesButton).toHaveClass('text-white');
-    expect(luyandaButton).not.toHaveClass('text-white');
+    const morningButton = screen.getByText('Later this morning');
+    fireEvent.click(morningButton);
 
-    // Click Luyanda
-    fireEvent.click(luyandaButton);
-    
-    // Now Luyanda should be selected
-    expect(luyandaButton).toHaveClass('text-white');
-    expect(jamesButton).not.toHaveClass('text-white');
+    // Click check-in button
+    const checkInButton = screen.getByText('Check in Now');
+    fireEvent.click(checkInButton);
+
+    // Should show salesperson modal
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+      expect(screen.getByText('James')).toBeInTheDocument();
+      expect(screen.getByText('Luyanda')).toBeInTheDocument();
+      expect(screen.getByText('Stefan')).toBeInTheDocument();
+    });
   });
 
   it('displays purpose selection buttons', async () => {
@@ -218,6 +223,17 @@ describe('CheckInPage', () => {
     expect(commentsTextarea).toHaveValue('Test comment');
   });
 
+  it('shows check-in button with correct text', async () => {
+    render(<CheckInPage />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
+    });
+
+    const checkInButton = screen.getByText('Check in Now');
+    expect(checkInButton).toBeInTheDocument();
+  });
+
   it('disables check-in button when required fields are missing', async () => {
     render(<CheckInPage />);
     
@@ -225,8 +241,44 @@ describe('CheckInPage', () => {
       expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
     });
 
-    const checkInButton = screen.getByText('Check-in Now');
+    const checkInButton = screen.getByText('Check in Now');
     expect(checkInButton).toBeDisabled();
+  });
+
+  it('enables check-in button when all required fields are filled', async () => {
+    render(<CheckInPage />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
+    });
+
+    // Fill in all required fields
+    const allMinesButton = screen.getByText('All mines');
+    fireEvent.click(allMinesButton);
+    
+    // Wait for mine groups to appear and expand Group A
+    await waitFor(() => {
+      const groupAButton = screen.getByText('Group A');
+      fireEvent.click(groupAButton);
+    });
+    
+    // Wait for individual mines to appear and select Mine Alpha
+    await waitFor(() => {
+      const mineAlphaButton = screen.getByText('Mine Alpha');
+      fireEvent.click(mineAlphaButton);
+    });
+
+    // Select purpose
+    const quoteButton = screen.getByText('Quote follow-up');
+    fireEvent.click(quoteButton);
+
+    // Select back in office time
+    const morningButton = screen.getByText('Later this morning');
+    fireEvent.click(morningButton);
+
+    // Now the check-in button should be enabled (salesperson is not required for button to be enabled)
+    const checkInButton = screen.getByText('Check in Now');
+    expect(checkInButton).not.toBeDisabled();
   });
 
   it('shows loading state while fetching contacts', () => {
@@ -254,7 +306,7 @@ describe('CheckInPage', () => {
     });
   });
 
-  it('submits check-in data successfully', async () => {
+  it('submits check-in data successfully and shows success message', async () => {
     // Override the default mock for this test
     (global.fetch as any).mockImplementation((url: string) => {
       if (url.includes('/api/contacts')) {
@@ -309,9 +361,17 @@ describe('CheckInPage', () => {
     const commentsTextarea = screen.getByPlaceholderText('Enter any additional comments...');
     fireEvent.change(commentsTextarea, { target: { value: 'Test comment' } });
 
-    // Submit check-in
-    const checkInButton = screen.getByText('Check-in Now');
+    // Submit check-in (this will show the salesperson modal)
+    const checkInButton = screen.getByText('Check in Now');
     fireEvent.click(checkInButton);
+
+    // Wait for salesperson modal to appear and select James
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+    });
+
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
 
     // Wait for API calls
     await waitFor(() => {
@@ -342,10 +402,85 @@ describe('CheckInPage', () => {
       });
     });
 
-    // Should navigate back to main page
+    // Should show success message
+    await waitFor(() => {
+      expect(screen.getByText('Check-in Successful!')).toBeInTheDocument();
+      expect(screen.getByText('Redirecting to main page...')).toBeInTheDocument();
+    });
+
+    // Should navigate back to main page after delay
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/');
+    }, { timeout: 3000 });
+  });
+
+  it('shows loading state during check-in submission', async () => {
+    // Override the default mock for this test with a delayed response
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url.includes('/api/contacts')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ok: true, data: mockContactsData })
+        });
+      }
+      if (url.includes('/api/site-visits')) {
+        return new Promise(resolve => {
+          setTimeout(() => {
+            resolve(mockSiteVisitResponse);
+          }, 100);
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: {} })
+      });
     });
+
+    render(<CheckInPage />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
+    });
+
+    // Fill in all required fields
+    const allMinesButton = screen.getByText('All mines');
+    fireEvent.click(allMinesButton);
+    
+    await waitFor(() => {
+      const groupAButton = screen.getByText('Group A');
+      fireEvent.click(groupAButton);
+    });
+    
+    await waitFor(() => {
+      const mineAlphaButton = screen.getByText('Mine Alpha');
+      fireEvent.click(mineAlphaButton);
+    });
+
+    const quoteButton = screen.getByText('Quote follow-up');
+    fireEvent.click(quoteButton);
+
+    const morningButton = screen.getByText('Later this morning');
+    fireEvent.click(morningButton);
+
+    // Submit check-in (this will show the salesperson modal)
+    const checkInButton = screen.getByText('Check in Now');
+    fireEvent.click(checkInButton);
+
+    // Wait for salesperson modal to appear and select James
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+    });
+
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
+
+    // Should show loading state
+    await waitFor(() => {
+      expect(screen.getByText('Checking in...')).toBeInTheDocument();
+    });
+
+    // Button should be disabled during submission
+    expect(screen.getByText('Checking in...')).toBeDisabled();
   });
 
   it('handles site visit API error gracefully', async () => {
@@ -397,9 +532,17 @@ describe('CheckInPage', () => {
     const morningButton = screen.getByText('Later this morning');
     fireEvent.click(morningButton);
 
-    // Submit check-in
-    const checkInButton = screen.getByText('Check-in Now');
+    // Submit check-in (this will show the salesperson modal)
+    const checkInButton = screen.getByText('Check in Now');
     fireEvent.click(checkInButton);
+
+    // Wait for salesperson modal to appear and select James
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+    });
+
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
 
     // Should show error alert
     await waitFor(() => {
@@ -459,13 +602,25 @@ describe('CheckInPage', () => {
     const morningButton = screen.getByText('Later this morning');
     fireEvent.click(morningButton);
 
-    // Submit check-in
-    const checkInButton = screen.getByText('Check-in Now');
+    // Submit check-in (this will show the salesperson modal)
+    const checkInButton = screen.getByText('Check in Now');
     fireEvent.click(checkInButton);
 
-    // Should still navigate back to main page even if Slack fails
+    // Wait for salesperson modal to appear and select James
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+    });
+
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
+
+    // Should still show success message and navigate back to main page even if Slack fails
+    await waitFor(() => {
+      expect(screen.getByText('Check-in Successful!')).toBeInTheDocument();
+    });
+
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/');
-    });
+    }, { timeout: 3000 });
   });
 });

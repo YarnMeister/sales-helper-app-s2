@@ -26,7 +26,7 @@ describe('Client QR-ID Generator', () => {
       const result = generateQRId();
       
       expect(result).toBe('QR-002');
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter', '2');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter_prod', '2');
     });
 
     it('should increment counter correctly', () => {
@@ -39,8 +39,8 @@ describe('Client QR-ID Generator', () => {
       
       expect(result1).toBe('QR-003');
       expect(result2).toBe('QR-004');
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter', '3');
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter', '4');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter_prod', '3');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter_prod', '4');
     });
 
     it('should handle localStorage errors gracefully with fallback', () => {
@@ -96,13 +96,13 @@ describe('Client QR-ID Generator', () => {
     it('should reset counter to default value', () => {
       resetQRCounter();
       
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter', '2');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter_prod', '2');
     });
 
     it('should reset counter to specified value', () => {
       resetQRCounter(10);
       
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter', '10');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter_prod', '10');
     });
 
     it('should handle localStorage errors gracefully', () => {
@@ -121,7 +121,7 @@ describe('Client QR-ID Generator', () => {
       
       initializeQRCounter();
       
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter', '1');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('qr_counter_prod', '1');
     });
 
     it('should not initialize counter when it already exists', () => {

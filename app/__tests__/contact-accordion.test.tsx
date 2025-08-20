@@ -45,14 +45,14 @@ describe('ContactAccordion', () => {
   });
 
   it('renders loading state initially', () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
     
     expect(screen.getByTestId('sh-contacts-loading')).toBeInTheDocument();
     expect(screen.getByText('Loading contacts...')).toBeInTheDocument();
   });
 
   it('displays contacts hierarchy after loading', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       expect(screen.getByText('Mining Group A')).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('ContactAccordion', () => {
   });
 
   it('expands and collapses mine groups', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       expect(screen.getByText('Mining Group A')).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe('ContactAccordion', () => {
   });
 
   it('handles contact selection', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     // Navigate to contact
     await waitFor(() => {
@@ -115,7 +115,7 @@ describe('ContactAccordion', () => {
   });
 
   it('filters contacts based on search', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('sh-contact-search')).toBeInTheDocument();
@@ -141,7 +141,7 @@ describe('ContactAccordion', () => {
       })
     });
 
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       expect(screen.getByText(/Using offline data/)).toBeInTheDocument();
@@ -149,7 +149,7 @@ describe('ContactAccordion', () => {
   });
 
   it('handles keyboard navigation', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       expect(screen.getByText('Mining Group A')).toBeInTheDocument();

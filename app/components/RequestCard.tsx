@@ -4,6 +4,7 @@ import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { User, Package, ExternalLink, Trash2, Plus, Minus, Mail, Phone } from 'lucide-react';
 import { CommentControl } from './CommentControl';
+import { LineItemCard } from './LineItemCard';
 
 interface Contact {
   personId: number;
@@ -17,8 +18,10 @@ interface Contact {
 interface LineItem {
   pipedriveProductId: number;
   name: string;
+  code?: string | null;
   quantity: number;
   price?: number;
+  shortDescription?: string;
 }
 
 interface Request {
@@ -184,15 +187,11 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             data-testid="sh-request-contact-display"
           >
             <div className="flex-1">
-              {/* Row 1: Name and Mine Group | Mine Name */}
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-medium text-blue-900">{request.contact.name}</p>
-                <div className="flex items-center gap-2">
-                  {request.contact.mineGroup && request.contact.mineName && (
-                    <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
-                      {request.contact.mineGroup} <span className="text-blue-400">|</span> {request.contact.mineName}
-                    </Badge>
-                  )}
+              {/* Mobile Layout: 3 separate rows */}
+              <div className="md:hidden">
+                {/* Row 1: Contact Name with Change button */}
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-medium text-blue-900">{request.contact.name}</p>
                   {!isSubmitted && (
                     <Button
                       variant="ghost"
@@ -205,8 +204,76 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                     </Button>
                   )}
                 </div>
-                              </div>
                 
+                {/* Row 2: Mine Group and Mine Name as separate badges */}
+                <div className="mb-2 flex gap-2">
+                  {request.contact.mineGroup && (
+                    <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
+                      {request.contact.mineGroup}
+                    </Badge>
+                  )}
+                  {request.contact.mineName && (
+                    <Badge className="bg-green-100 text-green-800 border-0 text-xs font-medium">
+                      {request.contact.mineName}
+                    </Badge>
+                  )}
+                </div>
+                  
+                {/* Row 3: Email and Phone */}
+                <div className="space-y-1">
+                  {request.contact.email && (
+                    <a 
+                      href={`mailto:${request.contact.email}`}
+                      className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                    >
+                      <Mail className="h-3 w-3" />
+                      <span>{request.contact.email}</span>
+                    </a>
+                  )}
+                  {request.contact.phone && (
+                    <a 
+                      href={`tel:${request.contact.phone}`}
+                      className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                    >
+                      <Phone className="h-3 w-3" />
+                      <span>{request.contact.phone}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Desktop Layout: Original compact layout */}
+              <div className="hidden md:block">
+                {/* Row 1: Name and Mine Group | Mine Name */}
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-medium text-blue-900">{request.contact.name}</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-2">
+                      {request.contact.mineGroup && (
+                        <Badge className="bg-blue-100 text-blue-800 border-0 text-xs font-medium">
+                          {request.contact.mineGroup}
+                        </Badge>
+                      )}
+                      {request.contact.mineName && (
+                        <Badge className="bg-green-100 text-green-800 border-0 text-xs font-medium">
+                          {request.contact.mineName}
+                        </Badge>
+                      )}
+                    </div>
+                    {!isSubmitted && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onAddContact?.(request.id)}
+                        className="text-red-600 hover:text-red-700 text-xs"
+                        data-testid="sh-request-change-contact-desktop"
+                      >
+                        Change
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                  
                 {/* Row 2: Email and Phone on same row */}
                 <div className="flex items-center gap-4">
                   {request.contact.email && (
@@ -229,6 +296,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
                   )}
                 </div>
               </div>
+            </div>
           </div>
         ) : (
           <Button
@@ -253,87 +321,17 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         )}
         {/* Display existing line items */}
         {request.line_items.length > 0 && (
-          <div 
-            className="bg-white border border-green-700 rounded-lg p-3"
-            data-testid="sh-request-items-display"
-          >
-            <div className="mb-2">
-              <p className="font-medium text-green-900">
-                Items: {request.line_items.length}
-              </p>
-            </div>
-            <div className="space-y-2">
-              {request.line_items.map((item, index) => (
-                <div key={index} className="bg-gray-50 rounded p-2">
-                  {/* Top row: Description spanning to delete button */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex-1 pr-2">
-                      <div className="text-sm text-gray-800">
-                        <span className="font-medium">{item.name}</span>
-                      </div>
-                    </div>
-                    {!isSubmitted && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteLineItem(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 flex-shrink-0"
-                        data-testid={`sh-delete-line-item-${index}`}
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {/* Bottom row: Quantity controls and price */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleQuantityChange(index, Math.max(1, (optimisticQuantities[index] ?? item.quantity) - 1))}
-                        disabled={isSubmitted || (optimisticQuantities[index] ?? item.quantity) <= 1}
-                        className="text-red-600 hover:text-red-700 bg-gray-50 hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
-                        data-testid={`sh-decrease-quantity-${index}`}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <input
-                        type="number"
-                        value={optimisticQuantities[index] ?? item.quantity}
-                        onChange={(e) => {
-                          const newQuantity = parseInt(e.target.value) || 1;
-                          handleQuantityChange(index, Math.max(1, newQuantity));
-                        }}
-                        min="1"
-                        disabled={isSubmitted}
-                        className="w-16 text-center text-sm border border-gray-300 rounded px-1 py-1 bg-white h-8"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        data-testid={`sh-quantity-input-${index}`}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleQuantityChange(index, (optimisticQuantities[index] ?? item.quantity) + 1)}
-                        disabled={isSubmitted}
-                        className="text-red-600 hover:text-red-700 bg-gray-50 hover:bg-red-50 p-2 h-8 w-8 flex items-center justify-center rounded text-lg font-bold"
-                        data-testid={`sh-increase-quantity-${index}`}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {item.price && (
-                        <span>
-                          R{(item.price * (optimisticQuantities[index] ?? item.quantity)).toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-3" data-testid="sh-request-items-display">
+            {request.line_items.map((item, index) => (
+              <LineItemCard
+                key={index}
+                item={item}
+                index={index}
+                isSubmitted={isSubmitted}
+                onQuantityChange={handleQuantityChange}
+                onDelete={handleDeleteLineItem}
+              />
+            ))}
           </div>
         )}
 

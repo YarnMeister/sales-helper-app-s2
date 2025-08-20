@@ -8,7 +8,7 @@ import { CommonHeader } from './components/CommonHeader';
 import { CommonFooter } from './components/CommonFooter';
 import { useRouter } from 'next/navigation';
 import { useToast } from './hooks/use-toast';
-import { generateQRId, initializeQRCounter } from '@/lib/client-qr-generator';
+import { generateQRId, initializeQRCounter, syncQRCounterWithDatabase } from '@/lib/client-qr-generator';
 
 import { Button } from './components/ui/button';
 
@@ -23,8 +23,13 @@ interface Contact {
 interface LineItem {
   pipedriveProductId: number;
   name: string;
-  quantity: number;
+  code?: string | null;
   price?: number;
+  quantity: number;
+  description?: string;
+  shortDescription?: string;
+  customDescription?: string;
+  showOnSalesHelper?: boolean;
 }
 
 interface Request {
@@ -41,8 +46,8 @@ interface Request {
 }
 
 export default function MainPage() {
-  // PRD: Default to specific salesperson, not "all"
-  const [selectedSalesperson, setSelectedSalesperson] = useState('James');
+  // PRD: Default to "All requests" to show all requests by default
+  const [selectedSalesperson, setSelectedSalesperson] = useState('All requests');
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +108,8 @@ export default function MainPage() {
   // Initialize QR counter on component mount
   useEffect(() => {
     initializeQRCounter();
+    // Sync counter with database to prevent duplicate ID issues
+    syncQRCounterWithDatabase();
   }, []);
 
   // Handle salesperson selection from other pages
@@ -200,9 +207,9 @@ export default function MainPage() {
   const handleNewRequestWithSalesperson = async (salesperson: string) => {
     setIsCreating(true);
     try {
-      // Generate QR-ID client-side
+      // Generate QR-ID client-side (consistent with non-main pages)
       const requestId = generateQRId();
-      console.log('🔍 Generated client-side QR-ID for salesperson:', requestId, salesperson);
+      console.log('🔍 Generated client-side QR-ID for main page modal:', requestId);
 
       const response = await fetch('/api/requests', {
         method: 'POST',
@@ -241,12 +248,47 @@ export default function MainPage() {
   };
 
   const handleAddContact = (requestId: string) => {
+    // Find the current request to get contact information
+    const currentRequest = requests.find(req => req.id === requestId);
+    
     sessionStorage.setItem('editingRequestId', requestId);
+    
+    // If there's a current contact, store its details for display
+    if (currentRequest?.contact) {
+      sessionStorage.setItem('currentContactInfo', JSON.stringify({
+        name: currentRequest.contact.name,
+        mineGroup: currentRequest.contact.mineGroup,
+        mineName: currentRequest.contact.mineName
+      }));
+    } else {
+      // Clear any previous contact info
+      sessionStorage.removeItem('currentContactInfo');
+    }
+    
     router.push('/add-contact');
   };
 
   const handleAddLineItems = (requestId: string) => {
+    // Find the current request to get line items information
+    const currentRequest = requests.find(req => req.id === requestId);
+    
     sessionStorage.setItem('editingRequestId', requestId);
+    
+    // If there are current line items, store their details for display
+    if (currentRequest?.line_items && currentRequest.line_items.length > 0) {
+      sessionStorage.setItem('currentLineItemsInfo', JSON.stringify(
+        currentRequest.line_items.map(item => ({
+          code: item.code || 'N/A',
+          name: item.name,
+          description: item.description || item.name,
+          quantity: item.quantity
+        }))
+      ));
+    } else {
+      // Clear any previous line items info
+      sessionStorage.removeItem('currentLineItemsInfo');
+    }
+    
     router.push('/add-line-items');
   };
 
