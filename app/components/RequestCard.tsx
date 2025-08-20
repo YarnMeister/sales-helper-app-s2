@@ -18,7 +18,7 @@ interface Contact {
 interface LineItem {
   pipedriveProductId: number;
   name: string;
-  code?: string;
+  code?: string | null;
   quantity: number;
   price?: number;
   shortDescription?: string;

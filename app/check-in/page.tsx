@@ -7,10 +7,9 @@ import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { useRouter } from 'next/navigation';
-import { Contact, ContactsHierarchy } from '../types/contact';
+import { ContactsHierarchy } from '../types/contact';
 import { CommonHeader } from '../components/CommonHeader';
 import { CommonFooter } from '../components/CommonFooter';
-import { SalespersonModal } from '../components/SalespersonModal';
 
 export default function CheckInPage() {
   const router = useRouter();
@@ -19,13 +18,13 @@ export default function CheckInPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   
-  // New state for check-in form
-  const [selectedSalesperson, setSelectedSalesperson] = useState('');
+  // Check-in form state
   const [selectedMine, setSelectedMine] = useState('');
   const [selectedPurpose, setSelectedPurpose] = useState('');
   const [backInOffice, setBackInOffice] = useState('');
   const [comments, setComments] = useState('');
-  const [showSalespersonModal, setShowSalespersonModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const fetchContacts = async () => {
     try {
@@ -70,21 +69,22 @@ export default function CheckInPage() {
     setExpandedGroups(new Set());
   };
 
-  const handleSalespersonSelect = (salesperson: string) => {
-    setSelectedSalesperson(salesperson);
-    setShowSalespersonModal(false);
-  };
-
   const handleCheckIn = async () => {
     try {
+      setIsSubmitting(true);
+      
       // Validate required fields
-      if (!selectedSalesperson || !selectedMine || !selectedPurpose || !backInOffice) {
+      if (!selectedMine || !selectedPurpose || !backInOffice) {
         console.error('Missing required fields');
         return;
       }
 
+      // For now, we'll use a default salesperson name
+      // In a real app, this would come from user authentication
+      const salesperson = 'Current User';
+
       const checkInData = {
-        salesperson: selectedSalesperson,
+        salesperson: salesperson,
         planned_mines: [selectedMine], // Convert single mine to array
         main_purpose: selectedPurpose,
         availability: backInOffice,
@@ -129,11 +129,15 @@ export default function CheckInPage() {
         // Don't fail the check-in if Slack fails
       }
 
-      // Navigate back to main page (Deals)
-      router.push('/');
+      // Show success message
+      setShowSuccessMessage(true);
+      
+      // Navigate back to main page after a short delay
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
       
       // Reset form (this will happen when component unmounts)
-      setSelectedSalesperson('James');
       setSelectedMine('');
       setSelectedPurpose('');
       setBackInOffice('');
@@ -142,6 +146,8 @@ export default function CheckInPage() {
     } catch (error) {
       console.error('Check-in failed:', error);
       alert(`Check-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -177,6 +183,24 @@ export default function CheckInPage() {
     );
   }
 
+  if (showSuccessMessage) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <CommonHeader title="Check-in" />
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+              <p className="font-medium">Check-in Successful!</p>
+              <p className="text-sm">Redirecting to main page...</p>
+            </div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+          </div>
+        </div>
+        <CommonFooter />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Common Header */}
@@ -184,27 +208,6 @@ export default function CheckInPage() {
 
       {/* Main Content */}
       <div className="px-4 py-4 pb-24">
-        {/* Salesperson Selection */}
-        <div className="mb-3">
-          <h2 className="text-lg font-medium text-gray-900 mb-3">Select name</h2>
-          <div className="flex gap-2">
-            {['James', 'Luyanda', 'Stefan'].map((name) => (
-              <Button
-                key={name}
-                variant={selectedSalesperson === name ? 'default' : 'outline'}
-                size="sm"
-                className={`flex-1 ${selectedSalesperson === name ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
-                onClick={() => setSelectedSalesperson(name)}
-              >
-                {name}
-              </Button>
-            ))}
-          </div>
-          {!selectedSalesperson && (
-            <p className="text-sm text-gray-500 mt-2">Please select a salesperson to continue</p>
-          )}
-        </div>
-
         {/* Mine Selection */}
         <div className="mb-3">
           <h2 className="text-lg font-medium text-gray-900 mb-3">Select visiting mine</h2>
@@ -291,7 +294,7 @@ export default function CheckInPage() {
                         {/* Mines List */}
                         {isGroupExpanded && (
                           <div className="bg-gray-25">
-                            {Object.entries(mines).sort(([a], [b]) => a.localeCompare(b)).map(([mine, contacts]) => (
+                            {Object.entries(mines).sort(([a], [b]) => a.localeCompare(b)).map(([mine, _contacts]) => (
                               <div
                                 key={`${group}-${mine}`}
                                 className={`p-3 pl-16 border-b border-gray-100 last:border-b-0 transition-colors min-h-[36px] flex items-center hover:bg-gray-50 cursor-pointer ${
@@ -384,28 +387,13 @@ export default function CheckInPage() {
         {/* Check-in Button */}
         <div className="pt-4 pb-20">
           <Button
-            onClick={() => {
-              if (!selectedSalesperson) {
-                setShowSalespersonModal(true);
-                return;
-              }
-              handleCheckIn();
-            }}
-            variant={selectedSalesperson && selectedMine && selectedPurpose && backInOffice ? "active" : "disabled"}
-            className="w-full h-12 text-lg font-medium bg-green-700 hover:bg-green-800 text-white border-green-700"
-            disabled={!selectedMine || !selectedPurpose || !backInOffice}
+            onClick={handleCheckIn}
+            disabled={!selectedMine || !selectedPurpose || !backInOffice || isSubmitting}
+            className="w-full h-12 text-lg font-medium bg-green-700 hover:bg-green-800 text-white border-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            {selectedSalesperson ? 'Check-in Now' : 'Select Salesperson to Check-in'}
+            {isSubmitting ? 'Checking in...' : 'Check in Now'}
           </Button>
         </div>
-
-        {/* Salesperson Modal */}
-        <SalespersonModal
-          isOpen={showSalespersonModal}
-          onClose={() => setShowSalespersonModal(false)}
-          onSelect={handleSalespersonSelect}
-          title="Who is checking in?"
-        />
 
         {/* No Results */}
         {Object.keys(contactsData).length === 0 && (

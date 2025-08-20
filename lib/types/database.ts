@@ -29,6 +29,7 @@ export interface ContactJSON {
 export interface LineItem {
   pipedriveProductId: number;
   name: string;
+  code?: string | null;
   description?: string;
   quantity: number;
   unitPrice: number;
