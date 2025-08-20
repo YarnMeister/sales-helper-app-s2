@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BottomNavigation } from './BottomNavigation';
 import { SalespersonModal } from './SalespersonModal';
 import { useRouter, usePathname } from 'next/navigation';
+import { generateQRId } from '@/lib/client-qr-generator';
 
 interface CommonFooterProps {
   onNewRequest?: () => void;
@@ -45,14 +46,18 @@ export const CommonFooter: React.FC<CommonFooterProps> = ({
   const handleSalespersonSelect = async (salesperson: string) => {
     setShowModal(false);
     
+    // Generate QR-ID client-side (consistent with main page approach)
+    const requestId = generateQRId();
+    console.log('🔍 Generated client-side QR-ID for non-main page:', requestId);
+    
     // Create new request by calling the API
     try {
       const response = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salespersonSelection: salesperson,
-          line_items: []
+          request_id: requestId, // Send the client-generated ID
+          salespersonFirstName: salesperson,
         })
       });
 

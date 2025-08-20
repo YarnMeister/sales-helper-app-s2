@@ -4,32 +4,41 @@
  * This replaces the database-based generation with a simple, reliable
  * client-side counter that works offline and persists across browser sessions.
  * 
+ * Environment-aware: Uses different counters for prod vs dev
  * Format: QR-002, QR-003, QR-004, etc.
  * Starts at 2 to avoid conflicts with existing QR-001 entries
  */
 
-const QR_COUNTER_KEY = 'qr_counter';
+// Environment-aware counter keys
+const getQRCounterKey = (): string => {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  return isDevelopment ? 'qr_counter_dev' : 'qr_counter_prod';
+};
+
 const QR_START_VALUE = 2; // Start at 2 to avoid conflicts with existing QR-001
 
 /**
- * Generate next QR-ID using localStorage counter
+ * Generate next QR-ID using environment-specific localStorage counter
  * Format: QR-002, QR-003, QR-004, etc.
  */
 export const generateQRId = (): string => {
   try {
+    const counterKey = getQRCounterKey();
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
     // Get current counter value from localStorage
-    const currentCounter = localStorage.getItem(QR_COUNTER_KEY);
+    const currentCounter = localStorage.getItem(counterKey);
     const nextCounter = currentCounter 
       ? parseInt(currentCounter, 10) + 1 
       : QR_START_VALUE;
     
     // Store the new counter value
-    localStorage.setItem(QR_COUNTER_KEY, nextCounter.toString());
+    localStorage.setItem(counterKey, nextCounter.toString());
     
     // Format as QR-XXX with zero padding
     const qrId = `QR-${nextCounter.toString().padStart(3, '0')}`;
     
-    console.log('Generated QR-ID:', qrId, 'Counter:', nextCounter);
+    console.log(`Generated QR-ID (${isDevelopment ? 'dev' : 'prod'}):`, qrId, 'Counter:', nextCounter);
     return qrId;
     
   } catch (error) {
@@ -48,7 +57,8 @@ export const generateQRId = (): string => {
  */
 export const getCurrentQRCounter = (): number => {
   try {
-    const counter = localStorage.getItem(QR_COUNTER_KEY);
+    const counterKey = getQRCounterKey();
+    const counter = localStorage.getItem(counterKey);
     return counter ? parseInt(counter, 10) : QR_START_VALUE - 1;
   } catch (error) {
     console.error('Failed to get current QR counter:', error);
@@ -61,8 +71,10 @@ export const getCurrentQRCounter = (): number => {
  */
 export const resetQRCounter = (value: number = QR_START_VALUE): void => {
   try {
-    localStorage.setItem(QR_COUNTER_KEY, value.toString());
-    console.log('QR counter reset to:', value);
+    const counterKey = getQRCounterKey();
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    localStorage.setItem(counterKey, value.toString());
+    console.log(`QR counter reset to ${value} (${isDevelopment ? 'dev' : 'prod'})`);
   } catch (error) {
     console.error('Failed to reset QR counter:', error);
   }
@@ -74,12 +86,42 @@ export const resetQRCounter = (value: number = QR_START_VALUE): void => {
  */
 export const initializeQRCounter = (): void => {
   try {
-    const currentCounter = localStorage.getItem(QR_COUNTER_KEY);
+    const counterKey = getQRCounterKey();
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const currentCounter = localStorage.getItem(counterKey);
     if (!currentCounter) {
-      localStorage.setItem(QR_COUNTER_KEY, (QR_START_VALUE - 1).toString());
-      console.log('QR counter initialized to:', QR_START_VALUE - 1);
+      localStorage.setItem(counterKey, (QR_START_VALUE - 1).toString());
+      console.log(`QR counter initialized to ${QR_START_VALUE - 1} (${isDevelopment ? 'dev' : 'prod'})`);
     }
   } catch (error) {
     console.error('Failed to initialize QR counter:', error);
+  }
+};
+
+/**
+ * Sync counter with database to prevent duplicate ID issues
+ * Call this when the app starts to ensure counter is in sync
+ */
+export const syncQRCounterWithDatabase = async (): Promise<void> => {
+  try {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const counterKey = getQRCounterKey();
+    
+    // Get the latest request ID from the database
+    const response = await fetch('/api/requests?limit=1');
+    if (response.ok) {
+      const data = await response.json();
+      if (data.ok && data.data && data.data.length > 0) {
+        const latestRequest = data.data[0];
+        const latestId = latestRequest.request_id;
+        const latestNumber = parseInt(latestId.replace('QR-', ''));
+        
+        // Set counter to the latest number
+        localStorage.setItem(counterKey, latestNumber.toString());
+        console.log(`QR counter synced to ${latestNumber} (${isDevelopment ? 'dev' : 'prod'})`);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to sync QR counter with database:', error);
   }
 };

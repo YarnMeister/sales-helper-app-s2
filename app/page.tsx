@@ -8,7 +8,7 @@ import { CommonHeader } from './components/CommonHeader';
 import { CommonFooter } from './components/CommonFooter';
 import { useRouter } from 'next/navigation';
 import { useToast } from './hooks/use-toast';
-import { generateQRId, initializeQRCounter } from '@/lib/client-qr-generator';
+import { generateQRId, initializeQRCounter, syncQRCounterWithDatabase } from '@/lib/client-qr-generator';
 
 import { Button } from './components/ui/button';
 
@@ -108,6 +108,8 @@ export default function MainPage() {
   // Initialize QR counter on component mount
   useEffect(() => {
     initializeQRCounter();
+    // Sync counter with database to prevent duplicate ID issues
+    syncQRCounterWithDatabase();
   }, []);
 
   // Handle salesperson selection from other pages
@@ -205,9 +207,9 @@ export default function MainPage() {
   const handleNewRequestWithSalesperson = async (salesperson: string) => {
     setIsCreating(true);
     try {
-      // Generate QR-ID client-side
+      // Generate QR-ID client-side (consistent with non-main pages)
       const requestId = generateQRId();
-      console.log('🔍 Generated client-side QR-ID for salesperson:', requestId, salesperson);
+      console.log('🔍 Generated client-side QR-ID for main page modal:', requestId);
 
       const response = await fetch('/api/requests', {
         method: 'POST',

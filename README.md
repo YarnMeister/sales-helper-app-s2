@@ -89,6 +89,61 @@ The app uses different strategies for local development vs production to prevent
 - **Read-only reference tables** - No environment-based switching
 - **Shared between environments** - Used for product catalog and contact lookup
 
+## QR-ID Generation Pattern
+
+The app uses a **client-side localStorage approach** for QR-ID generation to ensure resilience in poor network conditions, with server-side validation to catch duplicates.
+
+### **Design Philosophy**
+- **Offline-First**: QR-IDs can be generated even with poor WiFi coverage
+- **Resilient**: Works without server connectivity during ID generation
+- **Safe**: Server-side validation prevents duplicate IDs
+- **Environment-Aware**: Separate counters for development vs production
+
+### **How It Works**
+
+#### **Client-Side Generation (`lib/client-qr-generator.ts`)**
+```typescript
+// Environment-specific localStorage keys
+const getQRCounterKey = (): string => {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  return isDevelopment ? 'qr_counter_dev' : 'qr_counter_prod';
+};
+
+// Generates sequential IDs: QR-002, QR-003, QR-004, etc.
+export const generateQRId = (): string => {
+  const counterKey = getQRCounterKey();
+  const currentCounter = localStorage.getItem(counterKey);
+  const nextCounter = currentCounter ? parseInt(currentCounter, 10) + 1 : 2;
+  localStorage.setItem(counterKey, nextCounter.toString());
+  return `QR-${nextCounter.toString().padStart(3, '0')}`;
+};
+```
+
+#### **Server-Side Validation**
+- **Database Constraint**: `request_id` field has a unique constraint
+- **Duplicate Detection**: If a duplicate ID is submitted, the database throws an error
+- **Fallback**: If localStorage fails, timestamp-based fallback IDs are generated
+- **Environment Separation**: Development and production use separate localStorage counters
+
+#### **Usage Pattern**
+1. **Main Page**: Uses client-side generation for immediate feedback
+2. **Non-Main Pages**: Also uses client-side generation for consistency
+3. **API Endpoint**: Accepts client-generated IDs and validates against database
+4. **Error Handling**: Server returns clear error if duplicate ID is detected
+
+### **Benefits**
+- ✅ **Works offline** - No server dependency for ID generation
+- ✅ **Fast response** - No network round-trip for ID generation
+- ✅ **Resilient** - Handles poor network conditions gracefully
+- ✅ **Safe** - Server validation prevents duplicates
+- ✅ **Environment-aware** - Separate counters prevent conflicts
+- ✅ **Consistent** - Same approach across all pages
+
+### **Error Scenarios**
+- **Duplicate ID**: Server returns 500 error, user can retry
+- **localStorage failure**: Falls back to timestamp-based IDs
+- **Network failure**: Client can still generate IDs, server validates when connection restored
+
 ## Database Schema
 
 The app uses a flat JSONB structure:
