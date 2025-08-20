@@ -18,6 +18,7 @@ export const CommonFooter: React.FC<CommonFooterProps> = ({
   onSalespersonChange,
   onShowSalespersonModal
 }) => {
+  const [showModal, setShowModal] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isMainPage = pathname === '/';
@@ -31,15 +32,61 @@ export const CommonFooter: React.FC<CommonFooterProps> = ({
       return;
     }
 
-    // For all other cases, show the salesperson modal
-    if (onShowSalespersonModal) {
+    // If we're on main page but no specific salesperson, show modal
+    if (isMainPage && onShowSalespersonModal) {
       onShowSalespersonModal();
+      return;
+    }
+
+    // For non-main pages, show our own modal
+    setShowModal(true);
+  };
+
+  const handleSalespersonSelect = async (salesperson: string) => {
+    setShowModal(false);
+    
+    // Create new request by calling the API
+    try {
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          salesperson,
+          status: 'draft',
+          title: 'New Request',
+          description: '',
+          line_items: []
+        })
+      });
+
+      if (response.ok) {
+        // Navigate to main page and scroll to top
+        router.push('/');
+        // Small delay to ensure navigation completes before scrolling
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+      } else {
+        console.error('Failed to create new request');
+        alert('Failed to create new request. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating new request:', error);
+      alert('Failed to create new request. Please try again.');
     }
   };
 
   return (
     <>
       <BottomNavigation onNewRequest={handlePlusClick} isCreating={isCreating} />
+      
+      {/* Salesperson Modal for non-main pages */}
+      <SalespersonModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSelect={handleSalespersonSelect}
+        title="Select salesperson for new request"
+      />
     </>
   );
 };

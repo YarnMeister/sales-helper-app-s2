@@ -373,7 +373,7 @@ export default function CheckInPage() {
         {/* Back in Office Selection */}
         <Card className="p-4 mb-3">
           <h3 className="text-lg font-medium text-gray-900 mb-3">Back in office</h3>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {[
               'Later this morning',
               'In the afternoon',
@@ -383,7 +383,7 @@ export default function CheckInPage() {
                 key={time}
                 variant={backInOffice === time ? 'default' : 'outline'}
                 size="sm"
-                className={`flex-1 ${backInOffice === time ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+                className={`${backInOffice === time ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
                 onClick={() => setBackInOffice(time)}
               >
                 {time}
