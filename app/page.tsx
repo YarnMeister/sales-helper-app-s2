@@ -241,7 +241,23 @@ export default function MainPage() {
   };
 
   const handleAddContact = (requestId: string) => {
+    // Find the current request to get contact information
+    const currentRequest = requests.find(req => req.id === requestId);
+    
     sessionStorage.setItem('editingRequestId', requestId);
+    
+    // If there's a current contact, store its details for display
+    if (currentRequest?.contact) {
+      sessionStorage.setItem('currentContactInfo', JSON.stringify({
+        name: currentRequest.contact.name,
+        mineGroup: currentRequest.contact.mineGroup,
+        mineName: currentRequest.contact.mineName
+      }));
+    } else {
+      // Clear any previous contact info
+      sessionStorage.removeItem('currentContactInfo');
+    }
+    
     router.push('/add-contact');
   };
 
