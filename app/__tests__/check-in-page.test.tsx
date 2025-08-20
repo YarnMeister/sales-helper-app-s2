@@ -462,9 +462,17 @@ describe('CheckInPage', () => {
     const morningButton = screen.getByText('Later this morning');
     fireEvent.click(morningButton);
 
-    // Submit check-in
+    // Submit check-in (this will show the salesperson modal)
     const checkInButton = screen.getByText('Check in Now');
     fireEvent.click(checkInButton);
+
+    // Wait for salesperson modal to appear and select James
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+    });
+
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
 
     // Should show loading state
     await waitFor(() => {
@@ -524,9 +532,17 @@ describe('CheckInPage', () => {
     const morningButton = screen.getByText('Later this morning');
     fireEvent.click(morningButton);
 
-    // Submit check-in
+    // Submit check-in (this will show the salesperson modal)
     const checkInButton = screen.getByText('Check in Now');
     fireEvent.click(checkInButton);
+
+    // Wait for salesperson modal to appear and select James
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+    });
+
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
 
     // Should show error alert
     await waitFor(() => {
@@ -586,9 +602,17 @@ describe('CheckInPage', () => {
     const morningButton = screen.getByText('Later this morning');
     fireEvent.click(morningButton);
 
-    // Submit check-in
+    // Submit check-in (this will show the salesperson modal)
     const checkInButton = screen.getByText('Check in Now');
     fireEvent.click(checkInButton);
+
+    // Wait for salesperson modal to appear and select James
+    await waitFor(() => {
+      expect(screen.getByText('Who is checking in?')).toBeInTheDocument();
+    });
+
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
 
     // Should still show success message and navigate back to main page even if Slack fails
     await waitFor(() => {

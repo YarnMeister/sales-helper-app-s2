@@ -51,10 +51,7 @@ export const CommonFooter: React.FC<CommonFooterProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salesperson,
-          status: 'draft',
-          title: 'New Request',
-          description: '',
+          salespersonSelection: salesperson,
           line_items: []
         })
       });
