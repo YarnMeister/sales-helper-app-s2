@@ -97,7 +97,7 @@ describe('CheckInPage', () => {
     expect(screen.getByText('Purpose')).toBeInTheDocument();
     expect(screen.getByText('Back in office')).toBeInTheDocument();
     expect(screen.getByText('Comments')).toBeInTheDocument();
-    expect(screen.getByText('Check-in Now')).toBeInTheDocument();
+    expect(screen.getByText('Select Salesperson to Check-in')).toBeInTheDocument();
   });
 
   it('displays salesperson selection buttons', async () => {
@@ -122,7 +122,7 @@ describe('CheckInPage', () => {
     const jamesButton = screen.getByText('James');
     const luyandaButton = screen.getByText('Luyanda');
 
-    // Initially no salesperson should be selected (default is "All requests" but not shown in UI)
+    // Initially no salesperson should be selected
     expect(jamesButton).not.toHaveClass('text-white');
     expect(luyandaButton).not.toHaveClass('text-white');
 
@@ -218,12 +218,91 @@ describe('CheckInPage', () => {
     expect(commentsTextarea).toHaveValue('Test comment');
   });
 
+  it('shows select salesperson message when no salesperson is selected', async () => {
+    render(<CheckInPage />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
+    });
+
+    const checkInButton = screen.getByText('Select Salesperson to Check-in');
+    expect(checkInButton).toBeInTheDocument();
+  });
+
+  it('shows salesperson modal when check-in button is clicked without salesperson selected', async () => {
+    render(<CheckInPage />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
+    });
+
+    // The button should be disabled when no salesperson is selected
+    const checkInButton = screen.getByText('Select Salesperson to Check-in');
+    expect(checkInButton).toBeDisabled();
+  });
+
+  it('shows modal when salesperson is selected but other fields are missing', async () => {
+    render(<CheckInPage />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
+    });
+
+    // Select a salesperson first
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
+
+    // Now the check-in button should be enabled but still show the modal when clicked
+    const checkInButton = screen.getByText('Check-in Now');
+    expect(checkInButton).toBeDisabled(); // Still disabled because other fields are missing
+  });
+
+  it('selects salesperson from modal and updates button text', async () => {
+    render(<CheckInPage />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
+    });
+
+    // Select a salesperson first
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
+
+    // Fill in other required fields
+    const allMinesButton = screen.getByText('All mines');
+    fireEvent.click(allMinesButton);
+    
+    await waitFor(() => {
+      const groupAButton = screen.getByText('Group A');
+      fireEvent.click(groupAButton);
+    });
+    
+    await waitFor(() => {
+      const mineAlphaButton = screen.getByText('Mine Alpha');
+      fireEvent.click(mineAlphaButton);
+    });
+
+    const quoteButton = screen.getByText('Quote follow-up');
+    fireEvent.click(quoteButton);
+
+    const morningButton = screen.getByText('Later this morning');
+    fireEvent.click(morningButton);
+
+    // Now the check-in button should be enabled
+    const checkInButton = screen.getByText('Check-in Now');
+    expect(checkInButton).not.toBeDisabled();
+  });
+
   it('disables check-in button when required fields are missing', async () => {
     render(<CheckInPage />);
     
     await waitFor(() => {
       expect(screen.queryByText('Loading mine groups...')).not.toBeInTheDocument();
     });
+
+    // Select a salesperson first
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
 
     const checkInButton = screen.getByText('Check-in Now');
     expect(checkInButton).toBeDisabled();
@@ -282,6 +361,10 @@ describe('CheckInPage', () => {
     });
 
     // Fill in all required fields
+    // Select salesperson first
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
+
     const allMinesButton = screen.getByText('All mines');
     fireEvent.click(allMinesButton);
     
@@ -319,7 +402,7 @@ describe('CheckInPage', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salesperson: 'All requests',
+          salesperson: 'James',
           planned_mines: ['Mine Alpha'],
           main_purpose: 'Quote follow-up',
           availability: 'Later this morning',
@@ -333,7 +416,7 @@ describe('CheckInPage', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          salesperson: 'All requests',
+          salesperson: 'James',
           planned_mines: ['Mine Alpha'],
           main_purpose: 'Quote follow-up',
           availability: 'Later this morning',
@@ -376,6 +459,10 @@ describe('CheckInPage', () => {
     });
 
     // Fill in all required fields
+    // Select salesperson first
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
+
     const allMinesButton = screen.getByText('All mines');
     fireEvent.click(allMinesButton);
     
@@ -438,6 +525,10 @@ describe('CheckInPage', () => {
     });
 
     // Fill in all required fields
+    // Select salesperson first
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
+
     const allMinesButton = screen.getByText('All mines');
     fireEvent.click(allMinesButton);
     

@@ -113,6 +113,7 @@ export const ContactJSONSchema = z.object({
 export const LineItemSchema = z.object({
   pipedriveProductId: z.number().positive(),
   name: z.string().min(1),
+  code: z.string().nullable().optional(),
   description: z.string().optional(),
   quantity: z.number().positive(),
   unitPrice: z.number().nonnegative(),

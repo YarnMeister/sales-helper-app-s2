@@ -7,12 +7,14 @@ interface SalespersonModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (salesperson: string) => void;
+  title?: string;
 }
 
 export const SalespersonModal: React.FC<SalespersonModalProps> = ({
   isOpen,
   onClose,
-  onSelect
+  onSelect,
+  title = "Who's requesting?"
 }) => {
   if (!isOpen) return null;
 
@@ -27,7 +29,7 @@ export const SalespersonModal: React.FC<SalespersonModalProps> = ({
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Who&apos;s requesting?</h2>
+            <h2 className="text-xl font-bold text-gray-900">{title}</h2>
             <Button
               variant="ghost"
               size="sm"

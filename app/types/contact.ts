@@ -27,6 +27,5 @@ export interface ContactsApiResponse {
 export interface ContactSelectionState {
   expandedGroups: Set<string>;
   expandedMines: Set<string>;
-  selectedContact: Contact | null;
   searchTerm: string;
 }

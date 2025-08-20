@@ -45,7 +45,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
   });
 
   it('immediately calls onSelectContact when contact is clicked', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     // Navigate to contact
     await waitFor(() => {
@@ -74,7 +74,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
   });
 
   it('does not show selected contact preview', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       expect(screen.getByText('Mining Group A')).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
   });
 
   it('does not show save/cancel buttons', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       expect(screen.getByText('Mining Group A')).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
   });
 
   it('does not highlight selected contacts', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       fireEvent.click(screen.getByTestId('sh-contact-group-mining-group-a'));
@@ -118,7 +118,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
   });
 
   it('handles contact selection with keyboard', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       fireEvent.click(screen.getByTestId('sh-contact-group-mining-group-a'));
@@ -147,7 +147,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
   });
 
   it('handles contact selection with Space key', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       fireEvent.click(screen.getByTestId('sh-contact-group-mining-group-a'));
@@ -176,7 +176,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
   });
 
   it('maintains accessibility attributes', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       fireEvent.click(screen.getByTestId('sh-contact-group-mining-group-a'));
@@ -196,7 +196,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
   });
 
   it('handles multiple contact selections correctly', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       fireEvent.click(screen.getByTestId('sh-contact-group-mining-group-a'));
@@ -252,7 +252,7 @@ describe('ContactAccordion - Streamlined Selection', () => {
       })
     });
 
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} selectedContact={null} />);
+    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
     await waitFor(() => {
       fireEvent.click(screen.getByTestId('sh-contact-group-mining-group-a'));

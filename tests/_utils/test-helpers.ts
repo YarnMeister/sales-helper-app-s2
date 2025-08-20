@@ -33,8 +33,10 @@ export const assertValidLineItem = (lineItem: any): asserts lineItem is TLineIte
   expect(lineItem.pipedriveProductId).toBeGreaterThan(0);
   expect(lineItem.name).toBeTypeOf('string');
   expect(lineItem.name.length).toBeGreaterThan(0);
-  expect(lineItem.code).toBeTypeOf('string');
-  expect(lineItem.code.length).toBeGreaterThan(0);
+  if (lineItem.code !== null && lineItem.code !== undefined) {
+    expect(lineItem.code).toBeTypeOf('string');
+    expect(lineItem.code.length).toBeGreaterThan(0);
+  }
   expect(lineItem.category).toBeTypeOf('string');
   expect(lineItem.category.length).toBeGreaterThan(0);
   expect(lineItem.price).toBeTypeOf('number');

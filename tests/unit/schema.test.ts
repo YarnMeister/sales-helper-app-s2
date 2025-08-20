@@ -32,6 +32,30 @@ describe('Schema validation', () => {
       expect(() => LineItem.parse(validItem)).not.toThrow();
     });
     
+    it('should accept line item with null code', () => {
+      const itemWithNullCode = {
+        pipedriveProductId: 123,
+        name: "Test Product",
+        code: null,
+        price: 100,
+        quantity: 2
+      };
+      
+      expect(() => LineItem.parse(itemWithNullCode)).not.toThrow();
+    });
+    
+    it('should accept line item with undefined code', () => {
+      const itemWithUndefinedCode = {
+        pipedriveProductId: 123,
+        name: "Test Product",
+        code: undefined,
+        price: 100,
+        quantity: 2
+      };
+      
+      expect(() => LineItem.parse(itemWithUndefinedCode)).not.toThrow();
+    });
+    
     it('should reject invalid line item', () => {
       const invalidItem = {
         pipedriveProductId: -1,

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Contact, ContactsHierarchy } from '../types/contact';
 import { CommonHeader } from '../components/CommonHeader';
 import { CommonFooter } from '../components/CommonFooter';
+import { SalespersonModal } from '../components/SalespersonModal';
 
 export default function CheckInPage() {
   const router = useRouter();
@@ -19,11 +20,12 @@ export default function CheckInPage() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   
   // New state for check-in form
-  const [selectedSalesperson, setSelectedSalesperson] = useState('All requests');
+  const [selectedSalesperson, setSelectedSalesperson] = useState('');
   const [selectedMine, setSelectedMine] = useState('');
   const [selectedPurpose, setSelectedPurpose] = useState('');
   const [backInOffice, setBackInOffice] = useState('');
   const [comments, setComments] = useState('');
+  const [showSalespersonModal, setShowSalespersonModal] = useState(false);
 
   const fetchContacts = async () => {
     try {
@@ -68,10 +70,15 @@ export default function CheckInPage() {
     setExpandedGroups(new Set());
   };
 
+  const handleSalespersonSelect = (salesperson: string) => {
+    setSelectedSalesperson(salesperson);
+    setShowSalespersonModal(false);
+  };
+
   const handleCheckIn = async () => {
     try {
       // Validate required fields
-      if (!selectedMine || !selectedPurpose || !backInOffice) {
+      if (!selectedSalesperson || !selectedMine || !selectedPurpose || !backInOffice) {
         console.error('Missing required fields');
         return;
       }
@@ -126,7 +133,7 @@ export default function CheckInPage() {
       router.push('/');
       
       // Reset form (this will happen when component unmounts)
-      setSelectedSalesperson('All requests');
+      setSelectedSalesperson('James');
       setSelectedMine('');
       setSelectedPurpose('');
       setBackInOffice('');
@@ -193,6 +200,9 @@ export default function CheckInPage() {
               </Button>
             ))}
           </div>
+          {!selectedSalesperson && (
+            <p className="text-sm text-gray-500 mt-2">Please select a salesperson to continue</p>
+          )}
         </div>
 
         {/* Mine Selection */}
@@ -374,14 +384,28 @@ export default function CheckInPage() {
         {/* Check-in Button */}
         <div className="pt-4 pb-20">
           <Button
-            onClick={handleCheckIn}
-            variant={selectedMine && selectedPurpose && backInOffice ? "active" : "disabled"}
+            onClick={() => {
+              if (!selectedSalesperson) {
+                setShowSalespersonModal(true);
+                return;
+              }
+              handleCheckIn();
+            }}
+            variant={selectedSalesperson && selectedMine && selectedPurpose && backInOffice ? "active" : "disabled"}
             className="w-full h-12 text-lg font-medium bg-green-700 hover:bg-green-800 text-white border-green-700"
             disabled={!selectedMine || !selectedPurpose || !backInOffice}
           >
-            Check-in Now
+            {selectedSalesperson ? 'Check-in Now' : 'Select Salesperson to Check-in'}
           </Button>
         </div>
+
+        {/* Salesperson Modal */}
+        <SalespersonModal
+          isOpen={showSalespersonModal}
+          onClose={() => setShowSalespersonModal(false)}
+          onSelect={handleSalespersonSelect}
+          title="Who is checking in?"
+        />
 
         {/* No Results */}
         {Object.keys(contactsData).length === 0 && (

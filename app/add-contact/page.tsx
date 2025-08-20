@@ -12,7 +12,11 @@ export default function AddContactPage() {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [currentContactInfo, setCurrentContactInfo] = useState<{
+    name: string;
+    mineGroup: string;
+    mineName: string;
+  } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -20,26 +24,22 @@ export default function AddContactPage() {
     const requestId = sessionStorage.getItem('editingRequestId');
     if (requestId) {
       setEditingRequestId(requestId);
-      // Fetch the current request to get the selected contact
-      fetchCurrentRequest(requestId);
+      
+      // Get current contact info from sessionStorage
+      const contactInfoStr = sessionStorage.getItem('currentContactInfo');
+      if (contactInfoStr) {
+        try {
+          const contactInfo = JSON.parse(contactInfoStr);
+          setCurrentContactInfo(contactInfo);
+        } catch (error) {
+          console.error('Error parsing current contact info:', error);
+        }
+      }
     } else {
       // No request to edit, redirect back to main page
       router.push('/');
     }
   }, [router]);
-
-  const fetchCurrentRequest = async (requestId: string) => {
-    try {
-      const response = await fetch(`/api/requests?id=${requestId}`);
-      const data = await response.json();
-      
-      if (data.ok && data.data?.[0]?.contact) {
-        setSelectedContact(data.data[0].contact);
-      }
-    } catch (error) {
-      console.error('Error fetching current request:', error);
-    }
-  };
 
   const handleContactSelect = async (contact: Contact) => {
     if (!editingRequestId) return;
@@ -62,6 +62,7 @@ export default function AddContactPage() {
       if (data.ok) {
         // Clear the editing session and return to main page
         sessionStorage.removeItem('editingRequestId');
+        sessionStorage.removeItem('currentContactInfo');
         sessionStorage.setItem('shouldRefreshRequests', 'true');
         router.push('/');
       } else {
@@ -77,6 +78,7 @@ export default function AddContactPage() {
 
   const handleCancel = () => {
     sessionStorage.removeItem('editingRequestId');
+    sessionStorage.removeItem('currentContactInfo');
     router.push('/');
   };
 
@@ -133,11 +135,23 @@ export default function AddContactPage() {
           </div>
         )}
 
+        {/* Current Contact Display */}
+        {currentContactInfo && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-sm font-semibold text-blue-900 mb-2">Currently Selected Contact</h3>
+            <div className="text-sm text-blue-800">
+              <p className="font-medium">{currentContactInfo.name}</p>
+              <p className="text-blue-600">
+                {currentContactInfo.mineGroup} | {currentContactInfo.mineName}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Contact Selection */}
         <div className="mb-6">
           <ContactAccordion
             onSelectContact={handleContactSelect}
-            selectedContact={selectedContact}
           />
         </div>
       </div>

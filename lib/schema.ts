@@ -9,7 +9,7 @@ export const SalespersonSelection = z.enum(['Luyanda', 'James', 'Stefan'], {
 export const LineItem = z.object({
   pipedriveProductId: z.number().int().positive("Product ID must be a positive integer"),
   name: z.string().min(1, "Product name is required"),
-  code: z.string().optional(),
+  code: z.string().nullable().optional(),
   category: z.string().optional(),
   price: z.number().nonnegative("Price cannot be negative").default(0),
   quantity: z.number().int().positive("Quantity must be a positive integer").default(1),
