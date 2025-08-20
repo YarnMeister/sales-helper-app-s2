@@ -17,7 +17,7 @@ interface Contact {
 interface Product {
   pipedriveProductId: number;
   name: string;
-  code: string;
+  code: string | null;
   price: number;
   shortDescription: string;
 }

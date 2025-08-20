@@ -3,7 +3,7 @@ import { BaseFactory } from './base-factory';
 export interface TLineItem {
   pipedriveProductId: number;
   name: string;
-  code: string;
+  code: string | null;
   category: string;
   price: number;
   quantity: number;

@@ -286,12 +286,15 @@ Skipped
 Todo on UI
 [x] Add contact/line item not saving, no way to select and save yet
 [ ] Search top of Add Contact not working
-[ ] Move telephone inline with email to make contact row less tall
-[ ] Deal Management title on main page
-[ ] bring back sales person picker
-[ ] price is missing on line items
+[x] Move telephone inline with email to make contact row less tall
+[x] Deal Management title on main page
+[x] bring back sales person picker
+[x] price is missing on line items
 [x] remove "Null" product categories by looking at "Shoe on Helper App"
- 
+[x] reduce the toast message when creating "new request" ( + ) to 1 sec, its too long 
+[x] fix issue with fallback || '#out-of-office' to all Slack API calls - this won;t allow env.local to decide where to post and can't mock test either
+[ ] There are multiple test files that might need the withPerformanceLogging mock fix
+
 [ ] Add a long-press widget for selecting contacts:
 # There are third-party packages such as use-long-press that abstract this pattern for React, #making it easier to add long-press events across components.
 #

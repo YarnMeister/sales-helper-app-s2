@@ -1,7 +1,7 @@
 export interface Product {
   pipedriveProductId: number;
   name: string;
-  code?: string;
+  code?: string | null;
   price?: number;
   description?: string;
   shortDescription?: string;
@@ -11,7 +11,7 @@ export interface Product {
 export interface LineItem {
   pipedriveProductId: number;
   name: string;
-  code?: string;
+  code?: string | null;
   price?: number;
   quantity: number;
   description?: string;
