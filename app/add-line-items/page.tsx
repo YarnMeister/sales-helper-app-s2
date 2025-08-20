@@ -53,12 +53,26 @@ export default function AddLineItemsPage() {
     setError(null);
 
     try {
+      // First, fetch the current request to get existing line items
+      const currentResponse = await fetch(`/api/requests?id=${editingRequestId}`);
+      const currentData = await currentResponse.json();
+      
+      if (!currentData.ok || !currentData.data || !currentData.data[0]) {
+        throw new Error('Failed to fetch current request data');
+      }
+      
+      const currentRequest = currentData.data[0];
+      const existingLineItems = currentRequest.line_items || [];
+      
+      // Append the new product to existing line items
+      const updatedLineItems = [...existingLineItems, product];
+
       const response = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: editingRequestId,
-          line_items: [product]
+          line_items: updatedLineItems
         })
       });
 
