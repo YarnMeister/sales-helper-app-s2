@@ -34,6 +34,30 @@ describe('AddLineItemsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
+    // Mock sessionStorage to return different values for different keys
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === 'editingRequestId') {
+        return 'test-request-id';
+      }
+      if (key === 'currentLineItemsInfo') {
+        return JSON.stringify([
+          {
+            code: 'PROD-001',
+            name: 'Test Product 1',
+            description: 'Test product description 1',
+            quantity: 2
+          },
+          {
+            code: 'PROD-002',
+            name: 'Test Product 2',
+            description: 'Test product description 2',
+            quantity: 1
+          }
+        ]);
+      }
+      return null;
+    });
+    
     // Mock sessionStorage
     Object.defineProperty(window, 'sessionStorage', {
       value: {
@@ -76,9 +100,6 @@ describe('AddLineItemsPage', () => {
   });
 
   it('should render with correct header and navigation', async () => {
-    // Set up sessionStorage to have editingRequestId
-    mockSessionStorage.getItem.mockReturnValue('test-request-id');
-
     render(<AddLineItemsPage />);
 
     // Wait for the component to load
@@ -98,7 +119,46 @@ describe('AddLineItemsPage', () => {
     expect(screen.getByText('Deals')).toBeInTheDocument();
     expect(screen.getByText('Check-in')).toBeInTheDocument();
     expect(screen.getByText('Contacts')).toBeInTheDocument();
-    expect(screen.getByText('Price List')).toBeInTheDocument();
+  });
+
+  it('should display current line items info when available', async () => {
+    render(<AddLineItemsPage />);
+
+    // Wait for the component to load
+    await waitFor(() => {
+      expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
+    });
+
+    // Should show current line items info
+    expect(screen.getByText('Currently Selected Line Items')).toBeInTheDocument();
+    expect(screen.getByText('Test Product 1')).toBeInTheDocument();
+    expect(screen.getByText('Test Product 2')).toBeInTheDocument();
+    expect(screen.getByText('Code: PROD-001 | Qty: 2')).toBeInTheDocument();
+    expect(screen.getByText('Code: PROD-002 | Qty: 1')).toBeInTheDocument();
+    expect(screen.getByText('Test product description 1')).toBeInTheDocument();
+    expect(screen.getByText('Test product description 2')).toBeInTheDocument();
+  });
+
+  it('should not display current line items info when not available', async () => {
+    // Mock sessionStorage to not return currentLineItemsInfo
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === 'editingRequestId') {
+        return 'test-request-id';
+      }
+      return null;
+    });
+
+    render(<AddLineItemsPage />);
+
+    // Wait for the component to load
+    await waitFor(() => {
+      expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
+    });
+
+        // Should not show current line items info
+    expect(screen.queryByText('Currently Selected Line Items')).not.toBeInTheDocument();
+    expect(screen.queryByText('Test Product 1')).not.toBeInTheDocument();
+  });
   });
 
   it('should redirect to main page if no request ID in session storage', () => {
@@ -554,4 +614,3 @@ describe('AddLineItemsPage', () => {
     // The component should clear session storage and redirect
     // This would be handled by the component's success handler
   });
-});

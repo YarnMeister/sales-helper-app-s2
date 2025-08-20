@@ -23,8 +23,13 @@ interface Contact {
 interface LineItem {
   pipedriveProductId: number;
   name: string;
-  quantity: number;
+  code?: string | null;
   price?: number;
+  quantity: number;
+  description?: string;
+  shortDescription?: string;
+  customDescription?: string;
+  showOnSalesHelper?: boolean;
 }
 
 interface Request {
@@ -262,7 +267,26 @@ export default function MainPage() {
   };
 
   const handleAddLineItems = (requestId: string) => {
+    // Find the current request to get line items information
+    const currentRequest = requests.find(req => req.id === requestId);
+    
     sessionStorage.setItem('editingRequestId', requestId);
+    
+    // If there are current line items, store their details for display
+    if (currentRequest?.line_items && currentRequest.line_items.length > 0) {
+      sessionStorage.setItem('currentLineItemsInfo', JSON.stringify(
+        currentRequest.line_items.map(item => ({
+          code: item.code || 'N/A',
+          name: item.name,
+          description: item.description || item.name,
+          quantity: item.quantity
+        }))
+      ));
+    } else {
+      // Clear any previous line items info
+      sessionStorage.removeItem('currentLineItemsInfo');
+    }
+    
     router.push('/add-line-items');
   };
 

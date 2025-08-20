@@ -9,14 +9,14 @@ import { useDebounce } from '../hooks/useDebounce';
 
 interface ProductAccordionProps {
   onProductSelect: (product: LineItem) => void;
-  existingItems: LineItem[];
+  existingItems?: LineItem[];
   className?: string;
   viewOnly?: boolean;
 }
 
 export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   onProductSelect,
-  existingItems,
+  existingItems = [],
   className = '',
   viewOnly = false
 }) => {
@@ -29,10 +29,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Convert existingItems array to Map for easier lookup
-  const existingItemsMap = useMemo(() => {
-    return new Map(existingItems.map(item => [item.pipedriveProductId, item]));
-  }, [existingItems]);
+
 
   const fetchProducts = async () => {
     try {
@@ -158,7 +155,6 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
       <div className="space-y-3" data-testid="sh-products-hierarchy">
         {Object.entries(filteredProductsData).sort(([a], [b]) => a.localeCompare(b)).map(([category, products]) => {
           const isCategoryExpanded = expandedCategories.has(category);
-          const existingInCategory = products.filter(p => existingItemsMap.has(p.pipedriveProductId)).length;
           
           return (
             <Card key={category} className="overflow-hidden shadow-sm">
@@ -179,11 +175,6 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                     <h3 className="font-semibold text-lg text-gray-900">{category}</h3>
                   </div>
                   <div className="flex items-center gap-2">
-                    {existingInCategory > 0 && (
-                      <Badge variant="default" className="bg-green-600">
-                        {existingInCategory} added
-                      </Badge>
-                    )}
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                       {products.length} products
                     </Badge>
@@ -195,33 +186,27 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
               {isCategoryExpanded && (
                 <div className="bg-white">
                   {products.sort((a, b) => a.name.localeCompare(b.name)).map((product) => {
-                    const isExisting = existingItemsMap.has(product.pipedriveProductId);
-                    
                     return (
                       <div
                         key={product.pipedriveProductId}
                         className={`p-4 border-b border-gray-50 last:border-b-0 transition-colors min-h-[44px] flex items-center ${
                           viewOnly 
                             ? 'cursor-default hover:bg-gray-25' 
-                            : isExisting 
-                              ? 'bg-green-25 cursor-default' 
-                              : 'cursor-pointer hover:bg-gray-25 active:bg-gray-50'
+                            : 'cursor-pointer hover:bg-gray-25 active:bg-gray-50'
                         }`}
-                        onClick={() => !viewOnly && !isExisting && handleProductSelect(product)}
+                        onClick={() => !viewOnly && handleProductSelect(product)}
                         onKeyDown={(e) => {
-                          if (!viewOnly && !isExisting && (e.key === 'Enter' || e.key === ' ')) {
+                          if (!viewOnly && (e.key === 'Enter' || e.key === ' ')) {
                             e.preventDefault();
                             handleProductSelect(product);
                           }
                         }}
-                        tabIndex={viewOnly || isExisting ? -1 : 0}
-                        role={viewOnly || isExisting ? undefined : "button"}
+                        tabIndex={viewOnly ? -1 : 0}
+                        role={viewOnly ? undefined : "button"}
                         aria-label={
                           viewOnly 
                             ? `View ${product.name}` 
-                            : isExisting 
-                              ? `${product.name} already added` 
-                              : `Add ${product.name} to request`
+                            : `Add ${product.name} to request`
                         }
                         data-testid={`sh-product-item-${product.pipedriveProductId}`}
                       >
@@ -231,11 +216,6 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                               <span className="font-medium text-gray-900">
                                 {product.name}
                               </span>
-                              {isExisting && (
-                                <Badge variant="default" className="bg-green-600 text-xs">
-                                  Added
-                                </Badge>
-                              )}
                               {product.code && (
                                 <Badge variant="outline" className="text-xs">
                                   {product.code}
