@@ -39,6 +39,7 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
   - Mine group and mine name requirements
   - Integration with Pipedrive person records
   - Mobile-optimized form layout
+  - Cache refresh button for real-time data updates
 
 #### 3. Add Line Items (`/add-line-items`)
 - **Purpose**: Product selection and quantity management
@@ -48,6 +49,7 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
   - Price calculation
   - Custom descriptions
   - Show/hide product visibility
+  - Cache refresh button for real-time data updates
 
 #### 4. Check-In (`/check-in`)
 - **Purpose**: Site visit tracking and Slack notifications
@@ -60,7 +62,6 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
 #### 5. Contacts List (`/contacts-list`)
 - **Purpose**: Contact browsing and search
 - **Features**:
-  - Contact search and filtering
   - Mine group organization
   - Contact details display
   - Integration with main workflow
@@ -71,7 +72,7 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
   - Product browsing interface
   - Price information
   - Product categorization
-  - Search and filter capabilities
+
 
 ### Shared Components
 
@@ -92,6 +93,7 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
 - **CommentInput**: Comment input with validation
 - **QuantityControl**: Product quantity adjustment
 - **SalespersonModal**: Salesperson selection modal
+- **CacheRefreshButton**: Cache refresh functionality with visual feedback
 
 ## API Routes
 
@@ -171,6 +173,15 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
   - Mock submission retrieval
   - Development data isolation
   - Testing data management
+
+#### 10. `/api/cache/refresh` (POST)
+- **Purpose**: Manual cache refresh and data synchronization
+- **Features**:
+  - Redis cache busting for contacts and products
+  - Force refresh from Pipedrive API
+  - Comprehensive error handling and logging
+  - Performance monitoring and correlation tracking
+  - Returns busted cache keys for verification
 
 ## Database Structure and Interaction
 
@@ -284,6 +295,44 @@ CREATE TABLE mock_pipedrive_submissions (
 
 ## Redis Cache Usage
 
+### Cache Refresh Functionality
+
+#### Manual Cache Refresh
+- **Purpose**: Allow users to manually refresh data from Pipedrive without waiting for cache expiration
+- **Implementation**: Subtle refresh button in top-right corner of Add Contact and Add Line Items pages
+- **User Experience**: 
+  - Visual feedback with spinning animation during refresh
+  - Toast notifications for success/failure states
+  - Non-intrusive design that doesn't interfere with main workflow
+- **Technical Benefits**:
+  - Immediate data synchronization from Pipedrive
+  - Bypasses 2-hour cache expiration period
+  - Enables real-time updates for new contacts and products
+
+#### Cache Refresh API (`/api/cache/refresh`)
+```typescript
+// POST /api/cache/refresh
+interface CacheRefreshResponse {
+  ok: boolean;
+  message: string;
+  bustedKeys: string[];
+}
+```
+
+#### CacheRefreshButton Component
+```typescript
+interface CacheRefreshButtonProps {
+  className?: string;
+}
+
+// Features:
+// - RefreshCw icon from Lucide React
+// - Loading state with spinning animation
+// - Toast notifications for user feedback
+// - Error handling for network failures
+// - Accessibility with proper title and test IDs
+```
+
 ### Cache Architecture
 
 #### Cache Configuration
@@ -339,6 +388,8 @@ interface CacheEntry<T = any> {
 - **Selective Invalidation**: Targeted cache clearing
 - **Pattern Matching**: Bulk cache invalidation
 - **Event-Driven**: Automatic cache updates
+- **Manual Refresh**: User-initiated cache refresh via UI button
+- **Real-time Updates**: Immediate data synchronization from Pipedrive
 
 ## Frontend vs Backend
 
@@ -389,6 +440,13 @@ interface CacheEntry<T = any> {
 2. **API**: Request validation and database storage
 3. **Cache**: Cache invalidation and updates
 4. **Response**: Success/error feedback to user
+
+#### Cache Refresh Flow
+1. **Frontend**: User clicks cache refresh button
+2. **API**: Cache busting for contacts and products
+3. **Redis**: Removal of cached data
+4. **Pipedrive**: Fresh data fetch on next request
+5. **Response**: Success notification to user
 
 #### Submission Flow
 1. **Frontend**: Submit button triggers API call
@@ -449,6 +507,7 @@ export default defineConfig({
 - **UI Components**: Reusable component testing
 - **Form Validation**: Input validation testing
 - **User Interactions**: Click and form submission testing
+- **Cache Refresh**: Cache refresh button functionality testing
 
 ### Test Factories (`tests/_factories/`)
 
@@ -480,6 +539,7 @@ export default defineConfig({
 - **Form Validation**: Input validation and error handling
 - **Navigation**: Page routing and navigation
 - **State Management**: Component state changes
+- **Cache Refresh UI**: Button rendering, loading states, and user feedback
 
 #### Backend Coverage
 - **API Endpoints**: Request/response handling
@@ -487,12 +547,14 @@ export default defineConfig({
 - **Cache Operations**: Redis interactions
 - **External Integrations**: Pipedrive and Slack APIs
 - **Error Handling**: Error scenarios and recovery
+- **Cache Refresh API**: Manual cache busting functionality
 
 #### Integration Coverage
 - **End-to-End Flows**: Complete user workflows
 - **Data Persistence**: Database state consistency
 - **Cache Consistency**: Cache and database synchronization
 - **External Service Integration**: API reliability
+- **Cache Refresh Integration**: Manual refresh with Pipedrive synchronization
 
 ### Testing Best Practices
 
@@ -507,12 +569,14 @@ export default defineConfig({
 - **Cache Performance**: Cache hit/miss ratio testing
 - **API Performance**: Response time testing
 - **Memory Usage**: Memory leak detection
+- **Cache Refresh Performance**: Manual refresh operation timing and impact
 
 #### Error Scenario Testing
 - **Network Failures**: Offline behavior testing
 - **API Failures**: External service failure handling
 - **Validation Errors**: Invalid input handling
 - **Database Errors**: Connection failure handling
+- **Cache Refresh Failures**: Redis connection issues and API error handling
 
 ### Continuous Integration
 
@@ -598,4 +662,18 @@ export default defineConfig({
 - **Privacy Protection**: PII handling compliance
 - **Security Scanning**: Vulnerability assessment
 
-This technical specification provides a comprehensive overview of the Sales Helper App's current architecture, implementation details, and operational characteristics. The application demonstrates a well-structured, mobile-first approach to sales workflow management with robust testing, caching, and deployment practices.
+## User Workflow Improvements
+
+### Cache Refresh Integration
+- **Real-time Data Access**: Users can now see new contacts and products immediately after they're added to Pipedrive
+- **Reduced Wait Time**: Eliminates the 2-hour cache expiration wait period for critical data updates
+- **Improved User Experience**: Subtle, non-intrusive refresh functionality that enhances rather than disrupts workflow
+- **Data Synchronization**: Ensures users always have access to the most current information from Pipedrive
+
+### Workflow Benefits
+- **Sales Efficiency**: Sales personnel can immediately access newly added contacts and products
+- **Data Accuracy**: Reduces risk of working with outdated information
+- **User Control**: Gives users control over when to refresh data based on their needs
+- **Seamless Integration**: Cache refresh functionality integrates naturally with existing page layouts
+
+This technical specification provides a comprehensive overview of the Sales Helper App's current architecture, implementation details, and operational characteristics. The application demonstrates a well-structured, mobile-first approach to sales workflow management with robust testing, caching, and deployment practices, enhanced by manual cache refresh capabilities for improved data synchronization.
