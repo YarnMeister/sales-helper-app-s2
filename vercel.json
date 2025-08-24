@@ -1,13 +1,18 @@
 {
   "git": {
     "deploymentEnabled": {
-      "main": true,
-      "feature/*": false,
-      "develop": false,
-      "staging": false
+      "main": true
     }
   },
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "ignoreCommand": "echo 'Preview deployments disabled' && exit 1",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "regions": ["iad1"],
+  "public": false
 }

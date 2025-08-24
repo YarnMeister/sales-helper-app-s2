@@ -1,0 +1,31 @@
+# Prevent preview deployments by ignoring feature branch specific files
+# This file helps suppress automatic deployments for non-main branches
+
+# Ignore all feature branch specific files
+feature/
+feature-*/
+*feature*
+
+# Ignore development and testing files that might trigger deployments
+.env.local
+.env.development
+.env.test
+*.test.*
+*.spec.*
+__tests__/
+tests/
+test-*
+
+# Ignore documentation and spec files that shouldn't trigger deployments
+specs/
+docs/
+*.md
+!README.md
+
+# Ignore build artifacts and temporary files
+.next/
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
