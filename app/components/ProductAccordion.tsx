@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
+
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { ChevronDown, ChevronRight, Search, Package, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Package, AlertCircle } from 'lucide-react';
 import { Product, LineItem, ProductsHierarchy } from '../types/product';
-import { useDebounce } from '../hooks/useDebounce';
+
 
 interface ProductAccordionProps {
   onProductSelect: (product: LineItem) => void;
@@ -24,10 +24,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
 
 
@@ -57,26 +54,8 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
     fetchProducts();
   }, []);
 
-  // Filter products based on search term
-  const filteredProductsData = useMemo(() => {
-    if (!debouncedSearchTerm) return productsData;
-
-    const searchLower = debouncedSearchTerm.toLowerCase();
-    
-    return Object.entries(productsData).reduce((acc, [category, products]) => {
-      const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchLower) ||
-        product.code?.toLowerCase().includes(searchLower) ||
-        product.shortDescription?.toLowerCase().includes(searchLower) ||
-        category.toLowerCase().includes(searchLower)
-      );
-      
-      if (filteredProducts.length > 0) {
-        acc[category] = filteredProducts;
-      }
-      return acc;
-    }, {} as ProductsHierarchy);
-  }, [productsData, debouncedSearchTerm]);
+  // Use products data directly without filtering
+  const filteredProductsData = productsData;
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => {
@@ -137,19 +116,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
         </div>
       )}
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search products, categories, or codes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 text-base"
-            data-testid="sh-product-search"
-          />
-        </div>
-      </div>
+
 
       {/* Products Hierarchy */}
       <div className="space-y-3" data-testid="sh-products-hierarchy">
@@ -250,17 +217,8 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
       {Object.keys(filteredProductsData).length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            {debouncedSearchTerm ? 'No products found matching your search.' : 'No products available.'}
+            No products available.
           </p>
-          {debouncedSearchTerm && (
-            <Button 
-              variant="ghost" 
-              onClick={() => setSearchTerm('')}
-              className="mt-2"
-            >
-              Clear Search
-            </Button>
-          )}
         </div>
       )}
     </div>

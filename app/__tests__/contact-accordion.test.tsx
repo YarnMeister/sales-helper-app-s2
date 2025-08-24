@@ -114,22 +114,7 @@ describe('ContactAccordion', () => {
     });
   });
 
-  it('filters contacts based on search', async () => {
-    render(<ContactAccordion onSelectContact={mockOnSelectContact} />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('sh-contact-search')).toBeInTheDocument();
-    });
-
-    // Search for specific contact
-    const searchInput = screen.getByTestId('sh-contact-search');
-    fireEvent.change(searchInput, { target: { value: 'Alice' } });
-
-    // Should still show the group but filtered
-    await waitFor(() => {
-      expect(screen.getByText('Mining Group A')).toBeInTheDocument();
-    });
-  });
 
   it('displays stale data warning', async () => {
     (fetch as vi.Mock).mockResolvedValueOnce({

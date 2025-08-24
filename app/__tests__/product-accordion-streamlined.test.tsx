@@ -325,27 +325,7 @@ describe('ProductAccordion - Streamlined Selection', () => {
     });
   });
 
-  it('filters products based on search', async () => {
-    render(
-      <ProductAccordion 
-        onProductSelect={mockOnProductSelect} 
-        existingItems={existingItems}
-      />
-    );
 
-    await waitFor(() => {
-      expect(screen.getByTestId('sh-product-search')).toBeInTheDocument();
-    });
-
-    // Search for specific product
-    const searchInput = screen.getByTestId('sh-product-search');
-    fireEvent.change(searchInput, { target: { value: 'Alpha' } });
-
-    // Should still show the category but filtered
-    await waitFor(() => {
-      expect(screen.getByText('Category A')).toBeInTheDocument();
-    });
-  });
 
   it('expands and collapses product categories', async () => {
     render(
