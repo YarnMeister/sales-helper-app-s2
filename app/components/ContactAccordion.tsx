@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
+
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { ChevronDown, ChevronRight, Search, Mail, Phone, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Mail, Phone, AlertCircle } from 'lucide-react';
 import { Contact, ContactsHierarchy, ContactSelectionState } from '../types/contact';
-import { useDebounce } from '../hooks/useDebounce';
 
 interface ContactAccordionProps {
   onSelectContact: (contact: Contact) => void;
@@ -24,9 +23,6 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  
   const [state, setState] = useState<ContactSelectionState>({
     expandedGroups: new Set(),
     expandedMines: new Set(),
@@ -59,33 +55,8 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
     fetchContacts();
   }, []);
 
-  // Filter contacts based on search term
-  const filteredContactsData = useMemo(() => {
-    if (!debouncedSearchTerm) return contactsData;
-
-    const searchLower = debouncedSearchTerm.toLowerCase();
-    
-    return Object.entries(contactsData).reduce((acc, [group, mines]) => {
-      const filteredMines = Object.entries(mines).reduce((mineAcc, [mine, contacts]) => {
-        const filteredContacts = contacts.filter(contact =>
-          contact.name.toLowerCase().includes(searchLower) ||
-          contact.email?.toLowerCase().includes(searchLower) ||
-          group.toLowerCase().includes(searchLower) ||
-          mine.toLowerCase().includes(searchLower)
-        );
-        
-        if (filteredContacts.length > 0) {
-          mineAcc[mine] = filteredContacts;
-        }
-        return mineAcc;
-      }, {} as { [mine: string]: Contact[] });
-
-      if (Object.keys(filteredMines).length > 0) {
-        acc[group] = filteredMines;
-      }
-      return acc;
-    }, {} as ContactsHierarchy);
-  }, [contactsData, debouncedSearchTerm]);
+  // Use contacts data directly without filtering
+  const filteredContactsData = contactsData;
 
   const toggleGroup = (group: string) => {
     setState(prev => {
@@ -132,10 +103,6 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
     onSelectContact(contact);
   };
 
-  const updateSearchTerm = (term: string) => {
-    setSearchTerm(term);
-  };
-
   if (loading) {
     return (
       <div className={`text-center py-8 ${className}`} data-testid="sh-contacts-loading">
@@ -168,30 +135,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
         </div>
       )}
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search contacts, mines, or groups..."
-            value={searchTerm}
-            onChange={(e) => updateSearchTerm(e.target.value)}
-            className="pl-10 text-base"
-            data-testid="sh-contact-search"
-          />
-        </div>
-        
-        {/* Search Results Count */}
-        {Object.keys(filteredContactsData).length > 0 && debouncedSearchTerm && (
-          <div className="mt-2">
-            <p className="text-sm text-gray-600">
-              Found {Object.values(filteredContactsData).reduce((total, mines) => 
-                total + Object.values(mines).reduce((sum, contacts) => sum + contacts.length, 0), 0
-              )} contacts matching &quot;{debouncedSearchTerm}&quot;
-            </p>
-          </div>
-        )}
-      </div>
+
 
       {/* Contacts Hierarchy */}
       <div className="space-y-3" data-testid="sh-contacts-hierarchy">
@@ -363,17 +307,8 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
       {Object.keys(filteredContactsData).length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            {debouncedSearchTerm ? 'No contacts found matching your search.' : 'No contacts available.'}
+            No contacts available.
           </p>
-          {debouncedSearchTerm && (
-            <Button 
-              variant="ghost" 
-              onClick={() => updateSearchTerm('')}
-              className="mt-2"
-            >
-              Clear Search
-            </Button>
-          )}
         </div>
       )}
     </div>

@@ -9,15 +9,20 @@ vi.mock('../../lib/cache', () => ({
     set: vi.fn()
   },
   transformContactsHierarchy: vi.fn(),
-  transformProductsHierarchy: vi.fn(),
   CACHE_KEYS: {
     CONTACTS: 'contacts:hierarchical:v1',
     PRODUCTS: 'products:categorized:v1'
   }
 }));
 
+// Mock the BFF module
+vi.mock('../../lib/bff', () => ({
+  transformRawProductsToCategorized: vi.fn()
+}));
+
 // Import the mocked modules
-import { cache, transformContactsHierarchy, transformProductsHierarchy } from '../../lib/cache';
+import { cache, transformContactsHierarchy } from '../../lib/cache';
+import { transformRawProductsToCategorized } from '../../lib/bff';
 
 // Mock the pipedrive module
 vi.mock('../../lib/pipedrive', () => ({
@@ -143,7 +148,7 @@ describe('Products API', () => {
     
     // Mock transformation
     const mockTransformedData = { 'Safety Equipment': [] };
-    vi.mocked(transformProductsHierarchy).mockReturnValue(mockTransformedData);
+    vi.mocked(transformRawProductsToCategorized).mockReturnValue(mockTransformedData);
     
     const request = new Request('http://localhost:3000/api/products');
     const response = await getProducts(request);

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
-import { cache, transformProductsHierarchy, CACHE_KEYS } from '@/lib/cache';
+import { cache, CACHE_KEYS } from '@/lib/cache';
 import { fetchProducts } from '@/lib/pipedrive';
+import { transformRawProductsToCategorized } from '@/lib/bff';
 import { errorToResponse, ExternalError } from '@/lib/errors';
 import { logInfo, logWarn, logError, withPerformanceLogging, generateCorrelationId } from '@/lib/log';
 
@@ -42,8 +43,8 @@ export async function GET(request: NextRequest) {
       logInfo('Fetching fresh products from Pipedrive', { correlationId });
       const products = await fetchProducts();
       
-      // PRD requirement: Transform to categorized structure
-      const categorizedData = transformProductsHierarchy(products);
+      // PRD requirement: Transform to categorized structure using BFF helpers
+      const categorizedData = transformRawProductsToCategorized(products);
       
       // Try to update cache (but don't fail if cache is unavailable)
       try {

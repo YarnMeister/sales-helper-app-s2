@@ -7,6 +7,7 @@ import { ProductAccordion } from '../components/ProductAccordion';
 import { LineItem } from '../types/product';
 import { useRouter } from 'next/navigation';
 import { BottomNavigation } from '../components/BottomNavigation';
+import { CacheRefreshButton } from '../components/CacheRefreshButton';
 
 export default function AddLineItemsPage() {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
@@ -122,6 +123,9 @@ export default function AddLineItemsPage() {
               <h1 className="text-lg font-semibold text-gray-900">
                 Add Line Items
               </h1>
+            </div>
+            <div className="ml-auto">
+              <CacheRefreshButton />
             </div>
           </div>
           
