@@ -179,19 +179,27 @@ export const transformContactsHierarchy = (persons: any[], organizations: any[])
 
 // PRD-specific hierarchical transformation for products
 export const transformProductsHierarchy = (products: any[]) => {
-  // Category mapping based on actual Pipedrive category IDs to real category names
-  const categoryMap: Record<string, string> = {
+  // Known category mappings from Pipedrive
+  const knownCategoryMap: Record<string, string> = {
     '28': 'Cable',
     '29': 'Conveyor Belt Equipment',
     '30': 'Environmental Monitoring',
     '31': 'General Supplies',
-    '32': 'Panel Accessories',
-    '33': 'Rescue Bay Equipment',
-    '34': 'General Supplies',
+    '32': 'Services',
+    '33': 'Panel Accessories',
+    '34': 'Maintenance & Repair',
     '35': 'Rescue Bay Equipment',
-    '36': 'General Supplies',
-    '37': 'General Supplies',
+    '36': 'Labour & Services',
+    '37': 'Spare Parts',
     '80': 'New'
+  };
+  
+  // Dynamic category mapping - auto-discover all categories
+  const categoryMap: Record<string, string> = { ...knownCategoryMap };
+  
+  // Helper function to generate category name from ID for new categories
+  const generateCategoryName = (categoryId: string): string => {
+    return `Category ${categoryId}`;
   };
 
   // Custom field IDs from legacy tech specs
@@ -201,18 +209,25 @@ export const transformProductsHierarchy = (products: any[]) => {
   // Debug logging
   console.log('transformProductsHierarchy called with', products.length, 'products');
   
-
+  // Track discovered categories for logging
+  const discoveredCategories = new Set<string>();
   
-  return products.reduce((acc, product) => {
-    const category = categoryMap[product.category as string] || 'Other';
+  const result = products.reduce((acc, product) => {
+    // Use known mapping or generate category name dynamically if not already mapped
+    const categoryId = product.category as string;
+    if (!categoryMap[categoryId]) {
+      categoryMap[categoryId] = generateCategoryName(categoryId);
+      discoveredCategories.add(categoryId);
+    }
+    const category = categoryMap[categoryId];
     
     // Extract custom field values
     const shortDescription = product[SHORT_DESCRIPTION_FIELD_ID] || '';
     const showOnSalesHelperValue = product[SHOW_ON_SALES_HELPER_FIELD_ID];
     
     // Map "Show on Sales Helper" field: Custom dropdown field
-    // Based on logs, 79 = "Yes", 78 = "No" (dropdown option IDs)
-    const showOnSalesHelper = showOnSalesHelperValue === 79 || showOnSalesHelperValue === '79';
+    // Based on debug output, 78 = "Yes", 79 = "No" (dropdown option IDs)
+    const showOnSalesHelper = showOnSalesHelperValue === 78 || showOnSalesHelperValue === '78';
     
 
     
@@ -238,6 +253,13 @@ export const transformProductsHierarchy = (products: any[]) => {
     
     return acc;
   }, {});
+  
+  // Log discovered categories
+  if (discoveredCategories.size > 0) {
+    console.log('NEW CATEGORIES DISCOVERED:', Array.from(discoveredCategories).map(id => `${id}: ${categoryMap[id]}`));
+  }
+  
+  return result;
 };
 
 // Cache key constants
@@ -271,7 +293,8 @@ export const warmCache = async () => {
     // Warm products cache
     try {
       const products = await fetchProducts();
-      const categorizedData = transformProductsHierarchy(products);
+      const { transformRawProductsToCategorized } = await import('./bff');
+      const categorizedData = transformRawProductsToCategorized(products);
       await cache.set(CACHE_KEYS.PRODUCTS, categorizedData);
       logInfo('Products cache warmed successfully', { 
         productsCount: products.length

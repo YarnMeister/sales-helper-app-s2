@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { ChevronDown, ChevronRight, Package, AlertCircle } from 'lucide-react';
-import { Product, LineItem, ProductsHierarchy } from '../types/product';
+import { LineItem } from '../types/product';
 
 
 interface ProductAccordionProps {
@@ -20,13 +19,10 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   className = '',
   viewOnly = false
 }) => {
-  const [productsData, setProductsData] = useState<ProductsHierarchy>({});
+  const [products, setProducts] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stale, setStale] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-
-
 
   const fetchProducts = async () => {
     try {
@@ -37,13 +33,12 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
       const data = await response.json();
       
       if (data.ok) {
-        setProductsData(data.data);
-        setStale(data.stale || false);
+        setProducts(data.data);
       } else {
-        setError(data.message || 'Failed to load products');
+        setError('Failed to load products');
       }
     } catch (err) {
-      setError('Unable to load products. Please check your connection.');
+      setError('Unable to load products. Please try refreshing.');
       console.error('Error fetching products:', err);
     } finally {
       setLoading(false);
@@ -54,8 +49,12 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
     fetchProducts();
   }, []);
 
-  // Use products data directly without filtering
-  const filteredProductsData = productsData;
+  // Convert products object to categories array
+  const categories = Object.entries(products).map(([categoryName, categoryProducts]) => ({
+    name: categoryName,
+    products: categoryProducts,
+    productCount: categoryProducts.length
+  }));
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => {
@@ -69,7 +68,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
     });
   };
 
-  const handleProductSelect = (product: Product) => {
+  const handleProductSelect = (product: any) => {
     const newLineItem: LineItem = {
       pipedriveProductId: product.pipedriveProductId,
       name: product.name,
@@ -107,29 +106,27 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
 
   return (
     <div className={className} data-testid="sh-product-accordion">
-      {/* Stale Data Warning */}
-      {stale && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
-            ⚠️ Using offline data. Some products may be outdated.
-          </p>
-        </div>
-      )}
+      {/* Cache Source Info */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-blue-800 text-sm">
+          📊 Data from Redis cache • {Object.values(products).flat().length} products • {categories.length} categories
+        </p>
+      </div>
 
 
 
       {/* Products Hierarchy */}
       <div className="space-y-3" data-testid="sh-products-hierarchy">
-        {Object.entries(filteredProductsData).sort(([a], [b]) => a.localeCompare(b)).map(([category, products]) => {
-          const isCategoryExpanded = expandedCategories.has(category);
+        {categories.sort((a, b) => a.name.localeCompare(b.name)).map((categorySection) => {
+          const isCategoryExpanded = expandedCategories.has(categorySection.name);
           
           return (
-            <Card key={category} className="overflow-hidden shadow-sm">
+            <Card key={categorySection.name} className="overflow-hidden shadow-sm">
               {/* Category Header */}
               <div
                 className="p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors active:bg-gray-100"
-                onClick={() => toggleCategory(category)}
-                data-testid={`sh-product-category-${category.replace(/\s+/g, '-').toLowerCase()}`}
+                onClick={() => toggleCategory(categorySection.name)}
+                data-testid={`sh-product-category-${categorySection.name.replace(/\s+/g, '-').toLowerCase()}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -139,11 +136,11 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                       <ChevronRight className="h-5 w-5 text-gray-600" />
                     )}
                     <Package className="h-5 w-5 text-blue-600" />
-                    <h3 className="font-semibold text-lg text-gray-900">{category}</h3>
+                    <h3 className="font-semibold text-lg text-gray-900">{categorySection.name}</h3>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                      {products.length} products
+                      {categorySection.productCount} products
                     </Badge>
                   </div>
                 </div>
@@ -152,7 +149,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
               {/* Products List */}
               {isCategoryExpanded && (
                 <div className="bg-white">
-                  {products.sort((a, b) => a.name.localeCompare(b.name)).map((product) => {
+                  {categorySection.products.sort((a, b) => a.name.localeCompare(b.name)).map((product) => {
                     return (
                       <div
                         key={product.pipedriveProductId}
@@ -214,7 +211,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
       </div>
 
       {/* No Results */}
-      {Object.keys(filteredProductsData).length === 0 && (
+      {categories.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
             No products available.

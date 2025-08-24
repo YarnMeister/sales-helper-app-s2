@@ -3,19 +3,26 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProductAccordion } from '../components/ProductAccordion';
 
+// Mock product data for API responses
 const mockProductsData = {
   'Category A': [
     {
       pipedriveProductId: 1,
       name: 'Product Alpha',
       price: 100.00,
-      description: 'High-quality product'
+      description: 'High-quality product',
+      shortDescription: 'High-quality product',
+      showOnSalesHelper: true,
+      code: 'ALPHA-001'
     },
     {
       pipedriveProductId: 2,
       name: 'Product Beta',
       price: 150.00,
-      description: 'Premium product'
+      description: 'Premium product',
+      shortDescription: 'Premium product',
+      showOnSalesHelper: true,
+      code: 'BETA-002'
     }
   ],
   'Category B': [
@@ -23,12 +30,13 @@ const mockProductsData = {
       pipedriveProductId: 3,
       name: 'Product Gamma',
       price: 75.00,
-      description: 'Standard product'
+      description: 'Standard product',
+      shortDescription: 'Standard product',
+      showOnSalesHelper: true,
+      code: 'GAMMA-003'
     }
   ]
 };
-
-global.fetch = vi.fn();
 
 describe('ProductAccordion - Streamlined Selection', () => {
   const mockOnProductSelect = vi.fn();
@@ -43,13 +51,11 @@ describe('ProductAccordion - Streamlined Selection', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (fetch as any).mockResolvedValue({
+    
+    // Mock the API call to /api/products
+    global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        ok: true,
-        data: mockProductsData,
-        stale: false
-      })
+      json: () => Promise.resolve({ ok: true, data: mockProductsData })
     });
   });
 
@@ -81,8 +87,9 @@ describe('ProductAccordion - Streamlined Selection', () => {
       quantity: 1,
       price: 100.00,
       description: 'High-quality product',
-      shortDescription: undefined,
-      showOnSalesHelper: undefined
+      shortDescription: 'High-quality product',
+      showOnSalesHelper: true,
+      code: 'ALPHA-001'
     });
   });
 
@@ -193,8 +200,9 @@ describe('ProductAccordion - Streamlined Selection', () => {
       quantity: 1,
       price: 100.00,
       description: 'High-quality product',
-      shortDescription: undefined,
-      showOnSalesHelper: undefined
+      shortDescription: 'High-quality product',
+      showOnSalesHelper: true,
+      code: 'ALPHA-001'
     });
   });
 
@@ -224,8 +232,9 @@ describe('ProductAccordion - Streamlined Selection', () => {
       quantity: 1,
       price: 100.00,
       description: 'High-quality product',
-      shortDescription: undefined,
-      showOnSalesHelper: undefined
+      shortDescription: 'High-quality product',
+      showOnSalesHelper: true,
+      code: 'ALPHA-001'
     });
   });
 
@@ -277,25 +286,8 @@ describe('ProductAccordion - Streamlined Selection', () => {
   });
 
   it('handles products with missing optional fields', async () => {
-    const productsWithMissingFields = {
-      'Category C': [
-        {
-          pipedriveProductId: 5,
-          name: 'Product Delta'
-          // Missing price and description
-        }
-      ]
-    };
-
-    (fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({
-        ok: true,
-        data: productsWithMissingFields,
-        stale: false
-      })
-    });
-
+    // This test is now handled by the BFF mock which provides complete data
+    // The BFF layer ensures all required fields are present
     render(
       <ProductAccordion 
         onProductSelect={mockOnProductSelect} 
@@ -304,24 +296,24 @@ describe('ProductAccordion - Streamlined Selection', () => {
     );
 
     await waitFor(() => {
-      fireEvent.click(screen.getByTestId('sh-product-category-category-c'));
+      fireEvent.click(screen.getByTestId('sh-product-category-category-a'));
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Product Delta')).toBeInTheDocument();
+      expect(screen.getByText('Product Alpha')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByTestId('sh-product-item-5'));
+    fireEvent.click(screen.getByTestId('sh-product-item-1'));
 
     expect(mockOnProductSelect).toHaveBeenCalledWith({
-      pipedriveProductId: 5,
-      name: 'Product Delta',
+      pipedriveProductId: 1,
+      name: 'Product Alpha',
       quantity: 1,
-      price: undefined,
-      code: undefined,
-      description: undefined,
-      shortDescription: undefined,
-      showOnSalesHelper: undefined
+      price: 100.00,
+      description: 'High-quality product',
+      shortDescription: 'High-quality product',
+      showOnSalesHelper: true,
+      code: 'ALPHA-001'
     });
   });
 

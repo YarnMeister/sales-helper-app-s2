@@ -126,12 +126,14 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
   - Mine group organization
 
 #### 4. `/api/products` (GET)
-- **Purpose**: Product catalog management
+- **Purpose**: Product catalog management with BFF dynamic category discovery
 - **Features**:
   - Pipedrive product synchronization
   - Redis caching with TTL
+  - BFF-powered dynamic category discovery and mapping
   - Product filtering and categorization
   - Price and availability data
+  - Automatic category name generation for new categories
 
 #### 5. `/api/site-visits` (POST)
 - **Purpose**: Check-in tracking
@@ -295,6 +297,68 @@ CREATE TABLE mock_pipedrive_submissions (
 
 ## Redis Cache Usage
 
+### BFF (Backend for Frontend) Dynamic Category Discovery
+
+#### Overview
+The application now uses a BFF (Backend for Frontend) pattern for dynamic category discovery and data transformation. This replaces the previous hardcoded category mapping approach with a more flexible, auto-discovering system.
+
+#### BFF Architecture
+The BFF layer consists of several helper modules:
+
+##### 1. Core BFF Modules (`lib/bff/`)
+- **`types.ts`**: Type definitions for BFF data structures
+- **`redis-helper.ts`**: Redis cache interaction utilities
+- **`category-helper.ts`**: Category metadata extraction and management
+- **`product-shape.ts`**: Product data transformation and shaping functions
+- **`index.ts`**: Central export point for all BFF functionality
+
+##### 2. Dynamic Category Discovery
+The `transformRawProductsToCategorized` function in `lib/bff/product-shape.ts` provides:
+- **Auto-discovery**: Automatically discovers new category IDs from Pipedrive data
+- **Human-readable mapping**: Maps known category IDs to human-readable names
+- **Fallback naming**: Generates "Category XX" names for unmapped categories
+- **Real-time logging**: Logs newly discovered categories for monitoring
+
+##### 3. Category Mapping Strategy
+```typescript
+// Known category mappings for human-readable names
+const knownCategoryMap: Record<string, string> = {
+  '28': 'Cable',
+  '29': 'Conveyor Belt Equipment',
+  '30': 'Environmental Monitoring',
+  '31': 'General Supplies',
+  '32': 'Services',
+  '33': 'Panel Accessories',
+  '34': 'Maintenance & Repair',
+  '35': 'Rescue Bay Equipment',
+  '36': 'Labour & Services',
+  '37': 'Spare Parts',
+  '80': 'New'
+};
+
+// Dynamic discovery for new categories
+const generateCategoryName = (categoryId: string): string => {
+  return `Category ${categoryId}`;
+};
+
+// "Show on Sales Helper" field mapping
+// 78 = "Yes" (show on Sales Helper)
+// 79 = "No" (do not show on Sales Helper)
+const showOnSalesHelper = showOnSalesHelperValue === 78 || showOnSalesHelperValue === '78';
+```
+
+##### 4. Integration Points
+- **API Routes**: `/api/products` now uses `transformRawProductsToCategorized` from BFF
+- **Cache Warming**: Cache warming functions use BFF helpers for data transformation
+- **Frontend Components**: ProductAccordion components consume BFF-processed data
+
+#### Benefits of BFF Pattern
+- **Maintainability**: Centralized category mapping logic
+- **Flexibility**: Automatic discovery of new categories without code changes
+- **Consistency**: Unified data transformation across all endpoints
+- **Monitoring**: Built-in logging for category discovery tracking
+- **Performance**: Efficient Redis-based data access patterns
+
 ### Cache Refresh Functionality
 
 #### Manual Cache Refresh
@@ -441,6 +505,14 @@ interface CacheEntry<T = any> {
 3. **Cache**: Cache invalidation and updates
 4. **Response**: Success/error feedback to user
 
+#### Product Data Flow with BFF
+1. **Pipedrive**: Raw product data fetched from Pipedrive API
+2. **BFF Transformation**: `transformRawProductsToCategorized` processes raw data
+3. **Category Discovery**: BFF automatically discovers and maps category IDs
+4. **Redis Cache**: Transformed data cached with human-readable category names
+5. **Frontend**: ProductAccordion components consume BFF-processed data
+6. **Dynamic Updates**: New categories automatically discovered on cache refresh
+
 #### Cache Refresh Flow
 1. **Frontend**: User clicks cache refresh button
 2. **API**: Cache busting for contacts and products
@@ -548,6 +620,8 @@ export default defineConfig({
 - **External Integrations**: Pipedrive and Slack APIs
 - **Error Handling**: Error scenarios and recovery
 - **Cache Refresh API**: Manual cache busting functionality
+- **BFF Functions**: Dynamic category discovery and data transformation
+- **Category Mapping**: Human-readable name generation and fallback logic
 
 #### Integration Coverage
 - **End-to-End Flows**: Complete user workflows

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { transformProductsHierarchy } from '../../lib/cache';
+import { transformRawProductsToCategorized } from '../../lib/bff';
 
 // Pipedrive field IDs from legacy tech specs
 const MINE_GROUP_FIELD_ID = 'd0b6b2d1d53bed3053e896f938c6051a790bd15e';
@@ -338,7 +338,7 @@ describe('Transformation Functions', () => {
           code: 'SH-001',
           description: 'Safety helmet for mining operations', // Main description
           'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Hard hat for safety', // Short description field
-          '59af9d567fc57492de93e82653ce01d0c967f6f5': 79 // Show on Sales Helper = Yes
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
         },
         {
           id: 2,
@@ -348,7 +348,7 @@ describe('Transformation Functions', () => {
           code: 'MP-001',
           description: 'Mining pick for excavation work', // Main description
           'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Tool for mining', // Short description field
-          '59af9d567fc57492de93e82653ce01d0c967f6f5': 79 // Show on Sales Helper = Yes
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
         },
         {
           id: 3,
@@ -358,11 +358,11 @@ describe('Transformation Functions', () => {
           code: 'HP-001',
           description: 'Hidden product description', // Main description
           'f320da5e15bef8b83d8c9d997533107dfdb66d5c': 'Hidden product', // Short description field
-          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = No
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 79 // Show on Sales Helper = No
         }
       ];
 
-      const result = transformProductsHierarchy(products);
+      const result = transformRawProductsToCategorized(products);
 
       expect(result).toEqual({
         'Cable': [
@@ -397,29 +397,29 @@ describe('Transformation Functions', () => {
           id: 1, 
           name: 'Cable Item', 
           category: '28',
-          '59af9d567fc57492de93e82653ce01d0c967f6f5': 79 // Show on Sales Helper = Yes
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
         },
         { 
           id: 2, 
           name: 'Conveyor Item', 
           category: '29',
-          '59af9d567fc57492de93e82653ce01d0c967f6f5': 79 // Show on Sales Helper = Yes
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
         },
         { 
           id: 3, 
           name: 'Environmental Item', 
           category: '30',
-          '59af9d567fc57492de93e82653ce01d0c967f6f5': 79 // Show on Sales Helper = Yes
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
         },
         { 
           id: 4, 
           name: 'General Item', 
           category: '31',
-          '59af9d567fc57492de93e82653ce01d0c967f6f5': 79 // Show on Sales Helper = Yes
+          '59af9d567fc57492de93e82653ce01d0c967f6f5': 78 // Show on Sales Helper = Yes
         }
       ];
 
-      const result = transformProductsHierarchy(products);
+      const result = transformRawProductsToCategorized(products);
 
       expect(result['Cable']).toBeDefined();
       expect(result['Conveyor Belt Equipment']).toBeDefined();

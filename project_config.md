@@ -37,6 +37,7 @@
 - Run `npm test` and fix failing tests (even if unrelated).
 - Do a comprehensive review of the change to check if any new tests should be added for this commit, then do it
 - Include any changes to `project_config.md` or `/specs/*` in the commit.
+- Update README.md and technical-specs-v2.md for any new major features or technical changes
 **For and DB changes and migrations**
 - Always verify migrations actually worked - don't trust the "applied" status
 - Use the verification script after running migrations

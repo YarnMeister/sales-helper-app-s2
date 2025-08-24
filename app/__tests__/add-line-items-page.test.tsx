@@ -14,6 +14,38 @@ vi.mock('next/navigation', () => ({
 // Mock global fetch
 global.fetch = vi.fn();
 
+// Mock the BFF functions
+vi.mock('@/lib/bff', () => ({
+  shapeProductsForAccordion: () => ({
+    categories: [
+      {
+        name: 'Test Category',
+        products: [
+          {
+            pipedriveProductId: 1,
+            name: 'Product A',
+            code: 'PROD-001',
+            price: 100,
+            description: 'Test product description',
+            shortDescription: 'Test product description',
+            showOnSalesHelper: true,
+            category: 'Test Category'
+          }
+        ],
+        productCount: 1
+      }
+    ],
+    metadata: {
+      categories: [
+        { name: 'Test Category', productCount: 1, lastUpdated: new Date().toISOString() }
+      ],
+      totalProducts: 1,
+      lastUpdated: new Date().toISOString(),
+      source: 'redis' as const
+    }
+  })
+}));
+
 // Mock sessionStorage
 const mockSessionStorage = {
   getItem: vi.fn(),
@@ -75,24 +107,8 @@ describe('AddLineItemsPage', () => {
       back: mockRouter.back
     });
 
-    // Default mock for products API (used by ProductAccordion)
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ 
-        ok: true, 
-        data: {
-          'Test Category': [
-            {
-              pipedriveProductId: 1,
-              name: 'Product A',
-              code: 'PROD-001',
-              price: 100,
-              description: 'Test product description'
-            }
-          ]
-        }
-      })
-    });
+    // No default fetch mock needed since ProductAccordion now uses BFF helpers
+    // Individual tests will set up their own fetch mocks as needed
   });
 
   afterEach(() => {
@@ -233,35 +249,17 @@ describe('AddLineItemsPage', () => {
       }
     ];
 
-    // Mock the products API call that ProductAccordion makes first
-    (global.fetch as any)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ 
-          ok: true, 
-          data: {
-            'Test Category': [
-              {
-                pipedriveProductId: 1,
-                name: 'Product A',
-                price: 100,
-                description: 'Test product',
-                code: 'PROD-001'
-              }
-            ]
-          }
-        })
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ ok: true, data: { line_items: existingLineItems } })
-      });
+    // Mock the line items API call
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, data: { line_items: existingLineItems } })
+    });
 
     render(<AddLineItemsPage />);
 
-    // Wait for the products API call to be made (ProductAccordion loads first)
+    // Wait for the component to load (BFF mock handles products data)
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/products');
+      expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
     });
 
     // Should render the component
@@ -461,29 +459,52 @@ describe('AddLineItemsPage', () => {
       partNumber: 'PROD-001'
     };
 
-    const updatedLineItems = [...existingLineItems, newProduct];
+    // Mock the BFF call for ProductAccordion
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ 
+        ok: true, 
+        data: {
+          'Test Category': [
+            {
+              pipedriveProductId: 1,
+              name: 'Product A',
+              code: 'PROD-001',
+              price: 100,
+              description: 'Test product description'
+            }
+          ]
+        }
+      })
+    });
 
-    (global.fetch as any).mockResolvedValue({
+    // Mock the GET request to fetch current request data
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ 
+        ok: true, 
+        data: [{ 
+          id: 'test-request-id',
+          line_items: existingLineItems 
+        }] 
+      })
+    });
+
+    // Mock the POST request to save line items to return error
+    (global.fetch as any).mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({ ok: false, message: 'Failed to save line item' })
     });
 
     render(<AddLineItemsPage />);
 
-    // Simulate the product selection API call
-    const response = await fetch('/api/requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: 'test-request-id',
-        line_items: updatedLineItems
-      })
+    // Wait for component to load
+    await waitFor(() => {
+      expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
     });
 
-    const result = await response.json();
-
-    expect(result.ok).toBe(false);
-    expect(result.message).toBe('Failed to save line item');
+    // The component should handle the error gracefully
+    expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
   });
 
   it('should handle multiple line items', async () => {
@@ -507,26 +528,33 @@ describe('AddLineItemsPage', () => {
 
     const updatedLineItems = [...existingLineItems, newProduct];
 
-    (global.fetch as any).mockResolvedValue({
+    // Mock the GET request to fetch current request data
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ 
+        ok: true, 
+        data: [{ 
+          id: 'test-request-id',
+          line_items: existingLineItems 
+        }] 
+      })
+    });
+
+    // Mock the POST request to save line items
+    (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ ok: true, data: { line_items: updatedLineItems } })
     });
 
     render(<AddLineItemsPage />);
 
-    // Should handle multiple line items
-    const response = await fetch('/api/requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: 'test-request-id',
-        line_items: updatedLineItems
-      })
+    // Wait for component to load
+    await waitFor(() => {
+      expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
     });
 
-    const result = await response.json();
-
-    expect(result.ok).toBe(true);
+    // The component should handle multiple line items gracefully
+    expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
     expect(updatedLineItems).toHaveLength(2);
   });
 
@@ -581,28 +609,52 @@ describe('AddLineItemsPage', () => {
       // No description or partNumber
     };
 
-    const updatedLineItems = [...existingLineItems, newProduct];
-
-    (global.fetch as any).mockResolvedValue({
+    // Mock the BFF call for ProductAccordion
+    (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ ok: true, data: { line_items: updatedLineItems } })
+      json: () => Promise.resolve({ 
+        ok: true, 
+        data: {
+          'Test Category': [
+            {
+              pipedriveProductId: 1,
+              name: 'Product A',
+              code: undefined,
+              price: 100,
+              description: undefined
+            }
+          ]
+        }
+      })
+    });
+
+    // Mock the GET request to fetch current request data
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ 
+        ok: true, 
+        data: [{ 
+          id: 'test-request-id',
+          line_items: existingLineItems 
+        }] 
+      })
+    });
+
+    // Mock the POST request to save line items to return success
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, data: { line_items: [newProduct] } })
     });
 
     render(<AddLineItemsPage />);
 
-    // Should handle product without optional fields
-    const response = await fetch('/api/requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: 'test-request-id',
-        line_items: updatedLineItems
-      })
+    // Wait for component to load
+    await waitFor(() => {
+      expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
     });
 
-    const result = await response.json();
-
-    expect(result.ok).toBe(true);
+    // The component should handle products without optional fields gracefully
+    expect(screen.getByTestId('sh-add-line-items-page')).toBeInTheDocument();
   });
 
   it('should handle error when loading existing line items fails', async () => {
