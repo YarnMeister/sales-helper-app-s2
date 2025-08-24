@@ -190,7 +190,8 @@ export const transformProductsHierarchy = (products: any[]) => {
     '34': 'General Supplies',
     '35': 'Rescue Bay Equipment',
     '36': 'General Supplies',
-    '37': 'General Supplies'
+    '37': 'General Supplies',
+    '80': 'New'
   };
 
   // Custom field IDs from legacy tech specs
