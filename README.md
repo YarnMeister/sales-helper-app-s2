@@ -178,9 +178,44 @@ The app uses a flat JSONB structure:
 - All changes must go through feature branch → pull request → merge workflow
 
 ### Preview Deployments (Disabled)
-- Preview deployments have been disabled due to Vercel infrastructure issues
+- Preview deployments have been disabled due to persistent Vercel infrastructure issues
 - All testing should be done locally or via production deployment
 - Git integration has been disconnected to prevent automatic preview deployments
+
+#### Preview Deployment Configuration
+The following configuration has been implemented to prevent preview deployments:
+
+**`vercel.json` Configuration:**
+```json
+{
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "ignoreCommand": "echo 'Preview deployments disabled' && exit 1"
+}
+```
+
+**`.vercelignore` File:**
+- Ignores feature branch specific files
+- Prevents test and development files from triggering deployments
+- Excludes documentation that shouldn't trigger deployments
+
+**Environment Variables:**
+- `VERCEL_DISABLE_PREVIEW_DEPLOYMENTS=true` - Set for both Production and Development environments
+
+#### Why This Was Necessary
+- **Persistent Build Failures**: Preview deployments were consistently failing with "Unexpected Error" messages
+- **Resource Waste**: Failed builds were consuming Vercel resources and build minutes
+- **Development Blockers**: Failed previews were preventing proper testing workflow
+- **Infrastructure Issues**: Vercel's preview deployment system had unrecoverable issues for this project
+
+#### Impact
+- ✅ **Feature branches**: No longer trigger automatic preview deployments
+- ✅ **Main branch**: Continues to trigger production deployments normally
+- ✅ **Manual deployments**: Can still be triggered with `vercel --prod` when needed
+- ✅ **Local development**: Unaffected - `npm run dev` continues to work normally
 
 ## Emergency Override (Use with extreme caution)
 If you absolutely need to bypass the git hooks (emergency only):
