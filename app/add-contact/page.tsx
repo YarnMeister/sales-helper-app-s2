@@ -7,6 +7,7 @@ import { ContactAccordion } from '../components/ContactAccordion';
 import { Contact } from '../types/contact';
 import { useRouter } from 'next/navigation';
 import { BottomNavigation } from '../components/BottomNavigation';
+import { CacheRefreshButton } from '../components/CacheRefreshButton';
 
 export default function AddContactPage() {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
@@ -104,6 +105,9 @@ export default function AddContactPage() {
               <h1 className="text-lg font-semibold text-gray-900">
                 Add Contact
               </h1>
+            </div>
+            <div className="ml-auto">
+              <CacheRefreshButton />
             </div>
           </div>
           
