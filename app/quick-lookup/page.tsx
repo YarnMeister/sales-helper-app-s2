@@ -32,7 +32,7 @@ export default function QuickLookupPage() {
       <div className="px-4 py-4 pb-24 w-full max-w-full overflow-x-hidden" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
         {/* Tab Selectors */}
         <div className="mb-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-[90%] max-w-[90%] mx-auto">
             <Button
               variant={selectedTab === 'contacts' ? 'default' : 'outline'}
               size="sm"
