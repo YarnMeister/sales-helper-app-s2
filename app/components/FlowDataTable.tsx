@@ -22,8 +22,6 @@ interface FlowDataTableProps {
 }
 
 export const FlowDataTable: React.FC<FlowDataTableProps> = ({ data, isLoading = false }) => {
-  console.log('FlowDataTable received data:', data);
-  console.log('FlowDataTable isLoading:', isLoading);
   const formatDuration = (seconds: number | null | undefined) => {
     if (!seconds) return '-';
     

@@ -36,8 +36,26 @@ export async function POST(request: NextRequest) {
     // Process flow data to calculate durations and left_at times
     console.log('Raw flow data from Pipedrive:', flowData);
     
-    const processedFlowData = flowData.map((event: any, index: number) => {
-      const nextEvent = flowData[index + 1];
+    // Filter for stage changes only and extract relevant data
+    const stageChanges = flowData
+      .filter((event: any) => event.object === 'dealChange' && event.data.field_key === 'stage_id')
+      .map((event: any) => ({
+        deal_id: event.data.item_id,
+        stage_id: parseInt(event.data.new_value),
+        stage_name: event.data.additional_data?.new_value_formatted || `Stage ${event.data.new_value}`,
+        entered_at: event.timestamp,
+        old_stage_id: parseInt(event.data.old_value),
+        old_stage_name: event.data.additional_data?.old_value_formatted || `Stage ${event.data.old_value}`,
+        user_id: event.data.user_id,
+        log_time: event.data.log_time
+      }))
+      .sort((a, b) => new Date(a.entered_at).getTime() - new Date(b.entered_at).getTime());
+    
+    console.log('Stage changes extracted:', stageChanges);
+    
+    // Calculate durations and left_at times
+    const processedFlowData = stageChanges.map((event: any, index: number) => {
+      const nextEvent = stageChanges[index + 1];
       const left_at = nextEvent ? nextEvent.entered_at : null;
       const duration_seconds = left_at 
         ? Math.floor((new Date(left_at).getTime() - new Date(event.entered_at).getTime()) / 1000)
@@ -45,7 +63,7 @@ export async function POST(request: NextRequest) {
 
       const processedEvent = {
         deal_id: event.deal_id,
-        pipeline_id: event.pipeline_id,
+        pipeline_id: 1, // Default pipeline ID - we can get this from deal details if needed
         stage_id: event.stage_id,
         stage_name: event.stage_name,
         entered_at: event.entered_at,
