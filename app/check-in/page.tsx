@@ -173,7 +173,7 @@ export default function CheckInPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CommonHeader title="Check-in" />
+        <CommonHeader title="Check-in" showDivider={false} />
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
@@ -188,7 +188,7 @@ export default function CheckInPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CommonHeader title="Check-in" />
+        <CommonHeader title="Check-in" showDivider={false} />
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
@@ -205,7 +205,7 @@ export default function CheckInPage() {
   if (showSuccessMessage) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CommonHeader title="Check-in" />
+        <CommonHeader title="Check-in" showDivider={false} />
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -223,7 +223,7 @@ export default function CheckInPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Common Header */}
-      <CommonHeader title="Check-in" />
+      <CommonHeader title="Check-in" showDivider={false} />
 
       {/* Main Content */}
       <div className="px-4 py-4 pb-24">
