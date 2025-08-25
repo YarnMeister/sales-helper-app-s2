@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ContactAccordion } from '../components/ContactAccordion';
 import { ProductAccordion } from '../components/ProductAccordion';
 import { BottomNavigation } from '../components/BottomNavigation';
+import { CommonHeader } from '../components/CommonHeader';
 import { Button } from '../components/ui/button';
 
 export default function QuickLookupPage() {
@@ -22,19 +23,8 @@ export default function QuickLookupPage() {
 
     return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-2">
-            <div className="bg-red-600 text-white px-3 py-1 rounded font-bold text-sm">
-              RTSE
-            </div>
-            <h1 className="text-lg font-semibold text-gray-900">
-              Lookup
-            </h1>
-          </div>
-        </div>
-      </div>
+      {/* Common Header */}
+      <CommonHeader title="Lookup" showDivider={false} />
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 max-w-2xl">
