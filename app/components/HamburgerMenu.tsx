@@ -42,7 +42,10 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ className = '' }) 
       {/* Slide-out Menu */}
       {isOpen && (
         <div 
-          className="fixed top-0 right-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out translate-x-0"
+          className="fixed top-0 right-0 h-full w-64 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out translate-x-0"
+          style={{
+            boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.15), -2px 0 8px rgba(0, 0, 0, 0.1)'
+          }}
         >
           {/* Close Button */}
           <div className="flex justify-end p-4">
