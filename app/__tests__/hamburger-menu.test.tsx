@@ -51,19 +51,7 @@ describe('HamburgerMenu', () => {
     expect(screen.queryByText('Flow Metrics Report')).not.toBeInTheDocument();
   });
 
-  it('closes menu when overlay is clicked', () => {
-    render(<HamburgerMenu />);
-    
-    // Open menu
-    const menuButton = screen.getByText('Menu');
-    fireEvent.click(menuButton);
-    
-    // Click overlay
-    const overlay = screen.getByTestId('overlay');
-    fireEvent.click(overlay);
-    
-    expect(screen.queryByText('Flow Metrics Report')).not.toBeInTheDocument();
-  });
+
 
   it('navigates to flow metrics report when menu item is clicked', () => {
     render(<HamburgerMenu />);

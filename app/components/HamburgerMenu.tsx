@@ -39,15 +39,6 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ className = '' }) 
         <span className="text-xs">Menu</span>
       </Button>
 
-      {/* Overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50"
-          onClick={handleOverlayClick}
-          data-testid="overlay"
-        />
-      )}
-
       {/* Slide-out Menu */}
       {isOpen && (
         <div 
