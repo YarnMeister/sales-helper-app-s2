@@ -282,3 +282,106 @@ export const deleteRequest = async (id: string) => {
 
 // Export the sql instance for backward compatibility
 export { sql };
+
+// Pipedrive Flow Data Functions
+export const insertDealFlowData = async (flowData: any[]) => {
+  return withDbErrorHandling(async () => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (isDevelopment) {
+      // For now, just log in development since we don't have mock tables for this
+      logInfo('Development mode: Would insert deal flow data', { 
+        dealId: flowData[0]?.deal_id,
+        recordCount: flowData.length 
+      });
+      return flowData;
+    } else {
+      // Insert records one by one for now to avoid complex SQL syntax
+      const results = [];
+      for (const data of flowData) {
+        const result = await sql`
+          INSERT INTO pipedrive_deal_flow_data (
+            deal_id,
+            pipeline_id,
+            stage_id,
+            stage_name,
+            entered_at,
+            left_at,
+            duration_seconds
+          ) VALUES (
+            ${data.deal_id},
+            ${data.pipeline_id},
+            ${data.stage_id},
+            ${data.stage_name},
+            ${data.entered_at},
+            ${data.left_at || null},
+            ${data.duration_seconds || null}
+          )
+          RETURNING *
+        `;
+        results.push(result[0]);
+      }
+      return results;
+    }
+  }, 'insertDealFlowData');
+};
+
+export const insertDealMetadata = async (dealMetadata: any) => {
+  return withDbErrorHandling(async () => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (isDevelopment) {
+      // For now, just log in development since we don't have mock tables for this
+      logInfo('Development mode: Would insert deal metadata', { 
+        dealId: dealMetadata.id,
+        title: dealMetadata.title 
+      });
+      return dealMetadata;
+    } else {
+      const result = await sql`
+        INSERT INTO pipedrive_metric_data (
+          id,
+          title,
+          pipeline_id,
+          stage_id,
+          status
+        ) VALUES (
+          ${dealMetadata.id},
+          ${dealMetadata.title},
+          ${dealMetadata.pipeline_id},
+          ${dealMetadata.stage_id},
+          ${dealMetadata.status}
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          title = EXCLUDED.title,
+          pipeline_id = EXCLUDED.pipeline_id,
+          stage_id = EXCLUDED.stage_id,
+          status = EXCLUDED.status,
+          last_fetched_at = NOW()
+        RETURNING *
+      `;
+      return result[0];
+    }
+  }, 'insertDealMetadata');
+};
+
+export const getDealFlowData = async (dealId?: number) => {
+  return withDbErrorHandling(async () => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (isDevelopment) {
+      // Return empty array in development for now
+      logInfo('Development mode: Returning empty deal flow data', { dealId });
+      return [];
+    } else {
+      let query = sql`SELECT * FROM pipedrive_deal_flow_data`;
+      
+      if (dealId) {
+        query = sql`SELECT * FROM pipedrive_deal_flow_data WHERE deal_id = ${dealId}`;
+      }
+      
+      const result = await sql`${query} ORDER BY entered_at DESC`;
+      return result;
+    }
+  }, 'getDealFlowData');
+};

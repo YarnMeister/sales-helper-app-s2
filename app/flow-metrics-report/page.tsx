@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CommonHeader } from '../components/CommonHeader';
 import { CommonFooter } from '../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useRouter } from 'next/navigation';
+import { DealInputForm } from '../components/DealInputForm';
+import { FlowDataTable } from '../components/FlowDataTable';
+import { ViewToggle } from '../components/ViewToggle';
 
 // Mock data for the KPI cards
 const mockMetricsData = [
@@ -148,6 +151,39 @@ const KPICard = ({ data }: { data: typeof mockMetricsData[0] }) => {
 
 export default function FlowMetricsReportPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
+  const [currentView, setCurrentView] = useState<'metrics' | 'raw-data'>('metrics');
+  const [flowData, setFlowData] = useState<any[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // Load existing flow data on component mount
+  useEffect(() => {
+    loadExistingFlowData();
+  }, []);
+
+  const loadExistingFlowData = async () => {
+    setIsLoadingData(true);
+    try {
+      const response = await fetch('/api/pipedrive/deal-flow-data');
+      const result = await response.json();
+      
+      if (result.success) {
+        setFlowData(result.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading existing flow data:', error);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const handleFetchSuccess = (newData: any[]) => {
+    // Add new data to existing data, avoiding duplicates
+    setFlowData(prevData => {
+      const existingIds = new Set(prevData.map(item => item.id));
+      const uniqueNewData = newData.filter(item => !existingIds.has(item.id));
+      return [...uniqueNewData, ...prevData];
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -168,29 +204,56 @@ export default function FlowMetricsReportPage() {
               </p>
             </div>
             
-            {/* Period Selector */}
-            <div className="flex items-center gap-2">
-              <label htmlFor="period-select" className="text-sm font-medium text-gray-700">
-                Period:
-              </label>
-              <select
-                id="period-select"
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-              >
-                <option value="7d">Last 7 days</option>
-              </select>
-            </div>
+            {/* View Toggle */}
+            <ViewToggle 
+              currentView={currentView} 
+              onViewChange={setCurrentView} 
+            />
           </div>
         </div>
 
-        {/* KPI Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockMetricsData.map((metric) => (
-            <KPICard key={metric.id} data={metric} />
-          ))}
+        {/* Deal Input Form - Always visible */}
+        <div className="mb-6">
+          <DealInputForm 
+            onFetchSuccess={handleFetchSuccess}
+            isLoading={isLoadingData}
+          />
         </div>
+
+        {/* Content based on current view */}
+        {currentView === 'metrics' ? (
+          <>
+            {/* Period Selector for Metrics View */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2">
+                <label htmlFor="period-select" className="text-sm font-medium text-gray-700">
+                  Period:
+                </label>
+                <select
+                  id="period-select"
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="7d">Last 7 days</option>
+                </select>
+              </div>
+            </div>
+
+            {/* KPI Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mockMetricsData.map((metric) => (
+                <KPICard key={metric.id} data={metric} />
+              ))}
+            </div>
+          </>
+        ) : (
+          /* Raw Data View */
+          <FlowDataTable 
+            data={flowData} 
+            isLoading={isLoadingData}
+          />
+        )}
       </div>
 
       {/* Common Footer */}

@@ -97,3 +97,8 @@ export const fetchProducts = async () => {
   const response = await callPipedriveAPI('/products?limit=500&custom_fields=1');
   return response.data || [];
 };
+
+export const fetchDealFlow = async (dealId: number) => {
+  const response = await callPipedriveAPI(`/deals/${dealId}/flow`);
+  return response.data || [];
+};
