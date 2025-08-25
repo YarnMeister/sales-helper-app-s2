@@ -29,10 +29,10 @@ export default function QuickLookupPage() {
       <CommonHeader title="Lookup" />
 
       {/* Main Content */}
-      <div className="px-4 py-4 pb-24">
+      <div className="px-4 py-4 pb-24 w-[90%] max-w-[90%] mx-auto">
         {/* Tab Selectors */}
         <div className="mb-4">
-          <div className="flex gap-2 w-[90%] max-w-[90%] mx-auto">
+          <div className="flex gap-2">
             <Button
               variant={selectedTab === 'contacts' ? 'default' : 'outline'}
               size="sm"
