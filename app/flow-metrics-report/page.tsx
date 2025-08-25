@@ -213,14 +213,6 @@ export default function FlowMetricsReportPage() {
           </div>
         </div>
 
-        {/* Deal Input Form - Always visible */}
-        <div className="mb-6">
-          <DealInputForm 
-            onFetchSuccess={handleFetchSuccess}
-            isLoading={isLoadingData}
-          />
-        </div>
-
         {/* Content based on current view */}
         {currentView === 'metrics' && (
           <>
@@ -251,10 +243,20 @@ export default function FlowMetricsReportPage() {
         )}
         
         {currentView === 'raw-data' && (
-          <FlowDataTable 
-            data={flowData} 
-            isLoading={isLoadingData}
-          />
+          <>
+            {/* Deal Input Form - Only visible in Raw Data view */}
+            <div className="mb-6">
+              <DealInputForm 
+                onFetchSuccess={handleFetchSuccess}
+                isLoading={isLoadingData}
+              />
+            </div>
+            
+            <FlowDataTable 
+              data={flowData} 
+              isLoading={isLoadingData}
+            />
+          </>
         )}
         
         {currentView === 'mappings' && (
