@@ -53,7 +53,7 @@ describe('QuickLookupPage', () => {
   it('renders the page with correct title', () => {
     render(<QuickLookupPage />);
     
-    expect(screen.getByTestId('common-header')).toHaveTextContent('Quick Lookup');
+    expect(screen.getByTestId('common-header')).toHaveTextContent('Lookup');
   });
 
   it('shows contacts tab by default', () => {
