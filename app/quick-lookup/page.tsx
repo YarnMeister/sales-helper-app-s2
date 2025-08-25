@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import { ContactAccordion } from '../components/ContactAccordion';
 import { ProductAccordion } from '../components/ProductAccordion';
-import { CommonHeader } from '../components/CommonHeader';
-import { CommonFooter } from '../components/CommonFooter';
+import { BottomNavigation } from '../components/BottomNavigation';
 
 export default function QuickLookupPage() {
   const [selectedTab, setSelectedTab] = useState<'contacts' | 'price-list'>('contacts');
@@ -20,13 +19,24 @@ export default function QuickLookupPage() {
     console.log('Viewing product:', product.name);
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Common Header */}
-      <CommonHeader title="Lookup" />
+    return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="bg-red-600 text-white px-3 py-1 rounded font-bold text-sm">
+              RTSE
+            </div>
+            <h1 className="text-lg font-semibold text-gray-900">
+              Lookup
+            </h1>
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
-      <div className="px-4 py-4 pb-24">
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
         {selectedTab === 'contacts' ? (
           <ContactAccordion
             onSelectContact={handleContactView}
@@ -43,11 +53,8 @@ export default function QuickLookupPage() {
         )}
       </div>
 
-      {/* Common Footer */}
-      <CommonFooter 
-        onNewRequest={() => {}} 
-        isCreating={false}
-      />
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 }

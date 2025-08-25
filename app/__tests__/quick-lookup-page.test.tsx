@@ -3,37 +3,28 @@ import { render, screen } from '@testing-library/react';
 import QuickLookupPage from '../quick-lookup/page';
 
 // Mock the components
-vi.mock('../components/CommonHeader', () => ({
-  CommonHeader: ({ title }: any) => <div data-testid="common-header">{title}</div>,
-}));
-
-vi.mock('../components/CommonFooter', () => ({
-  CommonFooter: ({ onNewRequest, isCreating }: any) => (
-    <div data-testid="common-footer">
-      Common Footer Component
-    </div>
-  ),
+vi.mock('../components/BottomNavigation', () => ({
+  BottomNavigation: () => <div data-testid="bottom-navigation">Bottom Navigation Component</div>,
 }));
 
 describe('QuickLookupPage', () => {
   it('renders the page with correct title', () => {
     render(<QuickLookupPage />);
     
-    expect(screen.getByTestId('common-header')).toHaveTextContent('Lookup');
+    expect(screen.getByText('Lookup')).toBeInTheDocument();
   });
 
-  it('renders the page with header and footer', () => {
+  it('renders the page with header and bottom navigation', () => {
     render(<QuickLookupPage />);
     
-    expect(screen.getByTestId('common-header')).toBeInTheDocument();
-    expect(screen.getByTestId('common-footer')).toBeInTheDocument();
+    expect(screen.getByText('Lookup')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-navigation')).toBeInTheDocument();
   });
 
-  it('renders empty main content area', () => {
+  it('renders accordion content', () => {
     render(<QuickLookupPage />);
     
-    // The main content area should be present but empty
-    const mainContent = document.querySelector('.px-4.py-4.pb-24');
-    expect(mainContent).toBeInTheDocument();
+    // The accordion should be present (showing loading state)
+    expect(screen.getByTestId('sh-contacts-loading')).toBeInTheDocument();
   });
 });
