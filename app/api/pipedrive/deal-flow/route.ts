@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
     const stageChanges = flowData
       .filter((event: any) => event.object === 'dealChange' && event.data.field_key === 'stage_id')
       .map((event: any) => ({
+        pipedrive_event_id: event.data.id,
         deal_id: event.data.item_id,
         stage_id: parseInt(event.data.new_value),
         stage_name: event.data.additional_data?.new_value_formatted || `Stage ${event.data.new_value}`,
@@ -51,8 +52,6 @@ export async function POST(request: NextRequest) {
       }))
       .sort((a, b) => new Date(a.entered_at).getTime() - new Date(b.entered_at).getTime());
     
-    console.log('Stage changes extracted:', stageChanges);
-    
     // Calculate durations and left_at times
     const processedFlowData = stageChanges.map((event: any, index: number) => {
       const nextEvent = stageChanges[index + 1];
@@ -61,7 +60,8 @@ export async function POST(request: NextRequest) {
         ? Math.floor((new Date(left_at).getTime() - new Date(event.entered_at).getTime()) / 1000)
         : null;
 
-      const processedEvent = {
+      return {
+        pipedrive_event_id: event.pipedrive_event_id,
         deal_id: event.deal_id,
         pipeline_id: 1, // Default pipeline ID - we can get this from deal details if needed
         stage_id: event.stage_id,
@@ -70,9 +70,6 @@ export async function POST(request: NextRequest) {
         left_at,
         duration_seconds
       };
-      
-      console.log('Processed event:', processedEvent);
-      return processedEvent;
     });
 
     // Store flow data in database

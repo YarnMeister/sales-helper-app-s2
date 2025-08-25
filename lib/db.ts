@@ -291,30 +291,67 @@ export const insertDealFlowData = async (flowData: any[]) => {
       recordCount: flowData.length 
     });
     
-    // Insert records one by one for now to avoid complex SQL syntax
+    // Insert records one by one, skipping duplicates based on pipedrive_event_id
     const results = [];
     for (const data of flowData) {
-      const result = await sql`
-        INSERT INTO pipedrive_deal_flow_data (
-          deal_id,
-          pipeline_id,
-          stage_id,
-          stage_name,
-          entered_at,
-          left_at,
-          duration_seconds
-        ) VALUES (
-          ${data.deal_id},
-          ${data.pipeline_id},
-          ${data.stage_id},
-          ${data.stage_name},
-          ${data.entered_at},
-          ${data.left_at || null},
-          ${data.duration_seconds || null}
-        )
-        RETURNING *
-      `;
-      results.push(result[0]);
+      try {
+        // First try to insert the record
+        const insertResult = await sql`
+          INSERT INTO pipedrive_deal_flow_data (
+            pipedrive_event_id,
+            deal_id,
+            pipeline_id,
+            stage_id,
+            stage_name,
+            entered_at,
+            left_at,
+            duration_seconds
+          ) VALUES (
+            ${data.pipedrive_event_id},
+            ${data.deal_id},
+            ${data.pipeline_id},
+            ${data.stage_id},
+            ${data.stage_name},
+            ${data.entered_at},
+            ${data.left_at || null},
+            ${data.duration_seconds || null}
+          )
+          ON CONFLICT (pipedrive_event_id) DO NOTHING
+          RETURNING *
+        `;
+        
+        if (insertResult.length > 0) {
+          // New record was inserted
+          results.push(insertResult[0]);
+          logInfo('Inserted new record', { 
+            pipedrive_event_id: data.pipedrive_event_id,
+            deal_id: data.deal_id,
+            stage_name: data.stage_name 
+          });
+        } else {
+          // Record already exists, fetch it
+          const existingResult = await sql`
+            SELECT * FROM pipedrive_deal_flow_data 
+            WHERE pipedrive_event_id = ${data.pipedrive_event_id}
+          `;
+          if (existingResult.length > 0) {
+            results.push(existingResult[0]);
+            logInfo('Found existing record', { 
+              pipedrive_event_id: data.pipedrive_event_id,
+              deal_id: data.deal_id,
+              stage_name: data.stage_name 
+            });
+          }
+        }
+      } catch (error) {
+        // Log the error but continue processing other records
+        logInfo('Error processing record', { 
+          pipedrive_event_id: data.pipedrive_event_id,
+          deal_id: data.deal_id,
+          stage_name: data.stage_name,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
     }
     return results;
   }, 'insertDealFlowData');

@@ -4,6 +4,7 @@
 -- Core table for storing Pipedrive deal flow data
 CREATE TABLE IF NOT EXISTS pipedrive_deal_flow_data (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  pipedrive_event_id BIGINT UNIQUE NOT NULL,
   deal_id BIGINT NOT NULL,
   pipeline_id BIGINT NOT NULL,
   stage_id BIGINT NOT NULL,
@@ -31,6 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_pdfd_deal_id ON pipedrive_deal_flow_data(deal_id)
 CREATE INDEX IF NOT EXISTS idx_pdfd_entered_at ON pipedrive_deal_flow_data(entered_at);
 CREATE INDEX IF NOT EXISTS idx_pdfd_stage_id ON pipedrive_deal_flow_data(stage_id);
 CREATE INDEX IF NOT EXISTS idx_pdfd_created_at ON pipedrive_deal_flow_data(created_at);
+CREATE INDEX IF NOT EXISTS idx_pdfd_pipedrive_event_id ON pipedrive_deal_flow_data(pipedrive_event_id);
 
 -- Create trigger to auto-update updated_at timestamp for flow data
 CREATE OR REPLACE FUNCTION update_pipedrive_deal_flow_data_updated_at()
@@ -48,6 +50,7 @@ CREATE TRIGGER trigger_update_pipedrive_deal_flow_data_updated_at
 
 -- Add comments for documentation
 COMMENT ON TABLE pipedrive_deal_flow_data IS 'Stores Pipedrive deal flow data for lead time analysis';
+COMMENT ON COLUMN pipedrive_deal_flow_data.pipedrive_event_id IS 'Unique Pipedrive event ID to prevent duplicates';
 COMMENT ON COLUMN pipedrive_deal_flow_data.deal_id IS 'Pipedrive deal ID';
 COMMENT ON COLUMN pipedrive_deal_flow_data.pipeline_id IS 'Pipedrive pipeline ID';
 COMMENT ON COLUMN pipedrive_deal_flow_data.stage_id IS 'Pipedrive stage ID';

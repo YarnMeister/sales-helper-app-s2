@@ -29,6 +29,7 @@ export interface PipedriveFlowResponse {
 // Database record types
 export interface PipedriveDealFlowDataRecord {
   id: string;
+  pipedrive_event_id: number;
   deal_id: number;
   pipeline_id: number;
   stage_id: number;
