@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchDealFlow } from '../../../lib/pipedrive';
-import { insertDealFlowData, insertDealMetadata } from '../../../lib/db';
-import { logInfo, logError } from '../../../lib/log';
-import { ExternalError } from '../../../lib/errors';
+import { fetchDealFlow } from '../../../../lib/pipedrive';
+import { insertDealFlowData, insertDealMetadata } from '../../../../lib/db';
+import { logInfo, logError } from '../../../../lib/log';
+import { ExternalError } from '../../../../lib/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,21 +55,6 @@ export async function POST(request: NextRequest) {
     // Store flow data in database
     const insertResult = await insertDealFlowData(processedFlowData);
 
-    if (!insertResult.success) {
-      logError('Failed to insert deal flow data', { 
-        deal_id, 
-        error: insertResult.error 
-      });
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Error, the requested deal could not be fetched',
-          message: 'Failed to store flow data'
-        },
-        { status: 500 }
-      );
-    }
-
     // Store deal metadata (using first event for basic info)
     const firstEvent = flowData[0];
     const dealMetadata = {
@@ -89,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: insertResult.data || processedFlowData,
+      data: insertResult || processedFlowData,
       message: `Successfully fetched flow data for deal ${deal_id}`
     });
 

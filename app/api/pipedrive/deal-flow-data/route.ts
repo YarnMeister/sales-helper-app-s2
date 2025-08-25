@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDealFlowData } from '../../../lib/db';
-import { logInfo, logError } from '../../../lib/log';
+import { getDealFlowData } from '../../../../lib/db';
+import { logInfo, logError } from '../../../../lib/log';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,31 +9,16 @@ export async function GET(request: NextRequest) {
 
     logInfo('Fetching stored deal flow data', { deal_id: dealId });
 
-    const result = await getDealFlowData(dealId ? parseInt(dealId) : undefined);
-
-    if (!result.success) {
-      logError('Failed to fetch deal flow data', { 
-        deal_id: dealId, 
-        error: result.error 
-      });
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch deal flow data',
-          message: result.error
-        },
-        { status: 500 }
-      );
-    }
+    const data = await getDealFlowData(dealId ? parseInt(dealId) : undefined);
 
     logInfo('Successfully fetched deal flow data', { 
       deal_id: dealId, 
-      recordCount: result.data?.length || 0 
+      recordCount: data?.length || 0 
     });
 
     return NextResponse.json({
       success: true,
-      data: result.data || [],
+      data: data || [],
       message: 'Successfully fetched deal flow data'
     });
 
