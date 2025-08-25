@@ -128,17 +128,17 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                 onClick={() => toggleCategory(categorySection.name)}
                 data-testid={`sh-product-category-${categorySection.name.replace(/\s+/g, '-').toLowerCase()}`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between w-full min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     {isCategoryExpanded ? (
-                      <ChevronDown className="h-5 w-5 text-gray-600" />
+                      <ChevronDown className="h-5 w-5 text-gray-600 flex-shrink-0" />
                     ) : (
-                      <ChevronRight className="h-5 w-5 text-gray-600" />
+                      <ChevronRight className="h-5 w-5 text-gray-600 flex-shrink-0" />
                     )}
-                    <Package className="h-5 w-5 text-blue-600" />
-                    <h3 className="font-semibold text-lg text-gray-900">{categorySection.name}</h3>
+                    <Package className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <h3 className="font-semibold text-lg text-gray-900 truncate">{categorySection.name}</h3>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                       {categorySection.productCount} products
                     </Badge>
@@ -174,10 +174,10 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
                         }
                         data-testid={`sh-product-item-${product.pipedriveProductId}`}
                       >
-                        <div className="flex items-start justify-between gap-4 w-full">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-gray-900">
+                        <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 min-w-0">
+                              <span className="font-medium text-gray-900 truncate">
                                 {product.name}
                               </span>
                               {product.code && (

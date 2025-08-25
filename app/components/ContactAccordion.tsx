@@ -163,16 +163,16 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                 aria-label={`${isGroupExpanded ? 'Collapse' : 'Expand'} ${group} mine group with ${totalContacts} contacts`}
                 data-testid={`sh-contact-group-${group.replace(/\s+/g, '-').toLowerCase()}`}
               >
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between w-full min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     {isGroupExpanded ? (
-                      <ChevronDown className="h-5 w-5 text-gray-600" />
+                      <ChevronDown className="h-5 w-5 text-gray-600 flex-shrink-0" />
                     ) : (
-                      <ChevronRight className="h-5 w-5 text-gray-600" />
+                      <ChevronRight className="h-5 w-5 text-gray-600 flex-shrink-0" />
                     )}
-                    <h3 className="font-semibold text-lg text-gray-900">{group}</h3>
+                    <h3 className="font-semibold text-lg text-gray-900 truncate">{group}</h3>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                       {totalContacts} contacts
                     </Badge>
@@ -207,16 +207,16 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                           aria-label={`${isMineExpanded ? 'Collapse' : 'Expand'} ${mine} with ${contacts.length} contacts`}
                           data-testid={`sh-contact-mine-${mineKey.replace(/\s+/g, '-').toLowerCase()}`}
                         >
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-between w-full min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
                               {isMineExpanded ? (
-                                <ChevronDown className="h-4 w-4 text-gray-500" />
+                                <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
                               ) : (
-                                <ChevronRight className="h-4 w-4 text-gray-500" />
+                                <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
                               )}
-                              <h4 className="font-medium text-gray-800">{mine}</h4>
+                              <h4 className="font-medium text-gray-800 truncate">{mine}</h4>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               <Badge variant="outline" className="text-xs">
                                 {contacts.length}
                               </Badge>
@@ -252,8 +252,8 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                                   }
                                   data-testid={`sh-contact-person-${contact.personId}`}
                                 >
-                                  <div className="flex items-center justify-between w-full">
-                                    <div className="flex-1">
+                                  <div className="flex items-center justify-between w-full min-w-0">
+                                    <div className="flex-1 min-w-0">
                                       {/* Row 1: Name only */}
                                       <div className="mb-2">
                                         <div className="flex items-center gap-2">
