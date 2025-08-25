@@ -72,8 +72,9 @@ describe('MainPage', () => {
     // Check navigation buttons
     expect(screen.getByText('Deals')).toBeInTheDocument();
     expect(screen.getByText('Check-in')).toBeInTheDocument();
-    expect(screen.getByText('Contacts')).toBeInTheDocument();
-    expect(screen.getByText('Price List')).toBeInTheDocument();
+    expect(screen.getByText(/Quick/)).toBeInTheDocument();
+    expect(screen.getByText(/Lookup/)).toBeInTheDocument();
+    expect(screen.getByText('Menu')).toBeInTheDocument();
 
     // Check that All requests is selected by default
     const allRequestsButton = screen.getByText('All requests');
@@ -139,7 +140,9 @@ describe('MainPage', () => {
     });
 
     // Click the plus button (New Request) - use a more specific selector
-    const plusButton = screen.getByRole('button', { name: '' }); // The plus button has no accessible name
+    const plusButtons = screen.getAllByRole('button', { name: '' }); // The plus button has no accessible name
+    const plusButton = plusButtons.find(button => button.querySelector('svg[class*="lucide-plus"]'));
+    if (!plusButton) throw new Error('Plus button not found');
     fireEvent.click(plusButton);
 
     // Wait for the modal to appear
@@ -175,7 +178,9 @@ describe('MainPage', () => {
     });
 
     // Click the plus button
-    const plusButton = screen.getByRole('button', { name: '' }); // The plus button has no accessible name
+    const plusButtons = screen.getAllByRole('button', { name: '' }); // The plus button has no accessible name
+    const plusButton = plusButtons.find(button => button.querySelector('svg[class*="lucide-plus"]'));
+    if (!plusButton) throw new Error('Plus button not found');
     fireEvent.click(plusButton);
 
     // Wait for the modal to appear
@@ -253,17 +258,12 @@ describe('MainPage', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/check-in');
 
-    // Click contacts button
-    const contactsButton = screen.getByText('Contacts');
-    fireEvent.click(contactsButton);
+    // Click quick lookup button
+    const quickLookupButton = screen.getByText(/Quick/).closest('button');
+    if (!quickLookupButton) throw new Error('Quick Lookup button not found');
+    fireEvent.click(quickLookupButton);
 
-    expect(mockPush).toHaveBeenCalledWith('/contacts-list');
-
-    // Click price list button
-    const priceListButton = screen.getByText('Price List');
-    fireEvent.click(priceListButton);
-
-    expect(mockPush).toHaveBeenCalledWith('/price-list');
+    expect(mockPush).toHaveBeenCalledWith('/quick-lookup');
   });
 
   it('should refresh requests when returning from other pages', async () => {
@@ -316,7 +316,9 @@ describe('MainPage', () => {
     });
 
     // Click the plus button to show modal
-    const plusButton = screen.getByRole('button', { name: '' });
+    const plusButtons = screen.getAllByRole('button', { name: '' });
+    const plusButton = plusButtons.find(button => button.querySelector('svg[class*="lucide-plus"]'));
+    if (!plusButton) throw new Error('Plus button not found');
     fireEvent.click(plusButton);
 
     // Wait for modal to appear
@@ -357,7 +359,9 @@ describe('MainPage', () => {
     });
 
     // Click the plus button to show modal
-    const plusButton = screen.getByRole('button', { name: '' });
+    const plusButtons = screen.getAllByRole('button', { name: '' });
+    const plusButton = plusButtons.find(button => button.querySelector('svg[class*="lucide-plus"]'));
+    if (!plusButton) throw new Error('Plus button not found');
     fireEvent.click(plusButton);
 
     // Wait for modal to appear

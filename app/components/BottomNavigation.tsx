@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button } from './ui/button';
 import { Package, User, Plus, Filter, List, CheckSquare } from 'lucide-react';
+import { HamburgerMenu } from './HamburgerMenu';
 import { useRouter, usePathname } from 'next/navigation';
 
 interface BottomNavigationProps {
@@ -68,37 +69,28 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           )}
         </Button>
 
-        {/* Contacts */}
+        {/* Quick Lookup */}
         <Button
           variant="ghost"
           size="sm"
           className={`flex flex-col items-center gap-1 min-w-0 relative ${
-            isActive('/contacts-list') ? 'text-red-600' : 'text-gray-600'
+            isActive('/quick-lookup') ? 'text-red-600' : 'text-gray-600'
           }`}
-          onClick={() => router.push('/contacts-list')}
+          onClick={() => router.push('/quick-lookup')}
         >
-          {isActive('/contacts-list') && (
+          {isActive('/quick-lookup') && (
             <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
           )}
           <User className="h-5 w-5" />
-          <span className="text-xs">Contacts</span>
+          <span className="text-xs">Quick<br />Lookup</span>
         </Button>
 
-        {/* Price List */}
-        <Button
-          variant="ghost"
-          size="sm"
+        {/* Hamburger Menu */}
+        <HamburgerMenu 
           className={`flex flex-col items-center gap-1 min-w-0 relative ${
-            isActive('/price-list') ? 'text-red-600' : 'text-gray-600'
+            isActive('/flow-metrics-report') ? 'text-red-600' : 'text-gray-600'
           }`}
-          onClick={() => router.push('/price-list')}
-        >
-          {isActive('/price-list') && (
-            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
-          )}
-          <Package className="h-5 w-5" />
-          <span className="text-xs">Price List</span>
-        </Button>
+        />
       </div>
     </div>
   );
