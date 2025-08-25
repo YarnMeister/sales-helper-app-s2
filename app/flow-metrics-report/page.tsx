@@ -8,7 +8,7 @@ export default function FlowMetricsReportPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Common Header */}
-      <CommonHeader title="Flow Metrics Report" />
+      <CommonHeader title="Flow Metrics Report" showDivider={false} />
 
       {/* Main Content - Left blank as requested */}
       <div className="px-4 py-4 pb-24">
