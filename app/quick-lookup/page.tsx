@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ContactAccordion } from '../components/ContactAccordion';
 import { ProductAccordion } from '../components/ProductAccordion';
 import { BottomNavigation } from '../components/BottomNavigation';
+import { Button } from '../components/ui/button';
 
 export default function QuickLookupPage() {
   const [selectedTab, setSelectedTab] = useState<'contacts' | 'price-list'>('contacts');
@@ -37,6 +38,29 @@ export default function QuickLookupPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 max-w-2xl">
+        {/* Tab Selectors */}
+        <div className="mb-6">
+          <div className="flex gap-2">
+            <Button
+              variant={selectedTab === 'contacts' ? 'default' : 'outline'}
+              size="sm"
+              className={`flex-1 ${selectedTab === 'contacts' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+              onClick={() => setSelectedTab('contacts')}
+            >
+              Contacts
+            </Button>
+            <Button
+              variant={selectedTab === 'price-list' ? 'default' : 'outline'}
+              size="sm"
+              className={`flex-1 ${selectedTab === 'price-list' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+              onClick={() => setSelectedTab('price-list')}
+            >
+              Price List
+            </Button>
+          </div>
+        </div>
+
+        {/* Accordion Content */}
         {selectedTab === 'contacts' ? (
           <ContactAccordion
             onSelectContact={handleContactView}

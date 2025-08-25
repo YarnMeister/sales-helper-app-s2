@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import QuickLookupPage from '../quick-lookup/page';
 
 // Mock the components
@@ -21,10 +21,27 @@ describe('QuickLookupPage', () => {
     expect(screen.getByTestId('bottom-navigation')).toBeInTheDocument();
   });
 
-  it('renders accordion content', () => {
+  it('renders both tab buttons', () => {
     render(<QuickLookupPage />);
     
-    // The accordion should be present (showing loading state)
+    expect(screen.getByText('Contacts')).toBeInTheDocument();
+    expect(screen.getByText('Price List')).toBeInTheDocument();
+  });
+
+  it('shows contacts tab by default', () => {
+    render(<QuickLookupPage />);
+    
+    // The contacts accordion should be present (showing loading state)
     expect(screen.getByTestId('sh-contacts-loading')).toBeInTheDocument();
+  });
+
+  it('switches to price list tab when clicked', () => {
+    render(<QuickLookupPage />);
+    
+    const priceListButton = screen.getByText('Price List');
+    fireEvent.click(priceListButton);
+    
+    // The products accordion should be present (showing loading state)
+    expect(screen.getByTestId('sh-products-loading')).toBeInTheDocument();
   });
 });
