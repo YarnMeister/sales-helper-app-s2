@@ -82,7 +82,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full"></div>
           )}
           <User className="h-5 w-5" />
-          <span className="text-xs">Quick<br />Lookup</span>
+          <span className="text-xs">Lookup</span>
         </Button>
 
         {/* Hamburger Menu */}

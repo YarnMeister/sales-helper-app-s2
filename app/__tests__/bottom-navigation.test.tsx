@@ -39,8 +39,7 @@ describe('BottomNavigation', () => {
     
     expect(screen.getByText('Deals')).toBeInTheDocument();
     expect(screen.getByText('Check-in')).toBeInTheDocument();
-    expect(screen.getByText(/Quick/)).toBeInTheDocument();
-    expect(screen.getByText(/Lookup/)).toBeInTheDocument();
+    expect(screen.getByText('Lookup')).toBeInTheDocument();
     expect(screen.getByTestId('hamburger-menu')).toBeInTheDocument();
   });
 
@@ -82,9 +81,9 @@ describe('BottomNavigation', () => {
   it('navigates to quick lookup page when quick lookup button is clicked', () => {
     render(<BottomNavigation />);
     
-    const quickLookupButton = screen.getByText(/Quick/).closest('button');
-    if (!quickLookupButton) throw new Error('Quick Lookup button not found');
-    fireEvent.click(quickLookupButton);
+    const lookupButton = screen.getByText('Lookup').closest('button');
+    if (!lookupButton) throw new Error('Lookup button not found');
+    fireEvent.click(lookupButton);
     
     expect(mockRouter.push).toHaveBeenCalledWith('/quick-lookup');
   });
@@ -94,8 +93,8 @@ describe('BottomNavigation', () => {
     
     render(<BottomNavigation />);
     
-    const quickLookupButton = screen.getByText(/Quick/).closest('button');
-    expect(quickLookupButton).toHaveClass('text-red-600');
+    const lookupButton = screen.getByText('Lookup').closest('button');
+    expect(lookupButton).toHaveClass('text-red-600');
   });
 
   it('shows loading state when isCreating is true', () => {

@@ -134,8 +134,7 @@ describe('AddLineItemsPage', () => {
     // Should have bottom navigation
     expect(screen.getByText('Deals')).toBeInTheDocument();
     expect(screen.getByText('Check-in')).toBeInTheDocument();
-    expect(screen.getByText(/Quick/)).toBeInTheDocument();
-    expect(screen.getByText(/Lookup/)).toBeInTheDocument();
+    expect(screen.getByText('Lookup')).toBeInTheDocument();
     expect(screen.getByText('Menu')).toBeInTheDocument();
   });
 

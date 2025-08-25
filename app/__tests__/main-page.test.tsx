@@ -72,8 +72,7 @@ describe('MainPage', () => {
     // Check navigation buttons
     expect(screen.getByText('Deals')).toBeInTheDocument();
     expect(screen.getByText('Check-in')).toBeInTheDocument();
-    expect(screen.getByText(/Quick/)).toBeInTheDocument();
-    expect(screen.getByText(/Lookup/)).toBeInTheDocument();
+    expect(screen.getByText('Lookup')).toBeInTheDocument();
     expect(screen.getByText('Menu')).toBeInTheDocument();
 
     // Check that All requests is selected by default
@@ -258,10 +257,10 @@ describe('MainPage', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/check-in');
 
-    // Click quick lookup button
-    const quickLookupButton = screen.getByText(/Quick/).closest('button');
-    if (!quickLookupButton) throw new Error('Quick Lookup button not found');
-    fireEvent.click(quickLookupButton);
+    // Click lookup button
+    const lookupButton = screen.getByText('Lookup').closest('button');
+    if (!lookupButton) throw new Error('Lookup button not found');
+    fireEvent.click(lookupButton);
 
     expect(mockPush).toHaveBeenCalledWith('/quick-lookup');
   });
