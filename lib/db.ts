@@ -426,6 +426,8 @@ export const getCanonicalStageMapping = async (canonicalStage: string) => {
     const result = await sql`
       SELECT * FROM canonical_stage_mappings 
       WHERE canonical_stage = ${canonicalStage}
+      ORDER BY updated_at DESC
+      LIMIT 1
     `;
     return result[0] || null;
   }, 'getCanonicalStageMapping');
