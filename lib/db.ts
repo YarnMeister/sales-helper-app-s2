@@ -410,3 +410,70 @@ export const getDealFlowData = async (dealId?: number) => {
     return result;
   }, 'getDealFlowData');
 };
+
+// Canonical Stage Mappings Functions
+export const getCanonicalStageMappings = async () => {
+  return withDbErrorHandling(async () => {
+    logInfo('Fetching canonical stage mappings');
+    const result = await sql`SELECT * FROM canonical_stage_mappings ORDER BY canonical_stage`;
+    return result;
+  }, 'getCanonicalStageMappings');
+};
+
+export const getCanonicalStageMapping = async (canonicalStage: string) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Fetching canonical stage mapping', { canonicalStage });
+    const result = await sql`
+      SELECT * FROM canonical_stage_mappings 
+      WHERE canonical_stage = ${canonicalStage}
+    `;
+    return result[0] || null;
+  }, 'getCanonicalStageMapping');
+};
+
+export const getDealsForCanonicalStage = async (canonicalStage: string) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Fetching deals for canonical stage', { canonicalStage });
+    
+    // Get the mapping for this canonical stage
+    const mapping = await getCanonicalStageMapping(canonicalStage);
+    if (!mapping) {
+      logInfo('No mapping found for canonical stage', { canonicalStage });
+      return [];
+    }
+    
+    // Get all deals that have both start and end stages
+    const result = await sql`
+      WITH deal_stages AS (
+        SELECT 
+          deal_id,
+          stage_name,
+          entered_at,
+          ROW_NUMBER() OVER (PARTITION BY deal_id, stage_name ORDER BY entered_at) as rn
+        FROM pipedrive_deal_flow_data
+        WHERE stage_name IN (${mapping.start_stage}, ${mapping.end_stage})
+      ),
+      start_stages AS (
+        SELECT deal_id, entered_at as start_date
+        FROM deal_stages 
+        WHERE stage_name = ${mapping.start_stage} AND rn = 1
+      ),
+      end_stages AS (
+        SELECT deal_id, entered_at as end_date
+        FROM deal_stages 
+        WHERE stage_name = ${mapping.end_stage} AND rn = 1
+      )
+      SELECT 
+        s.deal_id,
+        s.start_date,
+        e.end_date,
+        EXTRACT(EPOCH FROM (e.end_date - s.start_date))::BIGINT as duration_seconds
+      FROM start_stages s
+      JOIN end_stages e ON s.deal_id = e.deal_id
+      WHERE e.end_date > s.start_date
+      ORDER BY s.start_date DESC
+    `;
+    
+    return result;
+  }, 'getDealsForCanonicalStage');
+};

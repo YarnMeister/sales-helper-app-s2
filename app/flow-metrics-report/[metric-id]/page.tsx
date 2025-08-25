@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CommonHeader } from '../../components/CommonHeader';
 import { CommonFooter } from '../../components/CommonFooter';
@@ -237,41 +237,54 @@ const mockDealsData = {
 const metricConfig = {
   'lead-conversion': {
     title: 'Lead Conversion Time',
+    canonicalStage: 'Lead Conversion',
     average: 17,
     best: 3,
     worst: 45,
   },
   'quote-conversion': {
     title: 'Quote Conversion Time',
+    canonicalStage: 'Quote Conversion',
     average: 8,
     best: 8,
     worst: 8,
   },
   'order-conversion': {
     title: 'Order Conversion Time',
+    canonicalStage: 'Order Conversion',
     average: 22,
     best: 5,
     worst: 60,
   },
   'procurement': {
     title: 'Procurement Lead Time',
+    canonicalStage: 'Procurement',
     average: 44,
     best: 10,
     worst: 90,
   },
   'manufacturing': {
     title: 'Manufacturing Lead Time',
+    canonicalStage: 'Manufacturing',
     average: 70,
     best: 20,
     worst: 120,
   },
   'delivery': {
     title: 'Delivery Lead Time',
+    canonicalStage: 'Delivery',
     average: 9,
     best: 2,
     worst: 21,
   },
 };
+
+interface DealData {
+  deal_id: string;
+  start_date: string;
+  end_date: string;
+  duration_seconds: number;
+}
 
 interface PageProps {
   params: {
@@ -283,11 +296,43 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const router = useRouter();
   const metricId = params['metric-id'];
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
+  const [deals, setDeals] = useState<DealData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const config = metricConfig[metricId as keyof typeof metricConfig];
-  const deals = mockDealsData[metricId as keyof typeof mockDealsData];
 
-  if (!config || !deals) {
+  // Fetch deals data for the canonical stage
+  useEffect(() => {
+    const fetchDeals = async () => {
+      if (!config?.canonicalStage) {
+        setError('No canonical stage configured for this metric');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/flow/canonical-stage-deals?canonicalStage=${encodeURIComponent(config.canonicalStage)}`);
+        const result = await response.json();
+
+        if (result.success) {
+          setDeals(result.data || []);
+        } else {
+          setError(result.error || 'Failed to fetch deals data');
+        }
+      } catch (err) {
+        setError('Failed to fetch deals data');
+        console.error('Error fetching deals:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDeals();
+  }, [config?.canonicalStage]);
+
+  if (!config) {
     return (
       <div className="min-h-screen bg-gray-50">
         <CommonHeader title="Metric Not Found" showDivider={false} />
@@ -390,45 +435,52 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">Deal ID</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">Start Date</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">End Date</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">Duration</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deals.map((deal) => (
-                    <tr
-                      key={deal.id}
-                      className={`border-b border-gray-100 ${
-                        deal.isBest ? 'bg-green-50' : deal.isWorst ? 'bg-red-50' : ''
-                      }`}
-                    >
-                      <td className="py-3 px-4 font-medium text-gray-900">{deal.id}</td>
-                      <td className="py-3 px-4 text-gray-700">{deal.startDate}</td>
-                      <td className="py-3 px-4 text-gray-700">{deal.endDate}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`font-medium ${
-                            deal.isBest
-                              ? 'text-green-600'
-                              : deal.isWorst
-                              ? 'text-red-600'
-                              : 'text-gray-900'
-                          }`}
-                        >
-                          {deal.duration} days
-                        </span>
-                      </td>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-gray-500">Loading deals data...</div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-red-500">{error}</div>
+              </div>
+            ) : deals.length === 0 ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-gray-500">No deals found for this canonical stage</div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Deal ID</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Start Date</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">End Date</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Duration</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {deals.map((deal) => {
+                      const durationDays = Math.ceil(deal.duration_seconds / 86400);
+                      const startDate = new Date(deal.start_date).toLocaleDateString();
+                      const endDate = new Date(deal.end_date).toLocaleDateString();
+                      
+                      return (
+                        <tr key={deal.deal_id} className="border-b border-gray-100">
+                          <td className="py-3 px-4 font-medium text-gray-900">{deal.deal_id}</td>
+                          <td className="py-3 px-4 text-gray-700">{startDate}</td>
+                          <td className="py-3 px-4 text-gray-700">{endDate}</td>
+                          <td className="py-3 px-4">
+                            <span className="font-medium text-gray-900">
+                              {durationDays} days
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
