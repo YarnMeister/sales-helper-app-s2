@@ -28,9 +28,10 @@ export default function QuickLookupPage() {
       {/* Common Header */}
       <CommonHeader title="Quick Lookup" />
 
-      {/* Tab Selectors */}
-      <div className="px-4 py-2">
-        <div className="mb-1">
+      {/* Main Content */}
+      <div className="px-4 py-4 pb-24">
+        {/* Tab Selectors */}
+        <div className="mb-4">
           <div className="flex gap-2">
             <Button
               variant={selectedTab === 'contacts' ? 'default' : 'outline'}
@@ -50,10 +51,6 @@ export default function QuickLookupPage() {
             </Button>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="px-4 py-4 pb-24">
         {selectedTab === 'contacts' ? (
           <ContactAccordion
             onSelectContact={handleContactView}

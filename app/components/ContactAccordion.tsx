@@ -125,7 +125,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   }
 
   return (
-    <div className={className} data-testid="sh-contact-accordion">
+    <div className={`${className} overflow-x-hidden`} data-testid="sh-contact-accordion">
       {/* Offline Warning */}
       {stale && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -264,25 +264,25 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
                                       </div>
                                       
                                       {/* Row 2: Email and Phone on same row */}
-                                      <div className="flex items-center gap-4">
+                                      <div className="flex items-center gap-4 min-w-0">
                                         {contact.email && (
                                           <a 
                                             href={`mailto:${contact.email}`}
-                                            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                                            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors min-w-0 flex-1"
                                             onClick={(e) => e.stopPropagation()}
                                           >
-                                            <Mail className="h-3 w-3" />
-                                            <span>{contact.email}</span>
+                                            <Mail className="h-3 w-3 flex-shrink-0" />
+                                            <span className="truncate">{contact.email}</span>
                                           </a>
                                         )}
                                         {contact.phone && (
                                           <a 
                                             href={`tel:${contact.phone}`}
-                                            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                                            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors min-w-0 flex-1"
                                             onClick={(e) => e.stopPropagation()}
                                           >
-                                            <Phone className="h-3 w-3" />
-                                            <span>{contact.phone}</span>
+                                            <Phone className="h-3 w-3 flex-shrink-0" />
+                                            <span className="truncate">{contact.phone}</span>
                                           </a>
                                         )}
                                       </div>
