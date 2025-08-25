@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Process flow data to calculate durations and left_at times
+    console.log('Raw flow data from Pipedrive:', flowData);
+    
     const processedFlowData = flowData.map((event: any, index: number) => {
       const nextEvent = flowData[index + 1];
       const left_at = nextEvent ? nextEvent.entered_at : null;
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
         ? Math.floor((new Date(left_at).getTime() - new Date(event.entered_at).getTime()) / 1000)
         : null;
 
-      return {
+      const processedEvent = {
         deal_id: event.deal_id,
         pipeline_id: event.pipeline_id,
         stage_id: event.stage_id,
@@ -50,6 +52,9 @@ export async function POST(request: NextRequest) {
         left_at,
         duration_seconds
       };
+      
+      console.log('Processed event:', processedEvent);
+      return processedEvent;
     });
 
     // Store flow data in database

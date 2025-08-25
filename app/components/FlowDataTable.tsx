@@ -22,6 +22,8 @@ interface FlowDataTableProps {
 }
 
 export const FlowDataTable: React.FC<FlowDataTableProps> = ({ data, isLoading = false }) => {
+  console.log('FlowDataTable received data:', data);
+  console.log('FlowDataTable isLoading:', isLoading);
   const formatDuration = (seconds: number | null | undefined) => {
     if (!seconds) return '-';
     
@@ -39,7 +41,13 @@ export const FlowDataTable: React.FC<FlowDataTableProps> = ({ data, isLoading = 
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    if (!dateString) return '-';
+    try {
+      return new Date(dateString).toLocaleString();
+    } catch (error) {
+      console.error('Error formatting date:', dateString, error);
+      return '-';
+    }
   };
 
   if (isLoading) {
