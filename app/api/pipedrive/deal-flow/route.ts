@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         user_id: event.data.user_id,
         log_time: event.data.log_time
       }))
-      .sort((a, b) => new Date(a.entered_at).getTime() - new Date(b.entered_at).getTime());
+      .sort((a: any, b: any) => new Date(a.entered_at).getTime() - new Date(b.entered_at).getTime());
     
     // Calculate durations and left_at times
     const processedFlowData = stageChanges.map((event: any, index: number) => {

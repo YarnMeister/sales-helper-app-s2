@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-type ViewMode = 'metrics' | 'raw-data';
+type ViewMode = 'metrics' | 'raw-data' | 'mappings';
 
 interface ViewToggleProps {
   currentView: ViewMode;
@@ -31,6 +31,16 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ currentView, onViewChang
         }`}
       >
         Raw Data
+      </button>
+      <button
+        onClick={() => onViewChange('mappings')}
+        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+          currentView === 'mappings'
+            ? 'bg-white text-gray-900 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+        }`}
+      >
+        Mappings
       </button>
     </div>
   );

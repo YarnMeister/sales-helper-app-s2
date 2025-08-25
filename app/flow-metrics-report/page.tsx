@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { DealInputForm } from '../components/DealInputForm';
 import { FlowDataTable } from '../components/FlowDataTable';
 import { ViewToggle } from '../components/ViewToggle';
+import { CanonicalStageMappings } from '../components/CanonicalStageMappings';
 
 // Mock data for the KPI cards
 const mockMetricsData = [
@@ -151,7 +152,7 @@ const KPICard = ({ data }: { data: typeof mockMetricsData[0] }) => {
 
 export default function FlowMetricsReportPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
-  const [currentView, setCurrentView] = useState<'metrics' | 'raw-data'>('metrics');
+  const [currentView, setCurrentView] = useState<'metrics' | 'raw-data' | 'mappings'>('metrics');
   const [flowData, setFlowData] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
 
@@ -221,7 +222,7 @@ export default function FlowMetricsReportPage() {
         </div>
 
         {/* Content based on current view */}
-        {currentView === 'metrics' ? (
+        {currentView === 'metrics' && (
           <>
             {/* Period Selector for Metrics View */}
             <div className="mb-6">
@@ -247,12 +248,17 @@ export default function FlowMetricsReportPage() {
               ))}
             </div>
           </>
-        ) : (
-          /* Raw Data View */
+        )}
+        
+        {currentView === 'raw-data' && (
           <FlowDataTable 
             data={flowData} 
             isLoading={isLoadingData}
           />
+        )}
+        
+        {currentView === 'mappings' && (
+          <CanonicalStageMappings />
         )}
       </div>
 
