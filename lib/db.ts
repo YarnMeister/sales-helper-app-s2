@@ -443,6 +443,7 @@ export const getDealsForCanonicalStage = async (canonicalStage: string) => {
     }
     
     // Get all deals that have both start and end stages
+    // Use entered_at for both start and end dates (not left_at)
     const result = await sql`
       WITH deal_stages AS (
         SELECT 

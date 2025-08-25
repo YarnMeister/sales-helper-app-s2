@@ -32,7 +32,7 @@ CREATE TRIGGER trigger_update_canonical_stage_mappings_updated_at
 
 -- Insert default Order Conversion mapping
 INSERT INTO canonical_stage_mappings (canonical_stage, start_stage, end_stage)
-VALUES ('Order Conversion', 'Order Received - Johan', 'Order Inv Paid')
+VALUES ('Order Conversion', 'Order Received - Johan', 'Quality Control')
 ON CONFLICT DO NOTHING;
 
 -- Add comments for documentation
