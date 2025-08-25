@@ -198,7 +198,8 @@ describe('FlowMetricsReportPage', () => {
       const moreInfoButtons = screen.getAllByText('More info');
       fireEvent.click(moreInfoButtons[0]); // Click first More Info button
       
-      expect(mockConsoleLog).toHaveBeenCalledWith('More info clicked for:', 'Lead Conversion Time');
+      // Check that router.push was called with the correct path
+      expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report/lead-conversion');
     });
   });
 

@@ -5,6 +5,7 @@ import { CommonHeader } from '../components/CommonHeader';
 import { CommonFooter } from '../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { useRouter } from 'next/navigation';
 
 // Mock data for the KPI cards
 const mockMetricsData = [
@@ -95,9 +96,11 @@ const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
 
 // KPI Card component
 const KPICard = ({ data }: { data: typeof mockMetricsData[0] }) => {
+  const router = useRouter();
+  
   const handleMoreInfo = () => {
-    // TODO: Implement detail view navigation
-    console.log('More info clicked for:', data.title);
+    // Navigate to the detail page
+    router.push(`/flow-metrics-report/${data.id}`);
   };
 
   return (
