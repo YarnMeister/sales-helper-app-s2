@@ -125,7 +125,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   }
 
   return (
-    <div className={`${className} overflow-x-hidden`} data-testid="sh-contact-accordion">
+    <div className={`${className} w-full max-w-full overflow-x-hidden`} data-testid="sh-contact-accordion">
       {/* Offline Warning */}
       {stale && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">

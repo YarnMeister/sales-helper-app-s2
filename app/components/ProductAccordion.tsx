@@ -105,7 +105,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   }
 
   return (
-    <div className={className} data-testid="sh-product-accordion">
+    <div className={`${className} w-full max-w-full overflow-x-hidden`} data-testid="sh-product-accordion">
       {/* Cache Source Info */}
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-blue-800 text-sm">

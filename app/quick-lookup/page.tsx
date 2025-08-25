@@ -24,12 +24,12 @@ export default function QuickLookupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 w-full max-w-full overflow-x-hidden" style={{ width: '100vw', maxWidth: '100vw' }}>
       {/* Common Header */}
       <CommonHeader title="Quick Lookup" />
 
       {/* Main Content */}
-      <div className="px-4 py-4 pb-24">
+      <div className="px-4 py-4 pb-24 w-full max-w-full overflow-x-hidden" style={{ width: '100%', maxWidth: '100%' }}>
         {/* Tab Selectors */}
         <div className="mb-4">
           <div className="flex gap-2">
