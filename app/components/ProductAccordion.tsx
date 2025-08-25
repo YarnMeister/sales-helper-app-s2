@@ -105,7 +105,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
   }
 
   return (
-    <div className={`${className} w-full max-w-full overflow-x-hidden`} data-testid="sh-product-accordion">
+    <div className={`${className} w-full max-w-full overflow-x-hidden`} style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }} data-testid="sh-product-accordion">
       {/* Cache Source Info */}
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-blue-800 text-sm">
@@ -121,7 +121,7 @@ export const ProductAccordion: React.FC<ProductAccordionProps> = ({
           const isCategoryExpanded = expandedCategories.has(categorySection.name);
           
           return (
-            <Card key={categorySection.name} className="overflow-hidden shadow-sm">
+            <Card key={categorySection.name} className="overflow-hidden shadow-sm w-full max-w-full" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
               {/* Category Header */}
               <div
                 className="p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors active:bg-gray-100"

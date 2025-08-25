@@ -125,7 +125,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   }
 
   return (
-    <div className={`${className} w-full max-w-full overflow-x-hidden`} data-testid="sh-contact-accordion">
+    <div className={`${className} w-full max-w-full overflow-x-hidden`} style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }} data-testid="sh-contact-accordion">
       {/* Offline Warning */}
       {stale && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -146,7 +146,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
 
           
           return (
-            <Card key={group} className="overflow-hidden shadow-sm">
+            <Card key={group} className="overflow-hidden shadow-sm w-full max-w-full" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
               {/* Mine Group Header */}
               <div
                 className="p-4 cursor-pointer border-b hover:bg-gray-50 transition-colors active:bg-gray-100 min-h-[44px] flex items-center"
