@@ -179,7 +179,7 @@ describe('FlowMetricsReportPage', () => {
         expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       });
       
-      // Check that we show "Calculating..." for metrics
+      // Check that we show "Calculating..." for metrics (static text, no need to wait)
       const calculatingElements = screen.getAllByText('Calculating...');
       expect(calculatingElements.length).toBeGreaterThan(0);
     });

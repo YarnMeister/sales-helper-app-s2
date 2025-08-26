@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ContactAccordion } from '../components/ContactAccordion';
 import { ProductAccordion } from '../components/ProductAccordion';
-import { BottomNavigation } from '../components/BottomNavigation';
+import { CommonFooter } from '../components/CommonFooter';
 import { CommonHeader } from '../components/CommonHeader';
 import { Button } from '../components/ui/button';
 
@@ -67,8 +67,8 @@ export default function QuickLookupPage() {
         )}
       </div>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation />
+      {/* Common Footer */}
+      <CommonFooter />
     </div>
   );
 }

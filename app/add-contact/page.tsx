@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { ContactAccordion } from '../components/ContactAccordion';
 import { Contact } from '../types/contact';
 import { useRouter } from 'next/navigation';
-import { BottomNavigation } from '../components/BottomNavigation';
+import { CommonFooter } from '../components/CommonFooter';
 import { CacheRefreshButton } from '../components/CacheRefreshButton';
 
 export default function AddContactPage() {
@@ -160,8 +160,8 @@ export default function AddContactPage() {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation />
+      {/* Common Footer */}
+      <CommonFooter />
     </div>
   );
 }

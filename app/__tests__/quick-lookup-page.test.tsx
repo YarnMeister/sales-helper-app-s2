@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import QuickLookupPage from '../quick-lookup/page';
 
 // Mock the components
-vi.mock('../components/BottomNavigation', () => ({
-  BottomNavigation: () => <div data-testid="bottom-navigation">Bottom Navigation Component</div>,
+vi.mock('../components/CommonFooter', () => ({
+  CommonFooter: () => <div data-testid="common-footer">Common Footer Component</div>,
 }));
 
 describe('QuickLookupPage', () => {
@@ -14,11 +14,11 @@ describe('QuickLookupPage', () => {
     expect(screen.getByText('Lookup')).toBeInTheDocument();
   });
 
-  it('renders the page with header and bottom navigation', () => {
+  it('renders the page with header and common footer', () => {
     render(<QuickLookupPage />);
     
     expect(screen.getByText('Lookup')).toBeInTheDocument();
-    expect(screen.getByTestId('bottom-navigation')).toBeInTheDocument();
+    expect(screen.getByTestId('common-footer')).toBeInTheDocument();
   });
 
   it('renders both tab buttons', () => {

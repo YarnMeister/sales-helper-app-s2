@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { ProductAccordion } from '../components/ProductAccordion';
 import { LineItem } from '../types/product';
 import { useRouter } from 'next/navigation';
-import { BottomNavigation } from '../components/BottomNavigation';
+import { CommonFooter } from '../components/CommonFooter';
 import { CacheRefreshButton } from '../components/CacheRefreshButton';
 
 export default function AddLineItemsPage() {
@@ -189,8 +189,8 @@ export default function AddLineItemsPage() {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation />
+      {/* Common Footer */}
+      <CommonFooter />
     </div>
   );
 }

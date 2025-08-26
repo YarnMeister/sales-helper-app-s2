@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { RequestCard } from './components/RequestCard';
-import { BottomNavigation } from './components/BottomNavigation';
 import { SalespersonModal } from './components/SalespersonModal';
 import { CommonHeader } from './components/CommonHeader';
 import { CommonFooter } from './components/CommonFooter';
