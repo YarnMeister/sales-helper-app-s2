@@ -22,26 +22,14 @@ interface FlowDataTableProps {
 }
 
 export const FlowDataTable: React.FC<FlowDataTableProps> = ({ data, isLoading = false }) => {
-  const formatDuration = (seconds: number | null | undefined) => {
-    if (!seconds) return '-';
-    
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
-    if (days > 0) {
-      return `${days}d ${hours}h ${minutes}m`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    } else {
-      return `${minutes}m`;
-    }
-  };
-
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
     try {
-      return new Date(dateString).toLocaleString();
+      const date = new Date(dateString);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
     } catch (error) {
       console.error('Error formatting date:', dateString, error);
       return '-';
@@ -92,10 +80,9 @@ export const FlowDataTable: React.FC<FlowDataTableProps> = ({ data, isLoading = 
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-2 px-2 font-medium text-gray-700">Deal ID</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-700">Stage ID</th>
                 <th className="text-left py-2 px-2 font-medium text-gray-700">Stage</th>
                 <th className="text-left py-2 px-2 font-medium text-gray-700">Entered At</th>
-                <th className="text-left py-2 px-2 font-medium text-gray-700">Left At</th>
-                <th className="text-left py-2 px-2 font-medium text-gray-700">Duration</th>
               </tr>
             </thead>
             <tbody>
@@ -107,17 +94,14 @@ export const FlowDataTable: React.FC<FlowDataTableProps> = ({ data, isLoading = 
                   <td className="py-2 px-2 text-gray-900 font-medium">
                     {record.deal_id}
                   </td>
+                  <td className="py-2 px-2 text-gray-700 font-mono text-sm">
+                    {record.stage_id}
+                  </td>
                   <td className="py-2 px-2 text-gray-700">
                     {record.stage_name}
                   </td>
                   <td className="py-2 px-2 text-gray-600">
                     {formatDate(record.entered_at)}
-                  </td>
-                  <td className="py-2 px-2 text-gray-600">
-                    {record.left_at ? formatDate(record.left_at) : '-'}
-                  </td>
-                  <td className="py-2 px-2 text-gray-600">
-                    {formatDuration(record.duration_seconds)}
                   </td>
                 </tr>
               ))}

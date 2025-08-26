@@ -30,8 +30,8 @@ interface FlowMetricConfig {
   canonical_stage: string;
   sort_order: number;
   is_active: boolean;
-  start_stage?: string;
-  end_stage?: string;
+  start_stage_id?: number;
+  end_stage_id?: number;
   created_at: string;
   updated_at: string;
 }
@@ -48,8 +48,8 @@ export const MetricsManagement: React.FC = () => {
     metric_key: '',
     display_title: '',
     canonical_stage: '',
-    start_stage: '',
-    end_stage: '',
+    start_stage_id: '',
+    end_stage_id: '',
     sort_order: 0,
     is_active: true
   });
@@ -91,8 +91,8 @@ export const MetricsManagement: React.FC = () => {
     setEditForm({
       display_title: metric.display_title,
       canonical_stage: metric.canonical_stage,
-      start_stage: metric.start_stage || '',
-      end_stage: metric.end_stage || '',
+      start_stage_id: metric.start_stage_id || undefined,
+      end_stage_id: metric.end_stage_id || undefined,
       sort_order: metric.sort_order,
       is_active: metric.is_active
     });
@@ -159,8 +159,8 @@ export const MetricsManagement: React.FC = () => {
       metric_key: '',
       display_title: '',
       canonical_stage: '',
-      start_stage: '',
-      end_stage: '',
+      start_stage_id: '',
+      end_stage_id: '',
       sort_order: 0,
       is_active: true
     });
@@ -205,8 +205,8 @@ export const MetricsManagement: React.FC = () => {
           metric_key: '',
           display_title: '',
           canonical_stage: '',
-          start_stage: '',
-          end_stage: '',
+          start_stage_id: '',
+          end_stage_id: '',
           sort_order: 0,
           is_active: true
         });
@@ -361,37 +361,37 @@ export const MetricsManagement: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Start Stage
+                      Start Stage ID
                     </label>
-                    <select
-                      value={addForm.start_stage}
-                      onChange={(e) => setAddForm({ ...addForm, start_stage: e.target.value })}
+                    <input
+                      type="number"
+                      value={addForm.start_stage_id || ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          setAddForm({ ...addForm, start_stage_id: value });
+                        }
+                      }}
+                      placeholder="Enter stage ID (e.g., 104)"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="">Select Start Stage</option>
-                      {STAGE_OPTIONS.map((stage) => (
-                        <option key={stage} value={stage}>
-                          {stage}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      End Stage
+                      End Stage ID
                     </label>
-                    <select
-                      value={addForm.end_stage}
-                      onChange={(e) => setAddForm({ ...addForm, end_stage: e.target.value })}
+                    <input
+                      type="number"
+                      value={addForm.end_stage_id || ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          setAddForm({ ...addForm, end_stage_id: value });
+                        }
+                      }}
+                      placeholder="Enter stage ID (e.g., 108)"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="">Select End Stage</option>
-                      {STAGE_OPTIONS.map((stage) => (
-                        <option key={stage} value={stage}>
-                          {stage}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
                 <div className="flex items-center gap-2 mt-3">
@@ -441,8 +441,8 @@ export const MetricsManagement: React.FC = () => {
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Metric Key</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Display Title</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Canonical Stage</th>
-                      <th className="text-left py-2 px-2 font-medium text-gray-700">Start Stage</th>
-                      <th className="text-left py-2 px-2 font-medium text-gray-700">End Stage</th>
+                      <th className="text-left py-2 px-2 font-medium text-gray-700">Start Stage ID</th>
+                      <th className="text-left py-2 px-2 font-medium text-gray-700">End Stage ID</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Sort</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Status</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Actions</th>
@@ -489,38 +489,38 @@ export const MetricsManagement: React.FC = () => {
                         </td>
                         <td className="py-2 px-2 text-gray-700">
                           {editingId === metric.id ? (
-                            <select
-                              value={editForm.start_stage || ''}
-                              onChange={(e) => setEditForm({ ...editForm, start_stage: e.target.value })}
+                            <input
+                              type="number"
+                              value={editForm.start_stage_id || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                  setEditForm({ ...editForm, start_stage_id: value ? Number(value) : undefined });
+                                }
+                              }}
+                              placeholder="Enter stage ID"
                               className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            >
-                              <option value="">Select Start Stage</option>
-                              {STAGE_OPTIONS.map((stage) => (
-                                <option key={stage} value={stage}>
-                                  {stage}
-                                </option>
-                              ))}
-                            </select>
+                            />
                           ) : (
-                            metric.start_stage || '-'
+                            metric.start_stage_id || '-'
                           )}
                         </td>
                         <td className="py-2 px-2 text-gray-700">
                           {editingId === metric.id ? (
-                            <select
-                              value={editForm.end_stage || ''}
-                              onChange={(e) => setEditForm({ ...editForm, end_stage: e.target.value })}
+                            <input
+                              type="number"
+                              value={editForm.end_stage_id || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                  setEditForm({ ...editForm, end_stage_id: value ? Number(value) : undefined });
+                                }
+                              }}
+                              placeholder="Enter stage ID"
                               className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            >
-                              <option value="">Select End Stage</option>
-                              {STAGE_OPTIONS.map((stage) => (
-                                <option key={stage} value={stage}>
-                                  {stage}
-                                </option>
-                              ))}
-                            </select>
+                            />
                           ) : (
-                            metric.end_stage || '-'
+                            metric.end_stage_id || '-'
                           )}
                         </td>
                         <td className="py-2 px-2 text-gray-700">

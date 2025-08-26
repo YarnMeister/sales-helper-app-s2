@@ -206,6 +206,22 @@ describe('Flow Metrics UI Components', () => {
       expect(screen.getAllByText('1467')).toHaveLength(2);
     });
 
+    it('should display Stage ID column', () => {
+      render(
+        <FlowDataTable 
+          data={mockData}
+          isLoading={false}
+        />
+      );
+
+      // Check that Stage ID column header is present
+      expect(screen.getByText('Stage ID')).toBeInTheDocument();
+      
+      // Check that stage IDs are displayed
+      expect(screen.getByText('1')).toBeInTheDocument(); // stage_id: 1
+      expect(screen.getByText('2')).toBeInTheDocument(); // stage_id: 2
+    });
+
     it('should show loading state', () => {
       render(
         <FlowDataTable 
@@ -236,9 +252,9 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      // Check that dates are formatted
-      expect(screen.getByText(/8\/11\/2025/)).toBeInTheDocument();
-      expect(screen.getByText(/8\/12\/2025/)).toBeInTheDocument();
+      // Check that dates are formatted in dd-mm-yyyy format
+      expect(screen.getByText('11-08-2025')).toBeInTheDocument();
+      expect(screen.getByText('12-08-2025')).toBeInTheDocument();
     });
 
     it('should handle null values gracefully', () => {

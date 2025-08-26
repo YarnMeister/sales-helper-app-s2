@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     logInfo('POST /api/admin/flow-metrics-config - Creating flow metric configuration', body);
     
     // Validate required fields
-    const { metric_key, display_title, canonical_stage, start_stage, end_stage } = body;
+    const { metric_key, display_title, canonical_stage, start_stage_id, end_stage_id } = body;
     
     if (!metric_key || !display_title || !canonical_stage) {
       return NextResponse.json(
@@ -44,14 +44,29 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Validate stage IDs are numbers
+    if (start_stage_id && !Number.isInteger(Number(start_stage_id))) {
+      return NextResponse.json(
+        { success: false, error: 'start_stage_id must be a valid number' },
+        { status: 400 }
+      );
+    }
+    
+    if (end_stage_id && !Number.isInteger(Number(end_stage_id))) {
+      return NextResponse.json(
+        { success: false, error: 'end_stage_id must be a valid number' },
+        { status: 400 }
+      );
+    }
+    
     const newConfig = await createFlowMetricConfig({
       metric_key,
       display_title,
       canonical_stage,
       sort_order: body.sort_order,
       is_active: body.is_active !== false,
-      start_stage,
-      end_stage
+      start_stage_id: start_stage_id ? Number(start_stage_id) : undefined,
+      end_stage_id: end_stage_id ? Number(end_stage_id) : undefined
     });
     
     return NextResponse.json({

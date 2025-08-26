@@ -585,8 +585,8 @@ export const getFlowMetricsConfig = async () => {
     const result = await sql`
       SELECT 
         fmc.*,
-        csm.start_stage,
-        csm.end_stage
+        csm.start_stage_id,
+        csm.end_stage_id
       FROM flow_metrics_config fmc
       LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
       ORDER BY fmc.sort_order, fmc.display_title
@@ -601,8 +601,8 @@ export const getActiveFlowMetricsConfig = async () => {
     const result = await sql`
       SELECT 
         fmc.*,
-        csm.start_stage,
-        csm.end_stage
+        csm.start_stage_id,
+        csm.end_stage_id
       FROM flow_metrics_config fmc
       LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
       WHERE fmc.is_active = true
@@ -618,8 +618,8 @@ export const getFlowMetricConfig = async (metricKey: string) => {
     const result = await sql`
       SELECT 
         fmc.*,
-        csm.start_stage,
-        csm.end_stage
+        csm.start_stage_id,
+        csm.end_stage_id
       FROM flow_metrics_config fmc
       LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
       WHERE fmc.metric_key = ${metricKey}
@@ -635,51 +635,58 @@ export const createFlowMetricConfig = async (data: {
   canonical_stage: string;
   sort_order?: number;
   is_active?: boolean;
-  start_stage?: string;
-  end_stage?: string;
+  start_stage_id?: number;
+  end_stage_id?: number;
 }) => {
   return withDbErrorHandling(async () => {
     logInfo('Creating flow metric configuration', { metricKey: data.metric_key });
     
-    // Start a transaction
-    const result = await sql`
-      WITH inserted_config AS (
-        INSERT INTO flow_metrics_config (
-          metric_key, 
-          display_title, 
-          canonical_stage, 
-          sort_order, 
-          is_active
-        ) VALUES (
-          ${data.metric_key},
-          ${data.display_title},
-          ${data.canonical_stage},
-          ${data.sort_order || 0},
-          ${data.is_active !== false}
-        )
-        RETURNING *
-      ),
-      inserted_mapping AS (
+    // Insert the config first
+    const configResult = await sql`
+      INSERT INTO flow_metrics_config (
+        metric_key, 
+        display_title, 
+        canonical_stage, 
+        sort_order, 
+        is_active
+      ) VALUES (
+        ${data.metric_key},
+        ${data.display_title},
+        ${data.canonical_stage},
+        ${data.sort_order || 0},
+        ${data.is_active !== false}
+      )
+      RETURNING *
+    `;
+    
+    const config = configResult[0];
+    
+    // Insert mapping if stage IDs are provided
+    if (data.start_stage_id && data.end_stage_id) {
+      await sql`
         INSERT INTO canonical_stage_mappings (
           metric_config_id,
           canonical_stage,
-          start_stage,
-          end_stage
-        )
-        SELECT 
-          id,
+          start_stage_id,
+          end_stage_id
+        ) VALUES (
+          ${config.id},
           ${data.canonical_stage},
-          ${data.start_stage || ''},
-          ${data.end_stage || ''}
-        FROM inserted_config
-        WHERE ${data.start_stage} IS NOT NULL AND ${data.end_stage} IS NOT NULL
-      )
+          ${data.start_stage_id},
+          ${data.end_stage_id}
+        )
+      `;
+    }
+    
+    // Return the config with mapping data
+    const result = await sql`
       SELECT 
-        ic.*,
-        csm.start_stage,
-        csm.end_stage
-      FROM inserted_config ic
-      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = ic.id
+        fmc.*,
+        csm.start_stage_id,
+        csm.end_stage_id
+      FROM flow_metrics_config fmc
+      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
+      WHERE fmc.id = ${config.id}
     `;
     
     return result[0];
@@ -693,8 +700,8 @@ export const updateFlowMetricConfig = async (
     canonical_stage?: string;
     sort_order?: number;
     is_active?: boolean;
-    start_stage?: string;
-    end_stage?: string;
+    start_stage_id?: number;
+    end_stage_id?: number;
   }
 ) => {
   return withDbErrorHandling(async () => {
@@ -713,23 +720,46 @@ export const updateFlowMetricConfig = async (
       `;
     }
     
-    // Update the mapping if provided
-    if (data.start_stage !== undefined || data.end_stage !== undefined) {
-      await sql`
-        UPDATE canonical_stage_mappings 
-        SET 
-          start_stage = COALESCE(${data.start_stage}, start_stage),
-          end_stage = COALESCE(${data.end_stage}, end_stage)
-        WHERE metric_config_id = ${id}
+    // Update or create the mapping if provided
+    if (data.start_stage_id !== undefined || data.end_stage_id !== undefined) {
+      // Check if mapping exists
+      const existingMapping = await sql`
+        SELECT id FROM canonical_stage_mappings WHERE metric_config_id = ${id}
       `;
+      
+      if (existingMapping.length > 0) {
+        // Update existing mapping
+        await sql`
+          UPDATE canonical_stage_mappings 
+          SET 
+            start_stage_id = COALESCE(${data.start_stage_id}, start_stage_id),
+            end_stage_id = COALESCE(${data.end_stage_id}, end_stage_id)
+          WHERE metric_config_id = ${id}
+        `;
+      } else {
+        // Create new mapping
+        await sql`
+          INSERT INTO canonical_stage_mappings (
+            metric_config_id,
+            canonical_stage,
+            start_stage_id,
+            end_stage_id
+          ) VALUES (
+            ${id},
+            (SELECT canonical_stage FROM flow_metrics_config WHERE id = ${id}),
+            ${data.start_stage_id || null},
+            ${data.end_stage_id || null}
+          )
+        `;
+      }
     }
     
     // Return the updated record
     const result = await sql`
       SELECT 
         fmc.*,
-        csm.start_stage,
-        csm.end_stage
+        csm.start_stage_id,
+        csm.end_stage_id
       FROM flow_metrics_config fmc
       LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
       WHERE fmc.id = ${id}

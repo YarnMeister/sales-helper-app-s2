@@ -15,8 +15,8 @@ export async function PATCH(
       canonical_stage: body.canonical_stage,
       sort_order: body.sort_order,
       is_active: body.is_active,
-      start_stage: body.start_stage,
-      end_stage: body.end_stage
+      start_stage_id: body.start_stage_id ? Number(body.start_stage_id) : undefined,
+      end_stage_id: body.end_stage_id ? Number(body.end_stage_id) : undefined
     });
     
     if (!updatedConfig) {
