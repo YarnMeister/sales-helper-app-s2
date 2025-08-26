@@ -288,9 +288,20 @@ describe('Flow Metrics UI Components', () => {
         }
       ];
 
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true, data: mockMetrics })
+      // Mock API calls based on URL
+      (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/api/admin/flow-metrics-config')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: mockMetrics })
+          });
+        } else if (url.includes('/api/pipedrive/pipelines')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: [] })
+          });
+        }
+        return Promise.reject(new Error('Unexpected API call'));
       });
 
       render(<MetricsManagement />);
@@ -310,9 +321,20 @@ describe('Flow Metrics UI Components', () => {
     });
 
     it('should show empty state when no metrics', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true, data: [] })
+      // Mock API calls based on URL
+      (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/api/admin/flow-metrics-config')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: [] })
+          });
+        } else if (url.includes('/api/pipedrive/pipelines')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: [] })
+          });
+        }
+        return Promise.reject(new Error('Unexpected API call'));
       });
 
       render(<MetricsManagement />);
@@ -338,9 +360,20 @@ describe('Flow Metrics UI Components', () => {
         }
       ];
 
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true, data: mockMetrics })
+      // Mock API calls based on URL
+      (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/api/admin/flow-metrics-config')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: mockMetrics })
+          });
+        } else if (url.includes('/api/pipedrive/pipelines')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: [] })
+          });
+        }
+        return Promise.reject(new Error('Unexpected API call'));
       });
 
       render(<MetricsManagement />);
@@ -358,9 +391,20 @@ describe('Flow Metrics UI Components', () => {
     });
 
     it('should handle add new metric', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true, data: [] })
+      // Mock API calls based on URL
+      (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/api/admin/flow-metrics-config')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: [] })
+          });
+        } else if (url.includes('/api/pipedrive/pipelines')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: [] })
+          });
+        }
+        return Promise.reject(new Error('Unexpected API call'));
       });
 
       render(<MetricsManagement />);
@@ -379,7 +423,18 @@ describe('Flow Metrics UI Components', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+      // Mock API calls based on URL
+      (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/api/admin/flow-metrics-config')) {
+          return Promise.reject(new Error('Network error'));
+        } else if (url.includes('/api/pipedrive/pipelines')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: [] })
+          });
+        }
+        return Promise.reject(new Error('Unexpected API call'));
+      });
 
       render(<MetricsManagement />);
 

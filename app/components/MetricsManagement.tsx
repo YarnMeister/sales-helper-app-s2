@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { useToast } from '../hooks/use-toast';
+import { PipedriveStageExplorer } from './PipedriveStageExplorer';
 
 // Static list of stages from the database
 const STAGE_OPTIONS = [
@@ -275,30 +276,31 @@ export const MetricsManagement: React.FC = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Flow Metrics Management</CardTitle>
-            <p className="text-sm text-gray-600">
-              Manage metrics displayed on the main reporting page. Add, edit, or delete metrics to customize your dashboard.
-            </p>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Flow Metrics Management</CardTitle>
+              <p className="text-sm text-gray-600">
+                Manage metrics displayed on the main reporting page. Add, edit, or delete metrics to customize your dashboard.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddForm(true);
+                setAddForm(prev => ({ ...prev, sort_order: getNextSortOrder() }));
+              }}
+              disabled={isSaving}
+              size="sm"
+              className="border-green-700 text-green-700 hover:bg-green-50"
+            >
+              Add New Metric
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setShowAddForm(true);
-              setAddForm(prev => ({ ...prev, sort_order: getNextSortOrder() }));
-            }}
-            disabled={isSaving}
-            size="sm"
-            className="border-green-700 text-green-700 hover:bg-green-50"
-          >
-            Add New Metric
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
+        </CardHeader>
+        <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="text-gray-500">Loading metrics...</div>
@@ -612,6 +614,10 @@ export const MetricsManagement: React.FC = () => {
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+
+      {/* Pipedrive Stage Explorer */}
+      <PipedriveStageExplorer />
+    </div>
   );
 };
