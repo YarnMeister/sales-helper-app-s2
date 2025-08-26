@@ -67,20 +67,27 @@ export const PipedriveStageExplorer: React.FC = () => {
         throw new Error(data.error || "Failed to fetch pipelines");
       }
 
-      // Initialize pipelines with empty stages
+      // Initialize pipelines without stages (will be loaded on demand)
       const pipelinesWithStages = data.success && data.data
         ? data.data.map((pipeline: Pipeline) => ({
             ...pipeline,
-            stages: [],
+            stages: undefined,
             stagesLoading: false,
             stagesError: null,
           }))
         : [];
 
+      // Initialize all pipelines as collapsed
+      const pipelineCollapsed: Record<number, boolean> = {};
+      pipelinesWithStages.forEach((pipeline: Pipeline) => {
+        pipelineCollapsed[pipeline.id] = true;
+      });
+
       setExplorerState(prev => ({ 
         ...prev, 
         loading: false, 
-        data: pipelinesWithStages 
+        data: pipelinesWithStages,
+        pipelineCollapsed
       }));
     } catch (error) {
       console.error("Fetch pipelines error:", error);
@@ -100,7 +107,7 @@ export const PipedriveStageExplorer: React.FC = () => {
       // If expanding and stages haven't been loaded yet, set loading state
       if (isCollapsed && prev.data) {
         const pipeline = prev.data.find(p => p.id === pipelineId);
-        if (pipeline && !pipeline.stages) {
+        if (pipeline && (!pipeline.stages || pipeline.stages.length === 0)) {
           // Set loading state for this pipeline
           const updatedData = prev.data.map(p => 
             p.id === pipelineId 
@@ -301,7 +308,7 @@ export const PipedriveStageExplorer: React.FC = () => {
                         ) : (
                           !pipeline.stagesLoading &&
                           !pipeline.stagesError &&
-                          pipeline.stages && (
+                          pipeline.stages && pipeline.stages.length === 0 && (
                             <p className="text-gray-500 text-center py-4">
                               No stages found for this pipeline
                             </p>
