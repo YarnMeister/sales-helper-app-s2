@@ -84,7 +84,7 @@ export const MetricsManagement: React.FC = () => {
     };
 
     fetchMetrics();
-  }, [toast]);
+  }, []); // Remove toast from dependency array to prevent infinite loops
 
   const handleEdit = (metric: FlowMetricConfig) => {
     setEditingId(metric.id);
