@@ -29,11 +29,19 @@ A Next.js application for managing sales contacts, line items, check-ins, and fl
 - `APP_ENV` - Environment ('development' or 'production')
 - `DATABASE_URL` - Neon Postgres connection string
 - `REDIS_URL` - Upstash Redis connection string
-- `PIPEDRIVE_API_TOKEN` - Pipedrive API token
+- `PIPEDRIVE_API_TOKEN` - Pipedrive API token (required for Pipedrive Stage Explorer)
 - `PIPEDRIVE_BASE_URL` - Pipedrive API base URL
 - `PIPEDRIVE_SUBMIT_MODE` - 'mock' or 'live' (defaults to 'mock')
 - `SLACK_BOT_TOKEN` - Optional Slack bot token for alerts
 - `SLACK_CHANNEL` - Slack channel for notifications (defaults to '#out-of-office')
+
+### **Pipedrive Integration Requirements**
+The Pipedrive Stage Explorer requires a valid Pipedrive API token with the following permissions:
+- **Read access to pipelines** - To fetch pipeline information
+- **Read access to stages** - To fetch stage details for each pipeline
+- **Network connectivity** - To reach the Pipedrive API endpoints
+
+**Note**: The Pipedrive Stage Explorer works independently of the `PIPEDRIVE_SUBMIT_MODE` setting and always fetches live data from Pipedrive.
 
 ## Environment-Based Behavior
 
@@ -162,6 +170,80 @@ UNIQUE(metric_config_id) -- One mapping per metric
 ### **Overview**
 The Flow Metrics Report provides comprehensive sales efficiency tracking with dynamic metric management. It replaces the previous hardcoded approach with a database-driven system that allows full CRUD operations on metrics and their stage mappings.
 
+### **Pipedrive Stage Explorer** (New Feature)
+The Flow Metrics Report now includes a **Pipedrive Stage Explorer** that provides real-time visibility into your Pipedrive pipeline structure and stage configurations. This feature helps users understand their sales process structure and validate stage mappings used in flow metrics calculations.
+
+#### **Key Features**
+- **Real-time Pipeline Data**: Fetches live data from Pipedrive API
+- **Accordion Interface**: Expandable pipeline sections for easy navigation
+- **Stage Details**: Shows Stage ID, Stage Name, and Order for each stage
+- **Status Indicators**: Visual badges for active/inactive pipelines
+- **Error Handling**: Graceful handling of API failures and network issues
+- **Manual Refresh**: Button to reload data when needed
+
+#### **Access Location**
+- **Page**: Flow Metrics Report (`/flow-metrics-report`)
+- **Tab**: "Mappings" tab
+- **Section**: "Pipedrive Stage Explorer" card
+
+#### **UI Components**
+- **Pipeline Headers**: Clickable headers with pipeline name, ID, order, and status
+- **Stage Tables**: Detailed tables showing stage information when expanded
+- **Loading States**: Spinning indicators during data fetch
+- **Error Messages**: Clear error display for failed API calls
+- **Empty States**: Helpful messages when no data is available
+
+#### **API Integration**
+```typescript
+// Fetch all pipelines
+GET /api/pipedrive/pipelines
+Response: { success: boolean, data: Pipeline[] }
+
+// Fetch stages for specific pipeline
+GET /api/pipedrive/stages?pipeline_id={id}
+Response: { success: boolean, data: Stage[] }
+```
+
+#### **Data Structure**
+```typescript
+interface Pipeline {
+  id: number;
+  name: string;
+  order_nr: number;
+  active: boolean;
+  stages?: Stage[];
+  stagesLoading?: boolean;
+  stagesError?: string | null;
+}
+
+interface Stage {
+  id: number;
+  name: string;
+  order_nr: number;
+  pipeline_id: number;
+  active_flag: boolean;
+  deal_probability: number;
+}
+```
+
+#### **Usage Workflow**
+1. **Navigate** to Flow Metrics Report → Mappings tab
+2. **View** available pipelines in the Pipedrive Stage Explorer
+3. **Expand** pipeline sections to see detailed stage information
+4. **Reference** stage IDs and names when configuring flow metrics
+5. **Refresh** data manually if needed using the refresh button
+
+#### **Configuration Requirements**
+- **Pipedrive API Token**: Must be configured in `PIPEDRIVE_API_TOKEN` environment variable
+- **API Permissions**: Token must have read access to pipelines and stages
+- **Network Access**: Requires internet connectivity to Pipedrive API
+
+#### **Error Scenarios**
+- **API Token Missing**: Shows configuration error message
+- **Network Failure**: Displays network error with retry option
+- **Authentication Failure**: Shows authentication error message
+- **Empty Response**: Displays "No pipelines found" message
+
 ### **Key Features**
 - **Dynamic Metrics**: Metrics are loaded from database instead of hardcoded values
 - **Full CRUD Operations**: Create, read, update, and delete metrics and mappings
@@ -184,6 +266,17 @@ The Flow Metrics Report provides comprehensive sales efficiency tracking with dy
 - **Validation**: Client-side validation for required fields and format requirements
 
 ### **API Endpoints**
+
+#### **Pipedrive Integration**
+```typescript
+// Get all Pipedrive pipelines
+GET /api/pipedrive/pipelines
+Response: { success: boolean, data: Pipeline[] }
+
+// Get stages for specific pipeline
+GET /api/pipedrive/stages?pipeline_id={id}
+Response: { success: boolean, data: Stage[] }
+```
 
 #### **Flow Metrics Configuration**
 ```typescript
@@ -276,6 +369,26 @@ reorderFlowMetrics(reorderData: ReorderData[]): Promise<void>
 - `npm run lint` - Run ESLint
 - `npm run db:migrate` - Run database migrations
 - `npm run env:check` - Validate environment configuration
+
+### **New Component Files**
+- `app/components/PipedriveStageExplorer.tsx` - Main Pipedrive Stage Explorer component
+- `app/api/pipedrive/pipelines/route.ts` - API endpoint for fetching Pipedrive pipelines
+- `app/api/pipedrive/stages/route.ts` - API endpoint for fetching Pipedrive stages
+- `app/__tests__/pipedrive-stage-explorer.test.tsx` - Test suite for Pipedrive Stage Explorer
+
+### **Testing the Pipedrive Stage Explorer**
+```bash
+# Run tests for the Pipedrive Stage Explorer component
+npm test -- --run app/__tests__/pipedrive-stage-explorer.test.tsx
+
+# Run all tests including the new component
+npm test
+
+# Test the component in development
+npm run dev
+# Then navigate to: http://localhost:3000/flow-metrics-report
+# Click on the "Mappings" tab to see the Pipedrive Stage Explorer
+```
 
 ## Deployment Workflow
 
