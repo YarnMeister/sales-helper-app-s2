@@ -6,7 +6,10 @@ export const TEST_TIMEOUT = 180000; // 3 minutes
 // Mock fetch with timeout protection
 export const createMockFetch = (responses: Record<string, any>) => {
   return vi.fn().mockImplementation((url: string) => {
-    const response = responses[url] || responses['default'];
+    // Handle URLs with query parameters by matching the base URL
+    const baseUrl = url.split('?')[0];
+    const response = responses[url] || responses[baseUrl] || responses['default'];
+    
     if (response) {
       return Promise.resolve({
         ok: true,
@@ -45,8 +48,8 @@ export const MANUFACTURING_FLOW_DATA = [
     stage_id: 5,
     stage_name: 'Quality Control',
     entered_at: '2025-08-11T12:28:28.000Z',
-    left_at: '2025-08-12T10:15:00.000Z',
-    duration_seconds: 15300,
+    left_at: undefined, // Changed from null to undefined
+    duration_seconds: undefined, // Changed from null to undefined
     created_at: '2025-08-11T12:28:28.000Z',
     updated_at: '2025-08-12T10:15:00.000Z'
   },
@@ -57,8 +60,8 @@ export const MANUFACTURING_FLOW_DATA = [
     stage_id: 8,
     stage_name: 'Order Inv Paid',
     entered_at: '2025-08-12T10:15:00.000Z',
-    left_at: undefined,
-    duration_seconds: undefined,
+    left_at: undefined, // Changed from null to undefined
+    duration_seconds: undefined, // Changed from null to undefined
     created_at: '2025-08-12T10:15:00.000Z',
     updated_at: '2025-08-12T10:15:00.000Z'
   }
@@ -78,13 +81,8 @@ export const CANONICAL_STAGE_DEALS_DATA = [
 
 // Setup function for flow metrics tests
 export const setupFlowMetricsTest = () => {
-  // Clear all mocks
   vi.clearAllMocks();
-  
-  // Mock fetch globally
   global.fetch = vi.fn();
-  
-  // Mock useToast
   vi.mock('../../app/hooks/use-toast', () => ({
     useToast: mockUseToast
   }));

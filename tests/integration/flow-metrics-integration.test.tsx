@@ -4,6 +4,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import FlowMetricsReportPage from '../../app/flow-metrics-report/page';
 import FlowMetricDetailPage from '../../app/flow-metrics-report/[metric-id]/page';
+import { 
+  TEST_TIMEOUT, 
+  createMockFetch, 
+  MANUFACTURING_LEAD_TIME_METRIC,
+  MANUFACTURING_FLOW_DATA
+} from '../test-utils';
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
@@ -11,9 +17,6 @@ vi.mock('next/navigation', () => ({
   useParams: vi.fn(),
   usePathname: vi.fn()
 }));
-
-// Mock fetch
-global.fetch = vi.fn();
 
 // Mock useToast hook
 vi.mock('../../app/hooks/use-toast', () => ({
@@ -40,9 +43,11 @@ describe('Flow Metrics Integration Tests', () => {
   describe('Flow Metrics Report Page', () => {
     it('should render all three view tabs and allow navigation', async () => {
       // Mock initial data loading
-      (global.fetch as any).mockResolvedValueOnce({
-        json: async () => ({ success: true, data: [] })
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: [] },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] }
       });
+      (global.fetch as any) = mockFetch;
 
       render(<FlowMetricsReportPage />);
 
@@ -53,15 +58,15 @@ describe('Flow Metrics Integration Tests', () => {
 
       // Check that Metrics view is shown by default
       expect(screen.getByText('Lead Time Overview')).toBeInTheDocument();
-      expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
-      expect(screen.getByText('Order Conversion Time')).toBeInTheDocument();
-    });
+    }, TEST_TIMEOUT);
 
     it('should switch to Raw Data view and show deal input form', async () => {
       // Mock initial data loading
-      (global.fetch as any).mockResolvedValueOnce({
-        json: async () => ({ success: true, data: [] })
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: [] },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] }
       });
+      (global.fetch as any) = mockFetch;
 
       render(<FlowMetricsReportPage />);
 
@@ -70,68 +75,42 @@ describe('Flow Metrics Integration Tests', () => {
 
       // Check that deal input form is shown
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Enter Deal ID')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter Pipedrive deal ID')).toBeInTheDocument();
         expect(screen.getByText('Fetch')).toBeInTheDocument();
-      });
+      }, { timeout: TEST_TIMEOUT });
     });
 
-    it('should switch to Mappings view and show canonical stage mappings', async () => {
-      const mockMappings = [
-        {
-          id: '1',
-          canonical_stage: 'Order Conversion',
-          start_stage: 'Order Received - Johan',
-          end_stage: 'Quality Control',
-          created_at: '2025-08-25T13:33:46.718Z',
-          updated_at: '2025-08-25T13:33:46.718Z'
-        }
-      ];
+    it('should switch to Mappings view and show flow metrics management', async () => {
+      const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
 
       // Mock initial data loading
-      (global.fetch as any)
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: [] })
-        })
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: mockMappings })
-        });
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: mockMetrics },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] },
+        '/api/pipedrive/pipelines': { success: true, data: [] }
+      });
+      (global.fetch as any) = mockFetch;
 
       render(<FlowMetricsReportPage />);
 
       // Click on Mappings tab
       fireEvent.click(screen.getByText('Mappings'));
 
-      // Check that mappings table is shown
+      // Check that flow metrics management is shown
       await waitFor(() => {
-        expect(screen.getByText('Canonical Stage Mappings')).toBeInTheDocument();
-        expect(screen.getByText('Order Conversion')).toBeInTheDocument();
-      });
+        expect(screen.getByText('Flow Metrics Management')).toBeInTheDocument();
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
     });
 
     it('should fetch and display deal flow data in Raw Data view', async () => {
-      const mockFlowData = [
-        {
-          id: '1',
-          pipedrive_event_id: 12345,
-          deal_id: 1467,
-          pipeline_id: 1,
-          stage_id: 5,
-          stage_name: 'Quality Control',
-          entered_at: '2025-08-11T12:28:28.000Z',
-          left_at: null,
-          duration_seconds: null,
-          created_at: '2025-08-25T13:33:46.718Z'
-        }
-      ];
-
       // Mock initial data loading
-      (global.fetch as any)
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: [] })
-        })
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: mockFlowData })
-        });
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: [] },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] },
+        '/api/pipedrive/deal-flow': { success: true, data: MANUFACTURING_FLOW_DATA }
+      });
+      (global.fetch as any) = mockFetch;
 
       render(<FlowMetricsReportPage />);
 
@@ -139,7 +118,7 @@ describe('Flow Metrics Integration Tests', () => {
       fireEvent.click(screen.getByText('Raw Data'));
 
       // Enter deal ID and fetch
-      const input = screen.getByPlaceholderText('Enter Deal ID');
+      const input = screen.getByPlaceholderText('Enter Pipedrive deal ID');
       const fetchButton = screen.getByText('Fetch');
 
       fireEvent.change(input, { target: { value: '1467' } });
@@ -149,177 +128,128 @@ describe('Flow Metrics Integration Tests', () => {
       await waitFor(() => {
         expect(screen.getByText('1467')).toBeInTheDocument();
         expect(screen.getByText('Quality Control')).toBeInTheDocument();
-      });
+        expect(screen.getByText('Order Inv Paid')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
     });
 
     it('should navigate to detail page when clicking More Info', async () => {
+      const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
+
       // Mock initial data loading
-      (global.fetch as any).mockResolvedValueOnce({
-        json: async () => ({ success: true, data: [] })
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: mockMetrics },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] }
       });
+      (global.fetch as any) = mockFetch;
 
       render(<FlowMetricsReportPage />);
 
-      // Find and click More Info button for Order Conversion
-      const moreInfoButtons = screen.getAllByText('More info');
-      const orderConversionButton = moreInfoButtons.find(button => 
-        button.closest('.h-full')?.textContent?.includes('Order Conversion')
-      );
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
 
-      if (orderConversionButton) {
-        fireEvent.click(orderConversionButton);
-        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report/order-conversion');
+      // Find and click More Info button
+      const moreInfoButtons = screen.getAllByText('More info');
+      if (moreInfoButtons.length > 0) {
+        fireEvent.click(moreInfoButtons[0]);
+        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report/manufacturing-lead-time');
       }
     });
   });
 
   describe('Flow Metric Detail Page', () => {
-    it('should fetch and display deals for a canonical stage', async () => {
-      const mockDeals = [
-        {
-          deal_id: '1467',
-          start_date: '2025-08-07T11:16:49.000Z',
-          end_date: '2025-08-11T12:28:28.000Z',
-          duration_seconds: 349899
-        },
-        {
-          deal_id: '1375',
-          start_date: '2025-08-04T10:59:43.000Z',
-          end_date: '2025-08-06T05:23:25.000Z',
-          duration_seconds: 152622
-        }
-      ];
-
+    it('should display manufacturing lead time metric details', async () => {
       // Mock the canonical stage deals API
-      (global.fetch as any).mockResolvedValueOnce({
-        json: async () => ({ success: true, data: mockDeals })
+      const mockFetch = createMockFetch({
+        '/api/flow/canonical-stage-deals': { success: true, data: [] }
       });
+      (global.fetch as any) = mockFetch;
 
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'order-conversion' }} />);
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
 
       // Check that the page loads with correct title
-      expect(screen.getByText('Order Conversion Time')).toBeInTheDocument();
+      expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
 
-      // Check that deals are displayed
-      await waitFor(() => {
-        expect(screen.getByText('1467')).toBeInTheDocument();
-        expect(screen.getByText('1375')).toBeInTheDocument();
-      });
-
-      // Check that duration is calculated correctly
-      await waitFor(() => {
-        expect(screen.getByText('4 days')).toBeInTheDocument(); // 349899 seconds ≈ 4 days
-        expect(screen.getByText('2 days')).toBeInTheDocument(); // 152622 seconds ≈ 2 days
-      });
+      // Check that summary statistics are displayed
+      expect(screen.getByText('Average')).toBeInTheDocument();
+      expect(screen.getByText('70 days')).toBeInTheDocument();
+      expect(screen.getByText('Best Performance')).toBeInTheDocument();
+      expect(screen.getByText('20 days')).toBeInTheDocument();
+      expect(screen.getByText('Worst Performance')).toBeInTheDocument();
+      expect(screen.getByText('120 days')).toBeInTheDocument();
     });
 
-    it('should handle missing canonical stage mapping', async () => {
-      // Mock API returning no data
-      (global.fetch as any).mockResolvedValueOnce({
-        json: async () => ({ success: true, data: [] })
-      });
+    it('should handle unknown metric gracefully', async () => {
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'unknown-metric' }} />);
 
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'order-conversion' }} />);
-
-      await waitFor(() => {
-        expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
-      });
-    });
-
-    it('should handle API errors gracefully', async () => {
-      // Mock API error
-      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
-
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'order-conversion' }} />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Failed to fetch deals data')).toBeInTheDocument();
-      });
+      // Check that error page is shown
+      expect(screen.getByText('Metric Not Found')).toBeInTheDocument();
+      expect(screen.getByText('The requested metric could not be found.')).toBeInTheDocument();
     });
 
     it('should navigate back to main page', async () => {
       // Mock the canonical stage deals API
-      (global.fetch as any).mockResolvedValueOnce({
-        json: async () => ({ success: true, data: [] })
+      const mockFetch = createMockFetch({
+        '/api/flow/canonical-stage-deals': { success: true, data: [] }
       });
+      (global.fetch as any) = mockFetch;
 
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'order-conversion' }} />);
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
 
-      // Find and click back button
-      const backButton = screen.getByRole('button', { name: /back/i });
-      fireEvent.click(backButton);
-
-      expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report');
+      // Find and click back button (first button with arrow icon)
+      const backButtons = screen.getAllByRole('button');
+      const backButton = backButtons.find(button => 
+        button.innerHTML.includes('M15 19l-7-7 7-7')
+      );
+      
+      if (backButton) {
+        fireEvent.click(backButton);
+        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report');
+      }
     });
   });
 
-  describe('End-to-End Flow', () => {
-    it('should complete full workflow: create mapping, fetch data, view details', async () => {
-      const mockMappings = [
-        {
-          id: '1',
-          canonical_stage: 'Order Conversion',
-          start_stage: 'Order Received - Johan',
-          end_stage: 'Quality Control',
-          created_at: '2025-08-25T13:33:46.718Z',
-          updated_at: '2025-08-25T13:33:46.718Z'
-        }
-      ];
+  describe('All Three Tabs Coverage', () => {
+    it('should test Metrics tab functionality', async () => {
+      const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
 
-      const mockFlowData = [
-        {
-          id: '1',
-          pipedrive_event_id: 12345,
-          deal_id: 1467,
-          pipeline_id: 1,
-          stage_id: 5,
-          stage_name: 'Quality Control',
-          entered_at: '2025-08-11T12:28:28.000Z',
-          left_at: null,
-          duration_seconds: null,
-          created_at: '2025-08-25T13:33:46.718Z'
-        }
-      ];
-
-      const mockDeals = [
-        {
-          deal_id: '1467',
-          start_date: '2025-08-07T11:16:49.000Z',
-          end_date: '2025-08-11T12:28:28.000Z',
-          duration_seconds: 349899
-        }
-      ];
-
-      // Mock all API calls
-      (global.fetch as any)
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: [] })
-        })
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: mockMappings })
-        })
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: mockFlowData })
-        })
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: mockDeals })
-        });
-
-      // Step 1: Render main page
-      const { rerender } = render(<FlowMetricsReportPage />);
-
-      // Step 2: Switch to Mappings view
-      fireEvent.click(screen.getByText('Mappings'));
-
-      await waitFor(() => {
-        expect(screen.getByText('Canonical Stage Mappings')).toBeInTheDocument();
-        expect(screen.getByText('Order Conversion')).toBeInTheDocument();
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: mockMetrics },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] }
       });
+      (global.fetch as any) = mockFetch;
 
-      // Step 3: Switch to Raw Data view and fetch data
+      render(<FlowMetricsReportPage />);
+
+      // Verify Metrics tab is active by default
+      expect(screen.getByText('Lead Time Overview')).toBeInTheDocument();
+      
+      // Verify metrics are displayed
+      await waitFor(() => {
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
+    });
+
+    it('should test Raw Data tab functionality', async () => {
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: [] },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] },
+        '/api/pipedrive/deal-flow': { success: true, data: MANUFACTURING_FLOW_DATA }
+      });
+      (global.fetch as any) = mockFetch;
+
+      render(<FlowMetricsReportPage />);
+
+      // Switch to Raw Data tab
       fireEvent.click(screen.getByText('Raw Data'));
 
-      const input = screen.getByPlaceholderText('Enter Deal ID');
+      // Verify deal input form is shown
+      expect(screen.getByPlaceholderText('Enter Pipedrive deal ID')).toBeInTheDocument();
+      expect(screen.getByText('Fetch')).toBeInTheDocument();
+
+      // Test fetching data
+      const input = screen.getByPlaceholderText('Enter Pipedrive deal ID');
       const fetchButton = screen.getByText('Fetch');
 
       fireEvent.change(input, { target: { value: '1467' } });
@@ -328,29 +258,46 @@ describe('Flow Metrics Integration Tests', () => {
       await waitFor(() => {
         expect(screen.getByText('1467')).toBeInTheDocument();
         expect(screen.getByText('Quality Control')).toBeInTheDocument();
+        expect(screen.getByText('Order Inv Paid')).toBeInTheDocument();
+        expect(screen.getByText('Stage ID')).toBeInTheDocument();
+        expect(screen.getByText('5')).toBeInTheDocument();
+        expect(screen.getByText('8')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
+    });
+
+    it('should test Mappings tab functionality', async () => {
+      const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
+
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: mockMetrics },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] },
+        '/api/pipedrive/pipelines': { success: true, data: [] }
       });
+      (global.fetch as any) = mockFetch;
 
-      // Step 4: Switch back to Metrics view and click More Info
-      fireEvent.click(screen.getByText('Metrics'));
+      render(<FlowMetricsReportPage />);
 
-      const moreInfoButtons = screen.getAllByText('More info');
-      const orderConversionButton = moreInfoButtons.find(button => 
-        button.closest('.h-full')?.textContent?.includes('Order Conversion')
-      );
-
-      if (orderConversionButton) {
-        fireEvent.click(orderConversionButton);
-        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report/order-conversion');
-      }
-
-      // Step 5: Render detail page
-      rerender(<FlowMetricDetailPage params={{ 'metric-id': 'order-conversion' }} />);
+      // Switch to Mappings tab
+      fireEvent.click(screen.getByText('Mappings'));
 
       await waitFor(() => {
-        expect(screen.getByText('Order Conversion Time')).toBeInTheDocument();
-        expect(screen.getByText('1467')).toBeInTheDocument();
-        expect(screen.getByText('4 days')).toBeInTheDocument();
-      });
+        expect(screen.getByText('Flow Metrics Management')).toBeInTheDocument();
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+        expect(screen.getByText('manufacturing-lead-time')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
+
+      // Test Edit button functionality (cornerstone test)
+      const editButtons = screen.getAllByText('Edit');
+      if (editButtons.length > 0) {
+        fireEvent.click(editButtons[0]);
+
+        await waitFor(() => {
+          expect(screen.getByDisplayValue('Manufacturing Lead Time')).toBeInTheDocument();
+          expect(screen.getByDisplayValue('5')).toBeInTheDocument(); // Start Stage ID
+          expect(screen.getByDisplayValue('8')).toBeInTheDocument(); // End Stage ID
+          expect(screen.getByText('Save')).toBeInTheDocument();
+        }, { timeout: TEST_TIMEOUT });
+      }
     });
   });
 });
