@@ -102,3 +102,31 @@ export const fetchDealFlow = async (dealId: number) => {
   const response = await callPipedriveAPI(`/deals/${dealId}/flow`);
   return response.data || [];
 };
+
+export const fetchPipedriveStages = async () => {
+  // First get all pipelines
+  const pipelinesResponse = await callPipedriveAPI('/pipelines');
+  const pipelines = pipelinesResponse.data || [];
+  
+  // Then get stages for each pipeline
+  const allStages: any[] = [];
+  
+  for (const pipeline of pipelines) {
+    try {
+      const stagesResponse = await callPipedriveAPI(`/stages?pipeline_id=${pipeline.id}`);
+      const stages = stagesResponse.data || [];
+      
+      // Add pipeline info to each stage
+      const stagesWithPipeline = stages.map((stage: any) => ({
+        ...stage,
+        pipeline_name: pipeline.name
+      }));
+      
+      allStages.push(...stagesWithPipeline);
+    } catch (error) {
+      console.warn(`Failed to fetch stages for pipeline ${pipeline.id}:`, error);
+    }
+  }
+  
+  return allStages;
+};

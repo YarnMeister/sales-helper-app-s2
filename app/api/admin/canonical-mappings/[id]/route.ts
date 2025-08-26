@@ -10,11 +10,19 @@ export async function PATCH(
   try {
     const { id } = params;
     const body = await request.json();
-    const { canonical_stage, start_stage, end_stage } = body;
+    const { canonical_stage, start_stage_id, end_stage_id, start_stage, end_stage } = body;
     
-    if (!canonical_stage || !start_stage || !end_stage) {
+    if (!canonical_stage) {
       return NextResponse.json(
-        { success: false, error: 'canonical_stage, start_stage, and end_stage are required' },
+        { success: false, error: 'canonical_stage is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Require either stage IDs or stage names
+    if ((!start_stage_id && !start_stage) || (!end_stage_id && !end_stage)) {
+      return NextResponse.json(
+        { success: false, error: 'Both start and end stages are required (either as IDs or names)' },
         { status: 400 }
       );
     }
@@ -22,6 +30,8 @@ export async function PATCH(
     logInfo('Updating canonical stage mapping', {
       id,
       canonical_stage,
+      start_stage_id,
+      end_stage_id,
       start_stage,
       end_stage
     });
@@ -30,8 +40,10 @@ export async function PATCH(
       UPDATE canonical_stage_mappings 
       SET 
         canonical_stage = ${canonical_stage},
-        start_stage = ${start_stage},
-        end_stage = ${end_stage},
+        start_stage_id = ${start_stage_id || null},
+        end_stage_id = ${end_stage_id || null},
+        start_stage = ${start_stage || ''},
+        end_stage = ${end_stage || ''},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

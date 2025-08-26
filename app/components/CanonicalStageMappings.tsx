@@ -1,35 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { useToast } from '../hooks/use-toast';
-
-// Static list of stages from the database (as shown in the screenshot)
-const STAGE_OPTIONS = [
-  'RFQ Received',
-  'RFQ Sent',
-  'Order Received - Johan',
-  'In Progress- Johan',
-  'Order Ready - Johan',
-  'Delivery Scheduled',
-  'Quality Control',
-  'Order Inv Paid',
-  'Units Collected',
-  'Generate Quote',
-  'Quote Sent - Repair',
-  'Order Received - Repair',
-  'Generate Invoice',
-  // Note: Some stages appear twice in the original list, keeping unique values
-];
 
 interface CanonicalStageMapping {
   id: string;
   canonical_stage: string;
   start_stage: string;
   end_stage: string;
+  start_stage_id?: number | null;
+  end_stage_id?: number | null;
   created_at: string;
   updated_at: string;
+}
+
+interface StageInfo {
+  [stageId: number]: {
+    name: string;
+    pipeline_id: number;
+    pipeline_name: string;
+  };
 }
 
 export const CanonicalStageMappings: React.FC = () => {
@@ -39,6 +31,41 @@ export const CanonicalStageMappings: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<CanonicalStageMapping>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [stageInfo, setStageInfo] = useState<StageInfo>({});
+
+  // Helper function to validate stage ID input
+  const validateStageId = (value: string): boolean => {
+    return /^\d*$/.test(value); // Only allow digits
+  };
+
+  // Helper function to handle stage ID changes
+  const handleStageIdChange = (field: 'start_stage_id' | 'end_stage_id', value: string) => {
+    if (validateStageId(value)) {
+      setEditForm({ ...editForm, [field]: value ? parseInt(value) : null });
+    }
+  };
+
+  // Helper function to resolve stage names from stage IDs
+  const resolveStageNames = useCallback(async (stageIds: number[]) => {
+    if (stageIds.length === 0) return;
+
+    try {
+      const response = await fetch('/api/pipedrive/resolve-stage-names', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ stage_ids: stageIds }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setStageInfo(result.data);
+      }
+    } catch (error) {
+      console.error('Error resolving stage names:', error);
+    }
+  }, []);
 
   // Load mappings from database
   useEffect(() => {
@@ -76,16 +103,39 @@ export const CanonicalStageMappings: React.FC = () => {
     setEditingId(mapping.id);
     setEditForm({
       canonical_stage: mapping.canonical_stage,
+      start_stage_id: mapping.start_stage_id,
+      end_stage_id: mapping.end_stage_id,
       start_stage: mapping.start_stage,
       end_stage: mapping.end_stage
     });
+
+    // Resolve stage names for display only if we don't already have them
+    const stageIds = [];
+    if (mapping.start_stage_id) stageIds.push(mapping.start_stage_id);
+    if (mapping.end_stage_id) stageIds.push(mapping.end_stage_id);
+    
+    // Only fetch if we don't already have the stage info
+    const missingStageIds = stageIds.filter(id => !stageInfo[id]);
+    if (missingStageIds.length > 0) {
+      resolveStageNames(missingStageIds);
+    }
   };
 
   const handleSave = async () => {
-    if (!editingId || !editForm.canonical_stage || !editForm.start_stage || !editForm.end_stage) {
+    if (!editingId || !editForm.canonical_stage) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in the canonical stage field",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Require either stage IDs or stage names
+    if ((!editForm.start_stage_id && !editForm.start_stage) || (!editForm.end_stage_id && !editForm.end_stage)) {
+      toast({
+        title: "Error",
+        description: "Please fill in both start and end stages (either as IDs or names)",
         variant: "destructive",
       });
       return;
@@ -100,6 +150,8 @@ export const CanonicalStageMappings: React.FC = () => {
         },
         body: JSON.stringify({
           canonical_stage: editForm.canonical_stage,
+          start_stage_id: editForm.start_stage_id,
+          end_stage_id: editForm.end_stage_id,
           start_stage: editForm.start_stage,
           end_stage: editForm.end_stage
         }),
@@ -146,8 +198,10 @@ export const CanonicalStageMappings: React.FC = () => {
   const handleAddNew = async () => {
     const newMapping = {
       canonical_stage: 'New Canonical Stage',
-      start_stage: 'Start Stage',
-      end_stage: 'End Stage'
+      start_stage_id: null,
+      end_stage_id: null,
+      start_stage: '',
+      end_stage: ''
     };
 
     try {
@@ -221,8 +275,10 @@ export const CanonicalStageMappings: React.FC = () => {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-2 px-2 font-medium text-gray-700">Canonical Stage</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700">Start Stage</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700">End Stage</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700">Start Stage ID</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700">Start Stage Name</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700">End Stage ID</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700">End Stage Name</th>
                   <th className="text-left py-2 px-2 font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
@@ -243,38 +299,58 @@ export const CanonicalStageMappings: React.FC = () => {
                     </td>
                     <td className="py-2 px-2 text-gray-700">
                       {editingId === mapping.id ? (
-                        <select
-                          value={editForm.start_stage || ''}
-                          onChange={(e) => setEditForm({ ...editForm, start_stage: e.target.value })}
+                        <input
+                          type="number"
+                          value={editForm.start_stage_id || ''}
+                          onChange={(e) => handleStageIdChange('start_stage_id', e.target.value)}
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                        >
-                          <option value="">Select Start Stage</option>
-                          {STAGE_OPTIONS.map((stage) => (
-                            <option key={stage} value={stage}>
-                              {stage}
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="Enter Stage ID"
+                        />
                       ) : (
-                        mapping.start_stage
+                        mapping.start_stage_id || '-'
                       )}
                     </td>
                     <td className="py-2 px-2 text-gray-700">
                       {editingId === mapping.id ? (
-                        <select
+                        <input
+                          type="text"
+                          value={editForm.start_stage || ''}
+                          onChange={(e) => setEditForm({ ...editForm, start_stage: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                          placeholder="Stage name (optional)"
+                        />
+                      ) : (
+                        mapping.start_stage_id && stageInfo[mapping.start_stage_id] 
+                          ? stageInfo[mapping.start_stage_id].name 
+                          : mapping.start_stage || '-'
+                      )}
+                    </td>
+                    <td className="py-2 px-2 text-gray-700">
+                      {editingId === mapping.id ? (
+                        <input
+                          type="number"
+                          value={editForm.end_stage_id || ''}
+                          onChange={(e) => handleStageIdChange('end_stage_id', e.target.value)}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                          placeholder="Enter Stage ID"
+                        />
+                      ) : (
+                        mapping.end_stage_id || '-'
+                      )}
+                    </td>
+                    <td className="py-2 px-2 text-gray-700">
+                      {editingId === mapping.id ? (
+                        <input
+                          type="text"
                           value={editForm.end_stage || ''}
                           onChange={(e) => setEditForm({ ...editForm, end_stage: e.target.value })}
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                        >
-                          <option value="">Select End Stage</option>
-                          {STAGE_OPTIONS.map((stage) => (
-                            <option key={stage} value={stage}>
-                              {stage}
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="Stage name (optional)"
+                        />
                       ) : (
-                        mapping.end_stage
+                        mapping.end_stage_id && stageInfo[mapping.end_stage_id] 
+                          ? stageInfo[mapping.end_stage_id].name 
+                          : mapping.end_stage || '-'
                       )}
                     </td>
                     <td className="py-2 px-2 text-gray-600">
@@ -319,9 +395,10 @@ export const CanonicalStageMappings: React.FC = () => {
         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
           <h4 className="font-medium text-gray-900 mb-2">Canonical Stage Mappings</h4>
           <p className="text-sm text-gray-600">
-            Define mappings between Pipedrive stages and canonical stages for lead time analysis. 
-            Each mapping specifies a start and end stage, and the system will calculate the time 
-            between when deals entered these stages to measure lifecycle efficiency.
+            Define mappings between Pipedrive stage IDs and canonical stages for lead time analysis. 
+            Each mapping specifies a start and end stage ID, and the system will calculate the time 
+            between when deals entered these stages to measure lifecycle efficiency. 
+            Stage IDs are preferred over stage names for accuracy and consistency.
           </p>
         </div>
       </CardContent>

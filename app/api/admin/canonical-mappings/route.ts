@@ -44,24 +44,46 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { canonical_stage, start_stage, end_stage } = body;
+    const { canonical_stage, start_stage_id, end_stage_id, start_stage, end_stage } = body;
     
-    if (!canonical_stage || !start_stage || !end_stage) {
+    if (!canonical_stage) {
       return NextResponse.json(
-        { success: false, error: 'canonical_stage, start_stage, and end_stage are required' },
+        { success: false, error: 'canonical_stage is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Require either stage IDs or stage names
+    if ((!start_stage_id && !start_stage) || (!end_stage_id && !end_stage)) {
+      return NextResponse.json(
+        { success: false, error: 'Both start and end stages are required (either as IDs or names)' },
         { status: 400 }
       );
     }
     
     logInfo('Creating new canonical stage mapping', {
       canonical_stage,
+      start_stage_id,
+      end_stage_id,
       start_stage,
       end_stage
     });
     
     const result = await sql`
-      INSERT INTO canonical_stage_mappings (canonical_stage, start_stage, end_stage)
-      VALUES (${canonical_stage}, ${start_stage}, ${end_stage})
+      INSERT INTO canonical_stage_mappings (
+        canonical_stage, 
+        start_stage_id, 
+        end_stage_id, 
+        start_stage, 
+        end_stage
+      )
+      VALUES (
+        ${canonical_stage}, 
+        ${start_stage_id || null}, 
+        ${end_stage_id || null}, 
+        ${start_stage || ''}, 
+        ${end_stage || ''}
+      )
       RETURNING *
     `;
     

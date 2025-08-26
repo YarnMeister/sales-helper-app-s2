@@ -415,7 +415,19 @@ export const getDealFlowData = async (dealId?: number) => {
 export const getCanonicalStageMappings = async () => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching canonical stage mappings');
-    const result = await sql`SELECT * FROM canonical_stage_mappings ORDER BY canonical_stage`;
+    const result = await sql`
+      SELECT 
+        id,
+        canonical_stage,
+        start_stage,
+        end_stage,
+        start_stage_id,
+        end_stage_id,
+        created_at,
+        updated_at
+      FROM canonical_stage_mappings 
+      ORDER BY canonical_stage
+    `;
     return result;
   }, 'getCanonicalStageMappings');
 };
@@ -424,7 +436,16 @@ export const getCanonicalStageMapping = async (canonicalStage: string) => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching canonical stage mapping', { canonicalStage });
     const result = await sql`
-      SELECT * FROM canonical_stage_mappings 
+      SELECT 
+        id,
+        canonical_stage,
+        start_stage,
+        end_stage,
+        start_stage_id,
+        end_stage_id,
+        created_at,
+        updated_at
+      FROM canonical_stage_mappings 
       WHERE canonical_stage = ${canonicalStage}
       ORDER BY updated_at DESC
       LIMIT 1
@@ -444,27 +465,37 @@ export const getDealsForCanonicalStage = async (canonicalStage: string) => {
       return [];
     }
     
+    // Use stage IDs if available, otherwise fall back to stage names
+    const startStageFilter = mapping.start_stage_id 
+      ? sql`stage_id = ${mapping.start_stage_id}` 
+      : sql`stage_name = ${mapping.start_stage}`;
+    
+    const endStageFilter = mapping.end_stage_id 
+      ? sql`stage_id = ${mapping.end_stage_id}` 
+      : sql`stage_name = ${mapping.end_stage}`;
+    
     // Get all deals that have both start and end stages
     // Use entered_at for both start and end dates (not left_at)
     const result = await sql`
       WITH deal_stages AS (
         SELECT 
           deal_id,
+          stage_id,
           stage_name,
           entered_at,
-          ROW_NUMBER() OVER (PARTITION BY deal_id, stage_name ORDER BY entered_at) as rn
+          ROW_NUMBER() OVER (PARTITION BY deal_id, stage_id ORDER BY entered_at) as rn
         FROM pipedrive_deal_flow_data
-        WHERE stage_name IN (${mapping.start_stage}, ${mapping.end_stage})
+        WHERE (${startStageFilter}) OR (${endStageFilter})
       ),
       start_stages AS (
         SELECT deal_id, entered_at as start_date
         FROM deal_stages 
-        WHERE stage_name = ${mapping.start_stage} AND rn = 1
+        WHERE (${startStageFilter}) AND rn = 1
       ),
       end_stages AS (
         SELECT deal_id, entered_at as end_date
         FROM deal_stages 
-        WHERE stage_name = ${mapping.end_stage} AND rn = 1
+        WHERE (${endStageFilter}) AND rn = 1
       )
       SELECT 
         s.deal_id,
@@ -479,6 +510,72 @@ export const getDealsForCanonicalStage = async (canonicalStage: string) => {
     
     return result;
   }, 'getDealsForCanonicalStage');
+};
+
+// New functions for stage ID-based canonical stage mappings
+export const updateCanonicalStageMapping = async (
+  id: string,
+  data: {
+    canonical_stage?: string;
+    start_stage_id?: number | null;
+    end_stage_id?: number | null;
+    start_stage?: string;
+    end_stage?: string;
+  }
+) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Updating canonical stage mapping', { id, data });
+    
+    const result = await sql`
+      UPDATE canonical_stage_mappings 
+      SET 
+        canonical_stage = COALESCE(${data.canonical_stage}, canonical_stage),
+        start_stage_id = ${data.start_stage_id},
+        end_stage_id = ${data.end_stage_id},
+        start_stage = COALESCE(${data.start_stage}, start_stage),
+        end_stage = COALESCE(${data.end_stage}, end_stage),
+        updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    
+    if (result.length === 0) {
+      throw new Error('Canonical stage mapping not found');
+    }
+    
+    return result[0];
+  }, 'updateCanonicalStageMapping');
+};
+
+export const createCanonicalStageMapping = async (data: {
+  canonical_stage: string;
+  start_stage_id?: number | null;
+  end_stage_id?: number | null;
+  start_stage?: string;
+  end_stage?: string;
+}) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Creating canonical stage mapping', { data });
+    
+    const result = await sql`
+      INSERT INTO canonical_stage_mappings (
+        canonical_stage,
+        start_stage_id,
+        end_stage_id,
+        start_stage,
+        end_stage
+      ) VALUES (
+        ${data.canonical_stage},
+        ${data.start_stage_id},
+        ${data.end_stage_id},
+        ${data.start_stage || ''},
+        ${data.end_stage || ''}
+      )
+      RETURNING *
+    `;
+    
+    return result[0];
+  }, 'createCanonicalStageMapping');
 };
 
 // Enhanced Flow Metrics Configuration Functions
