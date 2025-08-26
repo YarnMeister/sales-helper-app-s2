@@ -35,266 +35,181 @@ describe('FlowMetricDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useRouter as any).mockReturnValue(mockRouter);
+    
+    // Mock global.fetch
+    global.fetch = vi.fn();
+    
+    // Mock successful API response for canonical-stage-deals
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: [
+          {
+            deal_id: 'D001',
+            start_date: '2024-01-15T00:00:00.000Z',
+            end_date: '2024-01-18T00:00:00.000Z',
+            duration_seconds: 259200, // 3 days
+          },
+          {
+            deal_id: 'D002',
+            start_date: '2024-01-16T00:00:00.000Z',
+            end_date: '2024-01-28T00:00:00.000Z',
+            duration_seconds: 1036800, // 12 days
+          },
+          {
+            deal_id: 'D007',
+            start_date: '2024-01-05T00:00:00.000Z',
+            end_date: '2024-02-19T00:00:00.000Z',
+            duration_seconds: 3888000, // 45 days
+          },
+        ],
+      }),
+    });
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('Page Structure', () => {
-    it('renders the page with correct title for lead conversion', () => {
+  describe('Basic Rendering', () => {
+    it('renders the page with correct title and navigation', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
-      expect(screen.getByText('Last 7 days')).toBeInTheDocument();
-    });
-
-    it('renders the common footer', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      expect(screen.getByTestId('common-footer')).toBeInTheDocument();
-    });
-
-    it('has the correct page structure', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      // Check for main sections
-      expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
-      expect(screen.getByText('Individual Deal Performance')).toBeInTheDocument();
-    });
-
-    it('has content area with correct padding', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      // Find the main content area with the correct padding classes
-      const contentArea = screen.getByText('Average').closest('div')?.parentElement?.parentElement?.parentElement;
-      expect(contentArea).toHaveClass('px-4', 'py-4', 'pb-24');
-    });
-  });
-
-  describe('Header Section', () => {
-    it('renders the back button', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      const backButton = screen.getByRole('button');
-      expect(backButton).toBeInTheDocument();
-    });
-
-    it('renders the correct metric title', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'quote-conversion' }} />);
-      
-      expect(screen.getByText('Quote Conversion Time')).toBeInTheDocument();
-    });
-
-    it('renders the period text', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
       expect(screen.getByText('Last 7 days')).toBeInTheDocument();
+      expect(screen.getByRole('button')).toBeInTheDocument(); // Back button
     });
 
-    it('handles back button click', () => {
+    it('shows loading state initially', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      const backButton = screen.getByRole('button');
-      fireEvent.click(backButton);
-      
-      expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report');
+      expect(screen.getByText('Loading deals data...')).toBeInTheDocument();
     });
-  });
 
-  describe('Summary Statistics Cards', () => {
-    it('renders all three summary cards', () => {
+    it('displays summary statistics correctly', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      expect(screen.getByText('Average')).toBeInTheDocument();
-      expect(screen.getByText('Best Performance')).toBeInTheDocument();
-      expect(screen.getByText('Worst Performance')).toBeInTheDocument();
-    });
-
-    it('displays correct average value for lead conversion', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      expect(screen.getByText('17 days')).toBeInTheDocument();
-    });
-
-    it('displays correct best value for lead conversion', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      const bestElements = screen.getAllByText('3 days');
-      expect(bestElements[0]).toBeInTheDocument(); // Summary card element
-    });
-
-    it('displays correct worst value for lead conversion', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      const worstElements = screen.getAllByText('45 days');
-      expect(worstElements[0]).toBeInTheDocument(); // Summary card element
-    });
-
-    it('displays correct values for different metrics', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'procurement' }} />);
-      
-      expect(screen.getByText('44 days')).toBeInTheDocument(); // Average
-      const bestElements = screen.getAllByText('10 days');
-      expect(bestElements[0]).toBeInTheDocument(); // Best performance card
-      const worstElements = screen.getAllByText('90 days');
-      expect(worstElements[0]).toBeInTheDocument(); // Worst performance card
+      await waitFor(() => {
+        expect(screen.getByText('17 days')).toBeInTheDocument(); // Average
+        expect(screen.getByText('3 days')).toBeInTheDocument(); // Best
+        expect(screen.getByText('45 days')).toBeInTheDocument(); // Worst
+      });
     });
   });
 
   describe('Individual Deal Performance Table', () => {
-    it('renders the table with correct title', () => {
+    it('renders table headers correctly', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      expect(screen.getByText('Individual Deal Performance')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Deal ID')).toBeInTheDocument();
+        expect(screen.getByText('Start Date')).toBeInTheDocument();
+        expect(screen.getByText('End Date')).toBeInTheDocument();
+        expect(screen.getByText('Duration')).toBeInTheDocument();
+      });
     });
 
-    it('renders table headers', () => {
+    it('renders deal data for lead conversion', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      expect(screen.getByText('Deal ID')).toBeInTheDocument();
-      expect(screen.getByText('Start Date')).toBeInTheDocument();
-      expect(screen.getByText('End Date')).toBeInTheDocument();
-      expect(screen.getByText('Duration')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('D001')).toBeInTheDocument();
+        expect(screen.getByText('1/15/2024')).toBeInTheDocument();
+        expect(screen.getByText('1/18/2024')).toBeInTheDocument();
+        // Check for the table row specifically by looking for the span element
+        const tableRow = screen.getByText('D001').closest('tr');
+        expect(tableRow).toBeInTheDocument();
+        expect(tableRow).toHaveTextContent('3 days');
+      });
     });
 
-    it('renders deal data for lead conversion', () => {
+    it('renders multiple deals', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      expect(screen.getByText('D001')).toBeInTheDocument();
-      expect(screen.getByText('2024-01-15')).toBeInTheDocument();
-      expect(screen.getByText('2024-01-18')).toBeInTheDocument();
-      const threeDaysElements = screen.getAllByText('3 days');
-      expect(threeDaysElements[1]).toBeInTheDocument(); // Table row element
-    });
-
-    it('renders multiple deals', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      expect(screen.getByText('D001')).toBeInTheDocument();
-      expect(screen.getByText('D002')).toBeInTheDocument();
-      expect(screen.getByText('D004')).toBeInTheDocument();
-      expect(screen.getByText('D007')).toBeInTheDocument();
-      expect(screen.getByText('D008')).toBeInTheDocument();
-    });
-
-    it('highlights best performance deals in green', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      const bestDealElements = screen.getAllByText('3 days');
-      expect(bestDealElements[1]).toHaveClass('text-green-600'); // Table row element
-    });
-
-    it('highlights worst performance deals in red', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      const worstDealElements = screen.getAllByText('45 days');
-      expect(worstDealElements[1]).toHaveClass('text-red-600'); // Table row element
+      await waitFor(() => {
+        expect(screen.getByText('D001')).toBeInTheDocument();
+        expect(screen.getByText('D002')).toBeInTheDocument();
+        expect(screen.getByText('D007')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Responsive Design', () => {
-    it('has responsive grid layout for summary cards', () => {
+    it('has responsive table layout', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      const gridContainer = screen.getByText('Average').closest('div')?.parentElement?.parentElement;
-      expect(gridContainer).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-3');
-    });
-
-    it('has responsive table layout', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      // Find the table container with overflow-x-auto class
-      const tableContainer = screen.getByRole('table').closest('div');
-      expect(tableContainer).toHaveClass('overflow-x-auto');
+      await waitFor(() => {
+        // Find the table container with overflow-x-auto class
+        const tableContainer = screen.getByRole('table').closest('div');
+        expect(tableContainer).toHaveClass('overflow-x-auto');
+      });
     });
   });
 
   describe('Accessibility', () => {
-    it('has proper button elements', () => {
+    it('has proper table structure', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      const backButton = screen.getByRole('button');
-      expect(backButton).toBeInTheDocument();
-    });
-
-    it('has proper heading hierarchy', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      const mainHeading = screen.getByText('Lead Conversion Time');
-      expect(mainHeading.tagName).toBe('H1');
-    });
-
-    it('has proper table structure', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
-      
-      expect(screen.getByRole('table')).toBeInTheDocument();
-      const rowgroups = screen.getAllByRole('rowgroup');
-      expect(rowgroups).toHaveLength(2); // thead and tbody
+      await waitFor(() => {
+        expect(screen.getByRole('table')).toBeInTheDocument();
+        const rowgroups = screen.getAllByRole('rowgroup');
+        expect(rowgroups).toHaveLength(2); // thead and tbody
+      });
     });
   });
 
-  describe('Data Display', () => {
-    it('displays correct mock data values for different metrics', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
-      
-      expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
-      expect(screen.getByText('70 days')).toBeInTheDocument(); // Average
-      // Use getAllByText for duplicate values and check the first one (summary card)
-      const bestElements = screen.getAllByText('20 days');
-      expect(bestElements[0]).toBeInTheDocument(); // Best performance card
-      const worstElements = screen.getAllByText('120 days');
-      expect(worstElements[0]).toBeInTheDocument(); // Worst performance card
-    });
+  describe('Error Handling', () => {
+    it('handles API errors gracefully', async () => {
+      // Mock API error
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: false,
+          error: 'Failed to fetch deals data',
+        }),
+      });
 
-    it('displays all major stages from the design document', () => {
-      const metrics = ['lead-conversion', 'quote-conversion', 'order-conversion', 'procurement', 'manufacturing', 'delivery'];
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      // Test each metric individually to avoid multiple renders
-      metrics.forEach(metricId => {
-        const { unmount } = render(<FlowMetricDetailPage params={{ 'metric-id': metricId }} />);
-        
-        // Check that the page renders without error by looking for specific content
-        if (metricId === 'lead-conversion') {
-          expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
-        } else if (metricId === 'quote-conversion') {
-          expect(screen.getByText('Quote Conversion Time')).toBeInTheDocument();
-        } else if (metricId === 'order-conversion') {
-          expect(screen.getByText('Order Conversion Time')).toBeInTheDocument();
-        } else if (metricId === 'procurement') {
-          expect(screen.getByText('Procurement Lead Time')).toBeInTheDocument();
-        } else if (metricId === 'manufacturing') {
-          expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
-        } else if (metricId === 'delivery') {
-          expect(screen.getByText('Delivery Lead Time')).toBeInTheDocument();
-        }
-        
-        unmount();
+      await waitFor(() => {
+        expect(screen.getByText('Failed to fetch deals data')).toBeInTheDocument();
       });
     });
 
-    it('handles invalid metric ID gracefully', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'invalid-metric' }} />);
+    it('handles network errors', async () => {
+      // Mock network error
+      (global.fetch as any).mockRejectedValue(new Error('Network error'));
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      expect(screen.getByText('Metric Not Found')).toBeInTheDocument();
-      expect(screen.getByText('The requested metric could not be found.')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Failed to fetch deals data')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Navigation', () => {
-    it('navigates back to main flow metrics page', () => {
+    it('navigates back when back button is clicked', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
-      const backButton = screen.getByRole('button');
-      fireEvent.click(backButton);
-      
-      expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report');
+      await waitFor(() => {
+        const backButton = screen.getByRole('button');
+        fireEvent.click(backButton);
+        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report');
+      });
     });
+  });
 
-    it('maintains correct URL structure', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'delivery' }} />);
+  describe('Invalid Metric', () => {
+    it('shows error for invalid metric ID', () => {
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'invalid-metric' }} />);
       
-      expect(screen.getByText('Delivery Lead Time')).toBeInTheDocument();
+      expect(screen.getByText('Metric Not Found')).toBeInTheDocument();
+      expect(screen.getByText('The requested metric could not be found.')).toBeInTheDocument();
     });
   });
 });

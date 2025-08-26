@@ -1,34 +1,6 @@
 # Sales Helper App
 
-A Next.js application for managing sales contacts, line items, and check-ins using Neon Postgres and Upstash Redis.
-
-## 🚨 Branch Protection
-
-This repository has **mandatory branch protection** to prevent accidental commits to the main branch:
-
-### Git Hooks
-- **Pre-commit hook**: Blocks any commits to the `main` branch
-- **Pre-push hook**: Blocks pushing directly to the `main` branch
-- Both hooks provide clear error messages and instructions
-
-### Why This Was Necessary
-- **Production Safety**: Prevents accidental deployment of incomplete features
-- **Workflow Enforcement**: Ensures all changes go through feature branches and pull requests
-- **Team Protection**: Guards against human error and automated tool mistakes
-- **CI/CD Safety**: Prevents broken builds from reaching production
-
-### Working with Protected Branches
-```bash
-# ✅ Correct workflow
-git checkout -b feature/your-feature-name
-# ... make changes ...
-git commit -m "feat: your changes"
-git push origin feature/your-feature-name
-
-# ❌ This will be blocked
-git checkout main
-git commit -m "direct commit"  # ERROR: Commits to main branch are not allowed!
-```
+A Next.js application for managing sales contacts, line items, check-ins, and flow efficiency metrics using Neon Postgres and Upstash Redis.
 
 ## Setup
 
@@ -146,12 +118,155 @@ export const generateQRId = (): string => {
 
 ## Database Schema
 
-The app uses a flat JSONB structure:
+### **Core Tables**
 - `requests` - Main requests table with JSONB contact and line_items
 - `mock_requests` - Development requests table (identical structure)
 - `site_visits` - Site visit check-ins for Slack notifications
 - `mock_site_visits` - Development site visits table (identical structure)
 - `mock_pipedrive_submissions` - Testing support table for Pipedrive submissions
+
+### **Flow Metrics Tables** (New)
+The Flow Metrics Report system uses a unified data model for managing sales efficiency metrics and their stage mappings:
+
+#### **`flow_metrics_config` Table**
+```sql
+CREATE TABLE flow_metrics_config (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  metric_key VARCHAR(50) UNIQUE NOT NULL, -- e.g., 'lead-conversion-time'
+  display_title VARCHAR(100) NOT NULL,    -- e.g., 'Lead Conversion Time'
+  canonical_stage VARCHAR(50) NOT NULL,   -- e.g., 'LEAD'
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+#### **Enhanced `canonical_stage_mappings` Table**
+```sql
+-- Added to existing table:
+metric_config_id UUID REFERENCES flow_metrics_config(id),
+start_stage VARCHAR(100),
+end_stage VARCHAR(100),
+UNIQUE(metric_config_id) -- One mapping per metric
+```
+
+### **Data Relationships**
+- **One-to-One**: Each `flow_metrics_config` record has exactly one `canonical_stage_mappings` record
+- **Flexible Stages**: Start/end stages can be customized per metric
+- **Active Management**: Metrics can be enabled/disabled without deletion
+- **Ordered Display**: Sort order controls display sequence on main page
+
+## Flow Metrics Report System
+
+### **Overview**
+The Flow Metrics Report provides comprehensive sales efficiency tracking with dynamic metric management. It replaces the previous hardcoded approach with a database-driven system that allows full CRUD operations on metrics and their stage mappings.
+
+### **Key Features**
+- **Dynamic Metrics**: Metrics are loaded from database instead of hardcoded values
+- **Full CRUD Operations**: Create, read, update, and delete metrics and mappings
+- **Unified Management**: Single interface for managing both metrics and their stage mappings
+- **Real-time Updates**: Changes in mappings immediately reflect on the main report page
+- **Flexible Configuration**: Support for custom start/end stages per metric
+
+### **UI Components**
+
+#### **Main Report Page** (`/flow-metrics-report`)
+- **Dynamic Loading**: Fetches active metrics from `/api/admin/flow-metrics-config`
+- **KPI Cards**: Displays metrics with main value, best/worst performance, and trends
+- **Loading States**: Shows "Loading metrics..." during data fetch
+- **Empty States**: Handles scenarios with no configured metrics
+
+#### **Metrics Management Tab**
+- **Table View**: Lists all metrics with their configuration details
+- **Inline Editing**: Edit metric properties directly in the table
+- **Add/Delete**: Full CRUD operations with confirmation dialogs
+- **Validation**: Client-side validation for required fields and format requirements
+
+### **API Endpoints**
+
+#### **Flow Metrics Configuration**
+```typescript
+// Get all metrics
+GET /api/admin/flow-metrics-config
+Response: { success: boolean, data: FlowMetricConfig[] }
+
+// Create new metric
+POST /api/admin/flow-metrics-config
+Body: { metric_key: string, display_title: string, canonical_stage: string, start_stage?: string, end_stage?: string }
+Response: { success: boolean, data: FlowMetricConfig }
+
+// Update metric
+PATCH /api/admin/flow-metrics-config/[id]
+Body: { display_title?: string, canonical_stage?: string, start_stage?: string, end_stage?: string, is_active?: boolean }
+Response: { success: boolean, data: FlowMetricConfig }
+
+// Delete metric
+DELETE /api/admin/flow-metrics-config/[id]
+Response: { success: boolean }
+
+// Reorder metrics
+POST /api/admin/flow-metrics-config/reorder
+Body: { reorderData: Array<{id: string, sort_order: number}> }
+Response: { success: boolean }
+```
+
+### **Technical Architecture**
+
+#### **Data Flow**
+1. **Main Page Load**: `useEffect` fetches active metrics from API
+2. **Data Transformation**: API response converted to `FlowMetricData` format for UI
+3. **Dynamic Rendering**: KPI cards rendered based on fetched data
+4. **Real-time Updates**: Changes in mappings tab immediately reflect on main page
+
+#### **Database Functions** (`lib/db.ts`)
+```typescript
+// Core functions for flow metrics management
+getFlowMetricsConfig(): Promise<FlowMetricConfig[]>
+getActiveFlowMetricsConfig(): Promise<FlowMetricConfig[]>
+getFlowMetricConfig(metricKey: string): Promise<FlowMetricConfig | null>
+createFlowMetricConfig(data: CreateFlowMetricData): Promise<FlowMetricConfig>
+updateFlowMetricConfig(id: string, data: UpdateFlowMetricData): Promise<FlowMetricConfig>
+deleteFlowMetricConfig(id: string): Promise<void>
+reorderFlowMetrics(reorderData: ReorderData[]): Promise<void>
+```
+
+#### **Validation Rules**
+- **Metric Key**: Must be kebab-case format (e.g., 'lead-conversion-time')
+- **Display Title**: Required, max 100 characters
+- **Canonical Stage**: Must be one of predefined stages (LEAD, QUOTE, ORDER, etc.)
+- **Unique Constraints**: Metric key must be unique across all metrics
+- **Foreign Key**: Each metric must have exactly one stage mapping
+
+### **Future Maintenance and Changes**
+
+#### **Adding New Metrics**
+1. **Database**: Insert new record in `flow_metrics_config`
+2. **Mapping**: Create corresponding record in `canonical_stage_mappings`
+3. **UI**: Automatically appears on main page and in management tab
+4. **No Code Changes**: New metrics appear without UI modifications
+
+#### **Modifying Stage Mappings**
+1. **Update Mapping**: Modify `start_stage` or `end_stage` in `canonical_stage_mappings`
+2. **Immediate Effect**: Changes reflect on main page without restart
+3. **Validation**: API validates stage names against available options
+
+#### **Customizing Display**
+1. **Sort Order**: Modify `sort_order` to change display sequence
+2. **Active Status**: Set `is_active = false` to hide metrics without deletion
+3. **Display Title**: Update `display_title` for UI changes
+
+#### **Extending the System**
+- **New Metric Types**: Add new `metric_type` field for categorization
+- **Advanced Calculations**: Extend with custom calculation functions
+- **Historical Tracking**: Add audit trail for metric changes
+- **Performance Optimization**: Add caching layer for frequently accessed metrics
+
+#### **Migration Strategy**
+- **Backward Compatibility**: Existing hardcoded metrics preserved in database
+- **Gradual Migration**: Old and new systems can coexist during transition
+- **Data Integrity**: Foreign key constraints ensure data consistency
+- **Rollback Support**: Previous system can be restored if needed
 
 ## Development
 

@@ -480,3 +480,200 @@ export const getDealsForCanonicalStage = async (canonicalStage: string) => {
     return result;
   }, 'getDealsForCanonicalStage');
 };
+
+// Enhanced Flow Metrics Configuration Functions
+export const getFlowMetricsConfig = async () => {
+  return withDbErrorHandling(async () => {
+    logInfo('Fetching flow metrics configuration');
+    const result = await sql`
+      SELECT 
+        fmc.*,
+        csm.start_stage,
+        csm.end_stage
+      FROM flow_metrics_config fmc
+      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
+      ORDER BY fmc.sort_order, fmc.display_title
+    `;
+    return result;
+  }, 'getFlowMetricsConfig');
+};
+
+export const getActiveFlowMetricsConfig = async () => {
+  return withDbErrorHandling(async () => {
+    logInfo('Fetching active flow metrics configuration');
+    const result = await sql`
+      SELECT 
+        fmc.*,
+        csm.start_stage,
+        csm.end_stage
+      FROM flow_metrics_config fmc
+      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
+      WHERE fmc.is_active = true
+      ORDER BY fmc.sort_order, fmc.display_title
+    `;
+    return result;
+  }, 'getActiveFlowMetricsConfig');
+};
+
+export const getFlowMetricConfig = async (metricKey: string) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Fetching flow metric configuration', { metricKey });
+    const result = await sql`
+      SELECT 
+        fmc.*,
+        csm.start_stage,
+        csm.end_stage
+      FROM flow_metrics_config fmc
+      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
+      WHERE fmc.metric_key = ${metricKey}
+      LIMIT 1
+    `;
+    return result[0] || null;
+  }, 'getFlowMetricConfig');
+};
+
+export const createFlowMetricConfig = async (data: {
+  metric_key: string;
+  display_title: string;
+  canonical_stage: string;
+  sort_order?: number;
+  is_active?: boolean;
+  start_stage?: string;
+  end_stage?: string;
+}) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Creating flow metric configuration', { metricKey: data.metric_key });
+    
+    // Start a transaction
+    const result = await sql`
+      WITH inserted_config AS (
+        INSERT INTO flow_metrics_config (
+          metric_key, 
+          display_title, 
+          canonical_stage, 
+          sort_order, 
+          is_active
+        ) VALUES (
+          ${data.metric_key},
+          ${data.display_title},
+          ${data.canonical_stage},
+          ${data.sort_order || 0},
+          ${data.is_active !== false}
+        )
+        RETURNING *
+      ),
+      inserted_mapping AS (
+        INSERT INTO canonical_stage_mappings (
+          metric_config_id,
+          canonical_stage,
+          start_stage,
+          end_stage
+        )
+        SELECT 
+          id,
+          ${data.canonical_stage},
+          ${data.start_stage || ''},
+          ${data.end_stage || ''}
+        FROM inserted_config
+        WHERE ${data.start_stage} IS NOT NULL AND ${data.end_stage} IS NOT NULL
+      )
+      SELECT 
+        ic.*,
+        csm.start_stage,
+        csm.end_stage
+      FROM inserted_config ic
+      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = ic.id
+    `;
+    
+    return result[0];
+  }, 'createFlowMetricConfig');
+};
+
+export const updateFlowMetricConfig = async (
+  id: string, 
+  data: {
+    display_title?: string;
+    canonical_stage?: string;
+    sort_order?: number;
+    is_active?: boolean;
+    start_stage?: string;
+    end_stage?: string;
+  }
+) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Updating flow metric configuration', { id });
+    
+    // Update the config
+    if (data.display_title || data.canonical_stage !== undefined || data.sort_order !== undefined || data.is_active !== undefined) {
+      await sql`
+        UPDATE flow_metrics_config 
+        SET 
+          display_title = COALESCE(${data.display_title}, display_title),
+          canonical_stage = COALESCE(${data.canonical_stage}, canonical_stage),
+          sort_order = COALESCE(${data.sort_order}, sort_order),
+          is_active = COALESCE(${data.is_active}, is_active)
+        WHERE id = ${id}
+      `;
+    }
+    
+    // Update the mapping if provided
+    if (data.start_stage !== undefined || data.end_stage !== undefined) {
+      await sql`
+        UPDATE canonical_stage_mappings 
+        SET 
+          start_stage = COALESCE(${data.start_stage}, start_stage),
+          end_stage = COALESCE(${data.end_stage}, end_stage)
+        WHERE metric_config_id = ${id}
+      `;
+    }
+    
+    // Return the updated record
+    const result = await sql`
+      SELECT 
+        fmc.*,
+        csm.start_stage,
+        csm.end_stage
+      FROM flow_metrics_config fmc
+      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
+      WHERE fmc.id = ${id}
+      LIMIT 1
+    `;
+    
+    return result[0];
+  }, 'updateFlowMetricConfig');
+};
+
+export const deleteFlowMetricConfig = async (id: string) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Deleting flow metric configuration', { id });
+    
+    // Delete the mapping first (due to foreign key constraint)
+    await sql`DELETE FROM canonical_stage_mappings WHERE metric_config_id = ${id}`;
+    
+    // Delete the config
+    const result = await sql`
+      DELETE FROM flow_metrics_config 
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    
+    return result[0];
+  }, 'deleteFlowMetricConfig');
+};
+
+export const reorderFlowMetrics = async (reorderData: Array<{ id: string; sort_order: number }>) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Reordering flow metrics', { count: reorderData.length });
+    
+    // Update sort orders in batch
+    for (const item of reorderData) {
+      await sql`
+        UPDATE flow_metrics_config 
+        SET sort_order = ${item.sort_order}
+        WHERE id = ${item.id}
+      `;
+    }
+    
+    return { success: true, updated: reorderData.length };
+  }, 'reorderFlowMetrics');
+};

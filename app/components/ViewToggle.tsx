@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button } from './ui/button';
 
 type ViewMode = 'metrics' | 'raw-data' | 'mappings';
 
@@ -12,36 +13,42 @@ interface ViewToggleProps {
 export const ViewToggle: React.FC<ViewToggleProps> = ({ currentView, onViewChange }) => {
   return (
     <div className="flex bg-gray-100 rounded-lg p-1">
-      <button
+      <Button
         onClick={() => onViewChange('metrics')}
+        variant={currentView === 'metrics' ? 'default' : 'ghost'}
+        size="sm"
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
           currentView === 'metrics'
-            ? 'bg-white text-gray-900 shadow-sm'
+            ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
             : 'text-gray-600 hover:text-gray-900'
         }`}
       >
         Metrics
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={() => onViewChange('raw-data')}
+        variant={currentView === 'raw-data' ? 'default' : 'ghost'}
+        size="sm"
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
           currentView === 'raw-data'
-            ? 'bg-white text-gray-900 shadow-sm'
+            ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
             : 'text-gray-600 hover:text-gray-900'
         }`}
       >
         Raw Data
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={() => onViewChange('mappings')}
+        variant={currentView === 'mappings' ? 'default' : 'ghost'}
+        size="sm"
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
           currentView === 'mappings'
-            ? 'bg-white text-gray-900 shadow-sm'
+            ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
             : 'text-gray-600 hover:text-gray-900'
         }`}
       >
         Mappings
-      </button>
+      </Button>
     </div>
   );
 };

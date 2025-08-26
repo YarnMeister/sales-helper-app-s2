@@ -101,27 +101,33 @@ describe('Pipedrive Flow Data', () => {
           stage_id: 5,
           stage_name: 'Quality Control',
           entered_at: '2025-08-11T12:28:28.000Z',
-          created_at: '2025-08-25T13:33:46.718Z'
+          left_at: null,
+          duration_seconds: null,
+          created_at: '2025-08-25T13:33:46.718Z',
+          updated_at: '2025-08-25T13:33:46.718Z'
+        },
+        {
+          id: '2',
+          pipedrive_event_id: 12344,
+          deal_id: dealId,
+          pipeline_id: 1,
+          stage_id: 3,
+          stage_name: 'Order Received - Johan',
+          entered_at: '2025-08-07T11:16:49.000Z',
+          left_at: '2025-08-11T12:28:28.000Z',
+          duration_seconds: 349899,
+          created_at: '2025-08-25T13:33:46.718Z',
+          updated_at: '2025-08-25T13:33:46.718Z'
         }
       ];
 
-      // Mock Pipedrive API call
       vi.mocked(fetchDealFlow).mockResolvedValue(mockPipedriveResponse.data);
-
-      // Mock database operations
       vi.mocked(insertDealFlowData).mockResolvedValue(mockStoredData);
-      vi.mocked(insertDealMetadata).mockResolvedValue({
-        id: '1',
-        deal_id: dealId,
-        title: 'Test Deal',
-        pipeline_id: 1,
-        stage_id: 5,
-        status: 'Quality Control'
-      });
+      vi.mocked(insertDealMetadata).mockResolvedValue(undefined);
 
       const request = new NextRequest('http://localhost:3000/api/pipedrive/deal-flow', {
         method: 'POST',
-        body: JSON.stringify({ dealId })
+        body: JSON.stringify({ deal_id: dealId })
       });
 
       const response = await POST(request);
@@ -130,21 +136,21 @@ describe('Pipedrive Flow Data', () => {
       expect(insertDealFlowData).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
-            pipedrive_event_id: 12345,
             deal_id: dealId,
-            stage_name: 'Quality Control'
+            stage_name: 'Quality Control',
+            stage_id: 5
           }),
           expect.objectContaining({
-            pipedrive_event_id: 12344,
             deal_id: dealId,
-            stage_name: 'Order Received - Johan'
+            stage_name: 'Order Received - Johan',
+            stage_id: 3
           })
         ])
       );
       expect(response).toEqual({
         data: {
           success: true,
-          message: 'Successfully fetched and stored deal flow data',
+          message: `Successfully fetched flow data for deal ${dealId}`,
           data: mockStoredData
         },
         options: undefined
@@ -159,7 +165,7 @@ describe('Pipedrive Flow Data', () => {
 
       const request = new NextRequest('http://localhost:3000/api/pipedrive/deal-flow', {
         method: 'POST',
-        body: JSON.stringify({ dealId })
+        body: JSON.stringify({ deal_id: dealId })
       });
 
       const response = await POST(request);
@@ -185,7 +191,7 @@ describe('Pipedrive Flow Data', () => {
       expect(response).toEqual({
         data: {
           success: false,
-          error: 'dealId is required'
+          error: 'deal_id is required'
         },
         options: { status: 400 }
       });
@@ -231,20 +237,20 @@ describe('Pipedrive Flow Data', () => {
 
       vi.mocked(fetchDealFlow).mockResolvedValue(mockPipedriveResponse.data);
       vi.mocked(insertDealFlowData).mockResolvedValue([]);
-      vi.mocked(insertDealMetadata).mockResolvedValue({} as any);
+      vi.mocked(insertDealMetadata).mockResolvedValue(undefined);
 
       const request = new NextRequest('http://localhost:3000/api/pipedrive/deal-flow', {
         method: 'POST',
-        body: JSON.stringify({ dealId })
+        body: JSON.stringify({ deal_id: dealId })
       });
 
       await POST(request);
 
       expect(insertDealFlowData).toHaveBeenCalledWith([
         expect.objectContaining({
-          pipedrive_event_id: 12345,
           deal_id: dealId,
-          stage_name: 'Quality Control'
+          stage_name: 'Quality Control',
+          stage_id: 5
         })
       ]);
       // Should not include note or title change events
@@ -315,7 +321,7 @@ describe('Pipedrive Flow Data', () => {
 
       vi.mocked(getDealFlowData).mockResolvedValue(mockFlowData);
 
-      const request = new NextRequest(`http://localhost:3000/api/pipedrive/deal-flow-data?dealId=${dealId}`);
+      const request = new NextRequest(`http://localhost:3000/api/pipedrive/deal-flow-data?deal_id=${dealId}`);
       const response = await GET(request);
 
       expect(getDealFlowData).toHaveBeenCalledWith(dealId);

@@ -25,14 +25,49 @@ vi.mock('../components/CommonFooter', () => ({
 // Mock console.log for testing More Info button clicks
 const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 
+// Mock fetch for API calls
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
 describe('FlowMetricsReportPage', () => {
   const mockRouter = {
     push: vi.fn(),
   };
 
+  const mockMetricsData = [
+    {
+      id: 'lead-conversion',
+      metric_key: 'lead-conversion',
+      display_title: 'Lead Conversion Time',
+      canonical_stage: 'Lead Conversion',
+      sort_order: 1,
+      is_active: true,
+      start_stage: 'RFQ Received',
+      end_stage: 'Quote Sent',
+    },
+    {
+      id: 'quote-conversion',
+      metric_key: 'quote-conversion',
+      display_title: 'Quote Conversion Time',
+      canonical_stage: 'Quote Conversion',
+      sort_order: 2,
+      is_active: true,
+      start_stage: 'Quote Sent',
+      end_stage: 'Order Received',
+    },
+  ];
+
   beforeEach(() => {
     (useRouter as any).mockReturnValue(mockRouter);
     mockConsoleLog.mockClear();
+    
+    // Mock the API call to return metrics data
+    mockFetch.mockResolvedValue({
+      json: async () => ({
+        success: true,
+        data: mockMetricsData
+      })
+    });
   });
 
   afterEach(() => {
@@ -111,89 +146,104 @@ describe('FlowMetricsReportPage', () => {
   });
 
   describe('KPI Cards Grid', () => {
-    it('renders all 6 KPI cards', () => {
+    it('renders KPI cards from database', async () => {
       render(<FlowMetricsReportPage />);
       
-      // Check all card titles are present
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
+      
+      // Check that our mock metrics are displayed
       expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       expect(screen.getByText('Quote Conversion Time')).toBeInTheDocument();
-      expect(screen.getByText('Order Conversion Time')).toBeInTheDocument();
-      expect(screen.getByText('Procurement Lead Time')).toBeInTheDocument();
-      expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
-      expect(screen.getByText('Delivery Lead Time')).toBeInTheDocument();
     });
 
-    it('renders cards in a responsive grid layout', () => {
+    it('renders cards in a responsive grid layout', async () => {
       render(<FlowMetricsReportPage />);
+      
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
       const gridContainer = screen.getByText('Lead Conversion Time').closest('.grid');
       expect(gridContainer).toHaveClass('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
     });
 
-    it('renders correct main metrics for each card', () => {
+    it('renders calculating state for metrics', async () => {
       render(<FlowMetricsReportPage />);
       
-      // Check that all main metrics are present (using getAllByText for duplicates)
-      const eightDaysElements = screen.getAllByText('8 days');
-      expect(eightDaysElements).toHaveLength(2); // Lead Conversion and Quote Conversion
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
-      expect(screen.getByText('15 days')).toBeInTheDocument(); // Order Conversion
-      expect(screen.getByText('22 days')).toBeInTheDocument(); // Procurement
-      expect(screen.getByText('35 days')).toBeInTheDocument(); // Manufacturing
-      expect(screen.getByText('7 days')).toBeInTheDocument(); // Delivery
+      // Check that we show "Calculating..." for metrics
+      const calculatingElements = screen.getAllByText('Calculating...');
+      expect(calculatingElements.length).toBeGreaterThan(0);
     });
 
-    it('renders best/worst metrics for each card', () => {
+    it('renders N/A for best/worst metrics initially', async () => {
       render(<FlowMetricsReportPage />);
       
-      // Check for best values (green)
-      expect(screen.getByText('Best: 3d')).toBeInTheDocument();
-      expect(screen.getByText('Best: 8d')).toBeInTheDocument();
-      expect(screen.getByText('Best: 5d')).toBeInTheDocument();
-      expect(screen.getByText('Best: 10d')).toBeInTheDocument();
-      expect(screen.getByText('Best: 20d')).toBeInTheDocument();
-      expect(screen.getByText('Best: 2d')).toBeInTheDocument();
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
-      // Check for worst values (red)
-      expect(screen.getByText('Worst: 12d')).toBeInTheDocument();
-      expect(screen.getByText('Worst: 8d')).toBeInTheDocument();
-      expect(screen.getByText('Worst: 60d')).toBeInTheDocument();
-      expect(screen.getByText('Worst: 90d')).toBeInTheDocument();
-      expect(screen.getByText('Worst: 120d')).toBeInTheDocument();
-      expect(screen.getByText('Worst: 21d')).toBeInTheDocument();
+      // Check that we show "N/A" for best/worst values initially
+      const bestNaElements = screen.getAllByText('Best: N/A');
+      const worstNaElements = screen.getAllByText('Worst: N/A');
+      expect(bestNaElements.length).toBeGreaterThan(0);
+      expect(worstNaElements.length).toBeGreaterThan(0);
     });
 
-    it('renders trend indicators for each card', () => {
+    it('renders trend indicators for each card', async () => {
       render(<FlowMetricsReportPage />);
       
-      // Check that "Trend" text appears 6 times (once per card)
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
+      
+      // Check that "Trend" text appears for each card
       const trendTexts = screen.getAllByText('Trend');
-      expect(trendTexts).toHaveLength(6);
+      expect(trendTexts.length).toBeGreaterThan(0);
     });
 
-    it('renders trend icons with correct symbols', () => {
+    it('renders trend icons with correct symbols', async () => {
       render(<FlowMetricsReportPage />);
+      
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
       // Check for trend arrows (↗, ↘, →) - using getAllByText for duplicates
-      const upArrows = screen.getAllByText('↗');
-      expect(upArrows.length).toBeGreaterThan(0); // up trend
-      
-      const downArrows = screen.getAllByText('↘');
-      expect(downArrows.length).toBeGreaterThan(0); // down trend
-      
       const stableArrows = screen.getAllByText('→');
-      expect(stableArrows.length).toBeGreaterThan(0); // stable trend
+      expect(stableArrows.length).toBeGreaterThan(0); // stable trend (default)
     });
 
-    it('renders More Info buttons for each card', () => {
+    it('renders More Info buttons for each card', async () => {
       render(<FlowMetricsReportPage />);
+      
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
       const moreInfoButtons = screen.getAllByText('More info');
-      expect(moreInfoButtons).toHaveLength(6);
+      expect(moreInfoButtons).toHaveLength(2); // Only 2 metrics in our mock data
     });
 
-    it('handles More Info button clicks', () => {
+    it('handles More Info button clicks', async () => {
       render(<FlowMetricsReportPage />);
+      
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
       const moreInfoButtons = screen.getAllByText('More info');
       fireEvent.click(moreInfoButtons[0]); // Click first More Info button
@@ -211,8 +261,13 @@ describe('FlowMetricsReportPage', () => {
       expect(headerContainer).toHaveClass('flex-col', 'sm:flex-row', 'sm:items-center', 'sm:justify-between');
     });
 
-    it('has responsive grid layout', () => {
+    it('has responsive grid layout', async () => {
       render(<FlowMetricsReportPage />);
+      
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
       const gridContainer = screen.getByText('Lead Conversion Time').closest('.grid');
       expect(gridContainer).toHaveClass('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
@@ -229,8 +284,13 @@ describe('FlowMetricsReportPage', () => {
       expect(periodSelect).toHaveAttribute('id', 'period-select');
     });
 
-    it('has proper button elements', () => {
+    it('has proper button elements', async () => {
       render(<FlowMetricsReportPage />);
+      
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
       const moreInfoButtons = screen.getAllByText('More info');
       moreInfoButtons.forEach(button => {
@@ -247,27 +307,41 @@ describe('FlowMetricsReportPage', () => {
   });
 
   describe('Data Display', () => {
-    it('displays correct mock data values', () => {
+    it('displays correct metrics data from API', async () => {
       render(<FlowMetricsReportPage />);
       
-      // Verify specific data points from mock data
-      expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
-      const eightDaysElements = screen.getAllByText('8 days');
-      expect(eightDaysElements.length).toBeGreaterThan(0);
-      expect(screen.getByText('Best: 3d')).toBeInTheDocument();
-      expect(screen.getByText('Worst: 12d')).toBeInTheDocument();
-    });
-
-    it('displays all major stages from the design document', () => {
-      render(<FlowMetricsReportPage />);
+      // Wait for the metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
       
-      // These should match the major stages mentioned in the design document
+      // Verify the metrics are displayed
       expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       expect(screen.getByText('Quote Conversion Time')).toBeInTheDocument();
-      expect(screen.getByText('Order Conversion Time')).toBeInTheDocument();
-      expect(screen.getByText('Procurement Lead Time')).toBeInTheDocument();
-      expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
-      expect(screen.getByText('Delivery Lead Time')).toBeInTheDocument();
+    });
+
+    it('displays loading state initially', () => {
+      render(<FlowMetricsReportPage />);
+      
+      // Should show loading state initially
+      expect(screen.getByText('Loading metrics...')).toBeInTheDocument();
+    });
+
+    it('handles API errors gracefully', async () => {
+      // Mock API error
+      mockFetch.mockResolvedValueOnce({
+        json: async () => ({
+          success: false,
+          error: 'Failed to fetch metrics'
+        })
+      });
+
+      render(<FlowMetricsReportPage />);
+      
+      // Should show empty state after error
+      await waitFor(() => {
+        expect(screen.getByText('No active metrics found. Add metrics in the Mappings tab.')).toBeInTheDocument();
+      });
     });
   });
 });

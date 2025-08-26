@@ -9,59 +9,17 @@ import { useRouter } from 'next/navigation';
 import { DealInputForm } from '../components/DealInputForm';
 import { FlowDataTable } from '../components/FlowDataTable';
 import { ViewToggle } from '../components/ViewToggle';
-import { CanonicalStageMappings } from '../components/CanonicalStageMappings';
+import { MetricsManagement } from '../components/MetricsManagement';
 
-// Mock data for the KPI cards
-const mockMetricsData = [
-  {
-    id: 'lead-conversion',
-    title: 'Lead Conversion Time',
-    mainMetric: '8 days',
-    best: '3d',
-    worst: '12d',
-    trend: 'up' as const,
-  },
-  {
-    id: 'quote-conversion',
-    title: 'Quote Conversion Time',
-    mainMetric: '8 days',
-    best: '8d',
-    worst: '8d',
-    trend: 'stable' as const,
-  },
-  {
-    id: 'order-conversion',
-    title: 'Order Conversion Time',
-    mainMetric: '15 days',
-    best: '5d',
-    worst: '60d',
-    trend: 'up' as const,
-  },
-  {
-    id: 'procurement',
-    title: 'Procurement Lead Time',
-    mainMetric: '22 days',
-    best: '10d',
-    worst: '90d',
-    trend: 'stable' as const,
-  },
-  {
-    id: 'manufacturing',
-    title: 'Manufacturing Lead Time',
-    mainMetric: '35 days',
-    best: '20d',
-    worst: '120d',
-    trend: 'down' as const,
-  },
-  {
-    id: 'delivery',
-    title: 'Delivery Lead Time',
-    mainMetric: '7 days',
-    best: '2d',
-    worst: '21d',
-    trend: 'up' as const,
-  },
-];
+// Interface for flow metric data
+interface FlowMetricData {
+  id: string;
+  title: string;
+  mainMetric: string;
+  best: string;
+  worst: string;
+  trend: 'up' | 'down' | 'stable';
+}
 
 // Trend icon component
 const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
@@ -99,7 +57,7 @@ const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
 };
 
 // KPI Card component
-const KPICard = ({ data }: { data: typeof mockMetricsData[0] }) => {
+const KPICard = ({ data }: { data: FlowMetricData }) => {
   const router = useRouter();
   
   const handleMoreInfo = () => {
@@ -141,7 +99,7 @@ const KPICard = ({ data }: { data: typeof mockMetricsData[0] }) => {
           variant="outline"
           size="sm"
           onClick={handleMoreInfo}
-          className="w-full mt-2"
+          className="w-full mt-2 border-green-700 text-green-700 hover:bg-green-50"
         >
           More info
         </Button>
@@ -152,9 +110,48 @@ const KPICard = ({ data }: { data: typeof mockMetricsData[0] }) => {
 
 export default function FlowMetricsReportPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
+  const [metricsData, setMetricsData] = useState<FlowMetricData[]>([]);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
   const [currentView, setCurrentView] = useState<'metrics' | 'raw-data' | 'mappings'>('metrics');
   const [flowData, setFlowData] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // Load active metrics from database
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        setIsLoadingMetrics(true);
+        const response = await fetch('/api/admin/flow-metrics-config');
+        const result = await response.json();
+        
+        if (result.success) {
+          // Convert database data to the format expected by KPICard
+          const activeMetrics = result.data
+            .filter((metric: any) => metric.is_active)
+            .map((metric: any) => ({
+              id: metric.metric_key,
+              title: metric.display_title,
+              mainMetric: 'Calculating...', // TODO: Calculate actual metrics
+              best: 'N/A',
+              worst: 'N/A',
+              trend: 'stable' as const,
+            }));
+          
+          setMetricsData(activeMetrics);
+        } else {
+          console.error('Failed to fetch metrics:', result.error);
+          setMetricsData([]);
+        }
+      } catch (error) {
+        console.error('Error fetching metrics:', error);
+        setMetricsData([]);
+      } finally {
+        setIsLoadingMetrics(false);
+      }
+    };
+
+    fetchMetrics();
+  }, []);
 
   // Load existing flow data on component mount
   useEffect(() => {
@@ -235,9 +232,19 @@ export default function FlowMetricsReportPage() {
 
             {/* KPI Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockMetricsData.map((metric) => (
-                <KPICard key={metric.id} data={metric} />
-              ))}
+              {isLoadingMetrics ? (
+                <div className="col-span-full flex items-center justify-center py-8">
+                  <div className="text-gray-500">Loading metrics...</div>
+                </div>
+              ) : metricsData.length === 0 ? (
+                <div className="col-span-full flex items-center justify-center py-8">
+                  <div className="text-gray-500">No active metrics found. Add metrics in the Mappings tab.</div>
+                </div>
+              ) : (
+                metricsData.map((metric) => (
+                  <KPICard key={metric.id} data={metric} />
+                ))
+              )}
             </div>
           </>
         )}
@@ -260,7 +267,7 @@ export default function FlowMetricsReportPage() {
         )}
         
         {currentView === 'mappings' && (
-          <CanonicalStageMappings />
+          <MetricsManagement />
         )}
       </div>
 

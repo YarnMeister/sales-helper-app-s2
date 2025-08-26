@@ -92,7 +92,7 @@ export const DealInputForm: React.FC<DealInputFormProps> = ({
       <Button
         onClick={handleFetch}
         disabled={isFetching || isLoading || !dealId.trim()}
-        className="w-full sm:w-auto"
+        className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
       >
         {isFetching ? 'Fetching...' : 'Fetch'}
       </Button>

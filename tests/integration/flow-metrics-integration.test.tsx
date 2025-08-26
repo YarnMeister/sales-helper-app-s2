@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
@@ -7,7 +8,8 @@ import FlowMetricDetailPage from '../../app/flow-metrics-report/[metric-id]/page
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
-  useParams: vi.fn()
+  useParams: vi.fn(),
+  usePathname: vi.fn()
 }));
 
 // Mock fetch

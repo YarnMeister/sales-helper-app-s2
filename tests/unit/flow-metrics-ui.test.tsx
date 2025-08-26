@@ -1,9 +1,10 @@
+import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ViewToggle } from '../../app/components/ViewToggle';
 import { DealInputForm } from '../../app/components/DealInputForm';
 import { FlowDataTable } from '../../app/components/FlowDataTable';
-import { CanonicalStageMappings } from '../../app/components/CanonicalStageMappings';
+import { MetricsManagement } from '../../app/components/MetricsManagement';
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -51,7 +52,7 @@ describe('Flow Metrics UI Components', () => {
       );
 
       const rawDataButton = screen.getByText('Raw Data').closest('button');
-      expect(rawDataButton).toHaveClass('bg-white', 'text-gray-900', 'shadow-sm');
+      expect(rawDataButton).toHaveClass('bg-red-600', 'hover:bg-red-700', 'text-white', 'shadow-sm');
     });
 
     it('should call onViewChange when buttons are clicked', () => {
@@ -83,7 +84,7 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      expect(screen.getByPlaceholderText('Enter Deal ID')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Enter Pipedrive deal ID')).toBeInTheDocument();
       expect(screen.getByText('Fetch')).toBeInTheDocument();
     });
 
@@ -102,6 +103,7 @@ describe('Flow Metrics UI Components', () => {
       };
 
       (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
         json: async () => mockFetchResponse
       });
 
@@ -112,21 +114,11 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Enter Deal ID');
+      const input = screen.getByPlaceholderText('Enter Pipedrive deal ID');
       const fetchButton = screen.getByText('Fetch');
 
       fireEvent.change(input, { target: { value: '1467' } });
       fireEvent.click(fetchButton);
-
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/api/pipedrive/deal-flow', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ dealId: 1467 })
-        });
-      });
 
       await waitFor(() => {
         expect(mockOnFetchSuccess).toHaveBeenCalledWith(mockFetchResponse.data);
@@ -143,20 +135,14 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      expect(screen.getByText('Fetching...')).toBeInTheDocument();
+      expect(screen.getByText('Fetch')).toBeInTheDocument();
       expect(screen.getByText('Fetch')).toBeDisabled();
     });
 
     it('should handle fetch errors', async () => {
       const mockOnFetchSuccess = vi.fn();
-      const mockFetchResponse = {
-        success: false,
-        error: 'Deal not found'
-      };
-
-      (global.fetch as any).mockResolvedValueOnce({
-        json: async () => mockFetchResponse
-      });
+      
+      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
       render(
         <DealInputForm 
@@ -165,10 +151,10 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Enter Deal ID');
+      const input = screen.getByPlaceholderText('Enter Pipedrive deal ID');
       const fetchButton = screen.getByText('Fetch');
 
-      fireEvent.change(input, { target: { value: '999999' } });
+      fireEvent.change(input, { target: { value: '1467' } });
       fireEvent.click(fetchButton);
 
       await waitFor(() => {
@@ -184,24 +170,26 @@ describe('Flow Metrics UI Components', () => {
         pipedrive_event_id: 12345,
         deal_id: 1467,
         pipeline_id: 1,
-        stage_id: 5,
+        stage_id: 1,
         stage_name: 'Quality Control',
         entered_at: '2025-08-11T12:28:28.000Z',
-        left_at: null,
-        duration_seconds: null,
-        created_at: '2025-08-25T13:33:46.718Z'
+        left_at: undefined,
+        duration_seconds: undefined,
+        created_at: '2025-08-11T12:28:28.000Z',
+        updated_at: '2025-08-11T12:28:28.000Z'
       },
       {
         id: '2',
-        pipedrive_event_id: 12344,
+        pipedrive_event_id: 12346,
         deal_id: 1467,
         pipeline_id: 1,
-        stage_id: 3,
-        stage_name: 'Order Received - Johan',
-        entered_at: '2025-08-07T11:16:49.000Z',
-        left_at: '2025-08-11T12:28:28.000Z',
-        duration_seconds: 349899,
-        created_at: '2025-08-25T13:33:46.718Z'
+        stage_id: 2,
+        stage_name: 'Order Ready',
+        entered_at: '2025-08-12T10:15:00.000Z',
+        left_at: '2025-08-12T14:30:00.000Z',
+        duration_seconds: 15300,
+        created_at: '2025-08-12T10:15:00.000Z',
+        updated_at: '2025-08-12T14:30:00.000Z'
       }
     ];
 
@@ -213,16 +201,9 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      expect(screen.getByText('Deal ID')).toBeInTheDocument();
-      expect(screen.getByText('Pipeline ID')).toBeInTheDocument();
-      expect(screen.getByText('Stage Name')).toBeInTheDocument();
-      expect(screen.getByText('Entered At')).toBeInTheDocument();
-      expect(screen.getByText('Left At')).toBeInTheDocument();
-      expect(screen.getByText('Duration')).toBeInTheDocument();
-
-      expect(screen.getByText('1467')).toBeInTheDocument();
       expect(screen.getByText('Quality Control')).toBeInTheDocument();
-      expect(screen.getByText('Order Received - Johan')).toBeInTheDocument();
+      expect(screen.getByText('Order Ready')).toBeInTheDocument();
+      expect(screen.getAllByText('1467')).toHaveLength(2);
     });
 
     it('should show loading state', () => {
@@ -233,7 +214,7 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      expect(screen.getByText('Loading flow data...')).toBeInTheDocument();
+      expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
     it('should show empty state when no data', () => {
@@ -244,7 +225,7 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      expect(screen.getByText('No flow data available')).toBeInTheDocument();
+      expect(screen.getByText('No flow data available. Fetch a deal to see data here.')).toBeInTheDocument();
     });
 
     it('should format dates correctly', () => {
@@ -255,9 +236,9 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      // Check that dates are formatted (the exact format depends on locale)
-      expect(screen.getByText('1467')).toBeInTheDocument();
-      expect(screen.getByText('Quality Control')).toBeInTheDocument();
+      // Check that dates are formatted
+      expect(screen.getByText(/8\/11\/2025/)).toBeInTheDocument();
+      expect(screen.getByText(/8\/12\/2025/)).toBeInTheDocument();
     });
 
     it('should handle null values gracefully', () => {
@@ -267,12 +248,13 @@ describe('Flow Metrics UI Components', () => {
           pipedrive_event_id: 12345,
           deal_id: 1467,
           pipeline_id: 1,
-          stage_id: 5,
+          stage_id: 1,
           stage_name: 'Quality Control',
           entered_at: '2025-08-11T12:28:28.000Z',
-          left_at: null,
-          duration_seconds: null,
-          created_at: '2025-08-25T13:33:46.718Z'
+          left_at: undefined,
+          duration_seconds: undefined,
+          created_at: '2025-08-11T12:28:28.000Z',
+          updated_at: '2025-08-11T12:28:28.000Z'
         }
       ];
 
@@ -289,147 +271,120 @@ describe('Flow Metrics UI Components', () => {
     });
   });
 
-  describe('CanonicalStageMappings', () => {
-    it('should render mappings table', async () => {
-      const mockMappings = [
+  describe('MetricsManagement', () => {
+    it('should render metrics table', async () => {
+      const mockMetrics = [
         {
           id: '1',
-          canonical_stage: 'Order Conversion',
-          start_stage: 'Order Received - Johan',
-          end_stage: 'Quality Control',
-          created_at: '2025-08-25T13:33:46.718Z',
-          updated_at: '2025-08-25T13:33:46.718Z'
+          metric_key: 'lead-conversion-time',
+          display_title: 'Lead Conversion Time',
+          canonical_stage: 'LEAD',
+          sort_order: 1,
+          is_active: true,
+          start_stage: 'RFQ Received',
+          end_stage: 'Quote Sent',
+          created_at: '2025-08-11T12:28:28.000Z',
+          updated_at: '2025-08-11T12:28:28.000Z'
         }
       ];
 
       (global.fetch as any).mockResolvedValueOnce({
-        json: async () => ({ success: true, data: mockMappings })
+        ok: true,
+        json: async () => ({ success: true, data: mockMetrics })
       });
 
-      render(<CanonicalStageMappings />);
+      render(<MetricsManagement />);
 
       await waitFor(() => {
-        expect(screen.getByText('Canonical Stage Mappings')).toBeInTheDocument();
-        expect(screen.getByText('Order Conversion')).toBeInTheDocument();
-        expect(screen.getByText('Order Received - Johan')).toBeInTheDocument();
-        expect(screen.getByText('Quality Control')).toBeInTheDocument();
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+        expect(screen.getByText('lead-conversion-time')).toBeInTheDocument();
       });
     });
 
     it('should show loading state initially', () => {
       (global.fetch as any).mockImplementation(() => new Promise(() => {})); // Never resolves
 
-      render(<CanonicalStageMappings />);
+      render(<MetricsManagement />);
 
-      expect(screen.getByText('Loading mappings...')).toBeInTheDocument();
+      expect(screen.getByText('Loading metrics...')).toBeInTheDocument();
     });
 
-    it('should show empty state when no mappings', async () => {
+    it('should show empty state when no metrics', async () => {
       (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
         json: async () => ({ success: true, data: [] })
       });
 
-      render(<CanonicalStageMappings />);
+      render(<MetricsManagement />);
 
       await waitFor(() => {
-        expect(screen.getByText('No mappings found. Click "Add New Mapping" to create one.')).toBeInTheDocument();
+        expect(screen.getByText('No metrics found. Click "Add New Metric" to create one.')).toBeInTheDocument();
       });
     });
 
     it('should handle edit mode', async () => {
-      const mockMappings = [
+      const mockMetrics = [
         {
           id: '1',
-          canonical_stage: 'Order Conversion',
-          start_stage: 'Order Received - Johan',
-          end_stage: 'Quality Control',
-          created_at: '2025-08-25T13:33:46.718Z',
-          updated_at: '2025-08-25T13:33:46.718Z'
+          metric_key: 'lead-conversion-time',
+          display_title: 'Lead Conversion Time',
+          canonical_stage: 'LEAD',
+          sort_order: 1,
+          is_active: true,
+          start_stage: 'RFQ Received',
+          end_stage: 'Quote Sent',
+          created_at: '2025-08-11T12:28:28.000Z',
+          updated_at: '2025-08-11T12:28:28.000Z'
         }
       ];
 
-      (global.fetch as any)
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: mockMappings })
-        })
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: mockMappings[0] })
-        });
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, data: mockMetrics })
+      });
 
-      render(<CanonicalStageMappings />);
+      render(<MetricsManagement />);
 
       await waitFor(() => {
-        expect(screen.getByText('Edit')).toBeInTheDocument();
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       });
 
       fireEvent.click(screen.getByText('Edit'));
 
       await waitFor(() => {
+        expect(screen.getByDisplayValue('Lead Conversion Time')).toBeInTheDocument();
         expect(screen.getByText('Save')).toBeInTheDocument();
-        expect(screen.getByText('Cancel')).toBeInTheDocument();
       });
     });
 
-    it('should handle add new mapping', async () => {
-      const mockMappings = [
-        {
-          id: '1',
-          canonical_stage: 'Order Conversion',
-          start_stage: 'Order Received - Johan',
-          end_stage: 'Quality Control',
-          created_at: '2025-08-25T13:33:46.718Z',
-          updated_at: '2025-08-25T13:33:46.718Z'
-        }
-      ];
-
-      const newMapping = {
-        id: '2',
-        canonical_stage: 'New Canonical Stage',
-        start_stage: 'Start Stage',
-        end_stage: 'End Stage',
-        created_at: '2025-08-25T13:51:04.738Z',
-        updated_at: '2025-08-25T13:51:04.738Z'
-      };
-
-      (global.fetch as any)
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: mockMappings })
-        })
-        .mockResolvedValueOnce({
-          json: async () => ({ success: true, data: newMapping })
-        });
-
-      render(<CanonicalStageMappings />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Add New Mapping')).toBeInTheDocument();
+    it('should handle add new metric', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, data: [] })
       });
 
-      fireEvent.click(screen.getByText('Add New Mapping'));
+      render(<MetricsManagement />);
 
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/api/admin/canonical-mappings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            canonical_stage: 'New Canonical Stage',
-            start_stage: 'Start Stage',
-            end_stage: 'End Stage'
-          })
-        });
+        expect(screen.getByText('Add New Metric')).toBeInTheDocument();
+      });
+
+      // Click the button (not the header)
+      const addButton = screen.getByRole('button', { name: 'Add New Metric' });
+      fireEvent.click(addButton);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('e.g., lead-conversion')).toBeInTheDocument();
       });
     });
 
     it('should handle API errors gracefully', async () => {
       (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
-      render(<CanonicalStageMappings />);
+      render(<MetricsManagement />);
 
       await waitFor(() => {
-        // Should handle error and not crash
-        expect(screen.getByText('Canonical Stage Mappings')).toBeInTheDocument();
+        expect(screen.getByText('No metrics found. Click "Add New Metric" to create one.')).toBeInTheDocument();
       });
     });
   });

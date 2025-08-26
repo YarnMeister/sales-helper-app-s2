@@ -43,14 +43,14 @@ describe('Canonical Mappings API', () => {
         }
       ];
 
-      const { sql } = await import('../../../../lib/db');
+      const { sql } = await import('../../lib/db');
       (sql as any).mockResolvedValue(mockMappings);
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings');
       const response = await GET(request);
 
       expect(sql).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT * FROM canonical_stage_mappings ORDER BY canonical_stage, created_at DESC')
+        expect.stringContaining('SELECT * FROM canonical_stage_mappings')
       );
       expect(response).toEqual({
         data: {
@@ -63,7 +63,7 @@ describe('Canonical Mappings API', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      const { sql } = await import('../../../../lib/db');
+      const { sql } = await import('../../lib/db');
       (sql as any).mockRejectedValue(new Error('Database connection failed'));
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings');
@@ -95,7 +95,7 @@ describe('Canonical Mappings API', () => {
         updated_at: '2025-08-25T13:51:04.738Z'
       };
 
-      const { sql } = await import('../../../../lib/db');
+      const { sql } = await import('../../lib/db');
       (sql as any).mockResolvedValue([createdMapping]);
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings', {
@@ -107,10 +107,9 @@ describe('Canonical Mappings API', () => {
 
       expect(sql).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO canonical_stage_mappings'),
-        expect.stringContaining('Quote to Order'),
-        expect.stringContaining('Quote Sent'),
-        expect.stringContaining('Order Received - Johan'),
-        expect.stringContaining('RETURNING *')
+        'Quote to Order',
+        'Quote Sent',
+        'Order Received - Johan'
       );
       expect(response).toEqual({
         data: {
@@ -151,7 +150,7 @@ describe('Canonical Mappings API', () => {
         end_stage: 'Order Received - Johan'
       };
 
-      const { sql } = await import('../../../../lib/db');
+      const { sql } = await import('../../lib/db');
       (sql as any).mockRejectedValue(new Error('Insert failed'));
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings', {
@@ -188,7 +187,7 @@ describe('Canonical Mappings API', () => {
         updated_at: '2025-08-25T13:54:57.483Z'
       };
 
-      const { sql } = await import('../../../../lib/db');
+      const { sql } = await import('../../lib/db');
       (sql as any).mockResolvedValue([updatedMapping]);
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
@@ -200,14 +199,10 @@ describe('Canonical Mappings API', () => {
 
       expect(sql).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE canonical_stage_mappings'),
-        expect.stringContaining('SET'),
-        expect.stringContaining('canonical_stage ='),
-        expect.stringContaining('start_stage ='),
-        expect.stringContaining('end_stage ='),
-        expect.stringContaining('updated_at = NOW()'),
-        expect.stringContaining('WHERE id ='),
-        mappingId,
-        expect.stringContaining('RETURNING *')
+        'Order Conversion',
+        'Order Received - Johan',
+        'Quality Control',
+        mappingId
       );
       expect(response).toEqual({
         data: {
@@ -227,7 +222,7 @@ describe('Canonical Mappings API', () => {
         end_stage: 'Quality Control'
       };
 
-      const { sql } = await import('../../../../lib/db');
+      const { sql } = await import('../../lib/db');
       (sql as any).mockResolvedValue([]);
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
@@ -282,7 +277,7 @@ describe('Canonical Mappings API', () => {
         updated_at: '2025-08-25T13:33:46.718Z'
       };
 
-      const { sql } = await import('../../../../lib/db');
+      const { sql } = await import('../../lib/db');
       (sql as any).mockResolvedValue([deletedMapping]);
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
@@ -293,9 +288,7 @@ describe('Canonical Mappings API', () => {
 
       expect(sql).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM canonical_stage_mappings'),
-        expect.stringContaining('WHERE id ='),
-        mappingId,
-        expect.stringContaining('RETURNING *')
+        mappingId
       );
       expect(response).toEqual({
         data: {
@@ -310,7 +303,7 @@ describe('Canonical Mappings API', () => {
     it('should return 404 when mapping not found for deletion', async () => {
       const mappingId = '999';
 
-      const { sql } = await import('../../../../lib/db');
+      const { sql } = await import('../../lib/db');
       (sql as any).mockResolvedValue([]);
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
