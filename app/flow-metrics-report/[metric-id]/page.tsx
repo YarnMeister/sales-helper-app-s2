@@ -7,38 +7,6 @@ import { CommonFooter } from '../../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 
-// Metric configuration - now only contains titles and canonical stages
-const metricConfig = {
-  'lead-conversion': {
-    title: 'Lead Conversion Time',
-    canonicalStage: 'Lead Conversion',
-  },
-  'quote-conversion': {
-    title: 'Quote Conversion Time',
-    canonicalStage: 'Quote Conversion',
-  },
-  'order-conversion': {
-    title: 'Order Conversion Time',
-    canonicalStage: 'Order Conversion',
-  },
-  'procurement': {
-    title: 'Procurement Lead Time',
-    canonicalStage: 'Procurement',
-  },
-  'manufacturing': {
-    title: 'Manufacturing Lead Time',
-    canonicalStage: 'Manufacturing',
-  },
-  'delivery': {
-    title: 'Delivery Lead Time',
-    canonicalStage: 'Delivery',
-  },
-  'oem-order-conversion': {
-    title: 'OEM Order Lead Time',
-    canonicalStage: 'OEM Order Conversion',
-  },
-};
-
 interface DealData {
   deal_id: string;
   start_date: string;
@@ -51,6 +19,14 @@ interface CalculatedMetrics {
   best: number;
   worst: number;
   totalDeals: number;
+}
+
+interface MetricConfig {
+  id: string;
+  metric_key: string;
+  display_title: string;
+  canonical_stage: string;
+  is_active: boolean;
 }
 
 interface PageProps {
@@ -66,8 +42,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const [deals, setDeals] = useState<DealData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const config = metricConfig[metricId as keyof typeof metricConfig];
+  const [metricConfig, setMetricConfig] = useState<MetricConfig | null>(null);
 
   // Calculate metrics from the actual deals data
   const calculatedMetrics: CalculatedMetrics = useMemo(() => {
@@ -101,18 +76,44 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
     };
   }, [deals]);
 
+  // Fetch metric configuration from database
+  useEffect(() => {
+    const fetchMetricConfig = async () => {
+      try {
+        const response = await fetch('/api/admin/flow-metrics-config');
+        const result = await response.json();
+        
+        if (result.success) {
+          const metric = result.data.find((m: any) => m.metric_key === metricId);
+          if (metric) {
+            setMetricConfig(metric);
+          } else {
+            setError('Metric not found');
+            setIsLoading(false);
+          }
+        } else {
+          setError('Failed to fetch metric configuration');
+          setIsLoading(false);
+        }
+      } catch (err) {
+        setError('Failed to fetch metric configuration');
+        setIsLoading(false);
+      }
+    };
+
+    fetchMetricConfig();
+  }, [metricId]);
+
   // Fetch deals data for the canonical stage
   useEffect(() => {
     const fetchDeals = async () => {
-      if (!config?.canonicalStage) {
-        setError('No canonical stage configured for this metric');
-        setIsLoading(false);
-        return;
+      if (!metricConfig?.canonical_stage) {
+        return; // Wait for metric config to load
       }
 
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/flow/canonical-stage-deals?canonicalStage=${encodeURIComponent(config.canonicalStage)}`);
+        const response = await fetch(`/api/flow/canonical-stage-deals?canonicalStage=${encodeURIComponent(metricConfig.canonical_stage)}`);
         const result = await response.json();
 
         if (result.success) {
@@ -129,14 +130,14 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
     };
 
     fetchDeals();
-  }, [config?.canonicalStage]);
+  }, [metricConfig?.canonical_stage]);
 
-  if (!config) {
+  if (error && !metricConfig) {
     return (
       <div className="min-h-screen bg-gray-50">
         <CommonHeader title="Metric Not Found" showDivider={false} />
         <div className="px-4 py-4 pb-24">
-          <p className="text-gray-600">The requested metric could not be found.</p>
+          <p className="text-gray-600">{error}</p>
         </div>
         <CommonFooter onNewRequest={() => {}} isCreating={false} />
       </div>
@@ -174,7 +175,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               </svg>
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{config.title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{metricConfig?.display_title || 'Loading...'}</h1>
               <p className="text-gray-600">Last 7 days</p>
             </div>
           </div>

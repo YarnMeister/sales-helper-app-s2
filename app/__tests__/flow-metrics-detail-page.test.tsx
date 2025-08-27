@@ -38,34 +38,6 @@ describe('FlowMetricDetailPage', () => {
     
     // Mock global.fetch
     global.fetch = vi.fn();
-    
-    // Mock successful API response for canonical-stage-deals
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        data: [
-          {
-            deal_id: 'D001',
-            start_date: '2024-01-15T00:00:00.000Z',
-            end_date: '2024-01-18T00:00:00.000Z',
-            duration_seconds: 259200, // 3 days
-          },
-          {
-            deal_id: 'D002',
-            start_date: '2024-01-16T00:00:00.000Z',
-            end_date: '2024-01-28T00:00:00.000Z',
-            duration_seconds: 1036800, // 12 days
-          },
-          {
-            deal_id: 'D007',
-            start_date: '2024-01-05T00:00:00.000Z',
-            end_date: '2024-02-19T00:00:00.000Z',
-            duration_seconds: 3888000, // 45 days
-          },
-        ],
-      }),
-    });
   });
 
   afterEach(() => {
@@ -74,6 +46,48 @@ describe('FlowMetricDetailPage', () => {
 
   describe('Basic Rendering', () => {
     it('renders the page with correct title and navigation', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+              {
+                deal_id: 'D002',
+                start_date: '2024-01-16T00:00:00.000Z',
+                end_date: '2024-01-28T00:00:00.000Z',
+                duration_seconds: 1036800, // 12 days
+              },
+              {
+                deal_id: 'D007',
+                start_date: '2024-01-05T00:00:00.000Z',
+                end_date: '2024-02-19T00:00:00.000Z',
+                duration_seconds: 3888000, // 45 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -85,12 +99,69 @@ describe('FlowMetricDetailPage', () => {
     });
 
     it('shows loading state initially', () => {
+      // Mock metric configuration loading
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [{
+            id: '1',
+            metric_key: 'lead-conversion',
+            display_title: 'Lead Conversion Time',
+            canonical_stage: 'Lead Conversion',
+            is_active: true,
+          }],
+        }),
+      });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       expect(screen.getByText('Loading deals data...')).toBeInTheDocument();
     });
 
     it('displays calculated summary statistics correctly', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+              {
+                deal_id: 'D002',
+                start_date: '2024-01-16T00:00:00.000Z',
+                end_date: '2024-01-28T00:00:00.000Z',
+                duration_seconds: 1036800, // 12 days
+              },
+              {
+                deal_id: 'D007',
+                start_date: '2024-01-05T00:00:00.000Z',
+                end_date: '2024-02-19T00:00:00.000Z',
+                duration_seconds: 3888000, // 45 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -111,6 +182,36 @@ describe('FlowMetricDetailPage', () => {
 
   describe('Individual Deal Performance Table', () => {
     it('renders table headers correctly', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -122,6 +223,36 @@ describe('FlowMetricDetailPage', () => {
     });
 
     it('renders deal data for lead conversion', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -136,6 +267,48 @@ describe('FlowMetricDetailPage', () => {
     });
 
     it('renders multiple deals', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+              {
+                deal_id: 'D002',
+                start_date: '2024-01-16T00:00:00.000Z',
+                end_date: '2024-01-28T00:00:00.000Z',
+                duration_seconds: 1036800, // 12 days
+              },
+              {
+                deal_id: 'D007',
+                start_date: '2024-01-05T00:00:00.000Z',
+                end_date: '2024-02-19T00:00:00.000Z',
+                duration_seconds: 3888000, // 45 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -146,6 +319,48 @@ describe('FlowMetricDetailPage', () => {
     });
 
     it('highlights best and worst performers', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+              {
+                deal_id: 'D002',
+                start_date: '2024-01-16T00:00:00.000Z',
+                end_date: '2024-01-28T00:00:00.000Z',
+                duration_seconds: 1036800, // 12 days
+              },
+              {
+                deal_id: 'D007',
+                start_date: '2024-01-05T00:00:00.000Z',
+                end_date: '2024-02-19T00:00:00.000Z',
+                duration_seconds: 3888000, // 45 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -162,6 +377,36 @@ describe('FlowMetricDetailPage', () => {
 
   describe('Responsive Design', () => {
     it('has responsive table layout', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -174,6 +419,36 @@ describe('FlowMetricDetailPage', () => {
 
   describe('Accessibility', () => {
     it('has proper table structure', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -186,14 +461,28 @@ describe('FlowMetricDetailPage', () => {
 
   describe('Error Handling', () => {
     it('handles API errors gracefully', async () => {
-      // Mock API error
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          success: false,
-          error: 'Failed to fetch deals data',
-        }),
-      });
+      // Mock metric configuration success, but deals API error
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: false,
+            error: 'Failed to fetch deals data',
+          }),
+        });
 
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
@@ -209,19 +498,33 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
-        expect(screen.getByText('Failed to fetch deals data')).toBeInTheDocument();
+        expect(screen.getByText('Failed to fetch metric configuration')).toBeInTheDocument();
       });
     });
 
     it('handles empty deals data', async () => {
-      // Mock empty response
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: [],
-        }),
-      });
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [],
+          }),
+        });
 
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
@@ -231,10 +534,57 @@ describe('FlowMetricDetailPage', () => {
         expect(averageCard).toHaveTextContent('0 days');
       });
     });
+
+    it('handles metric not found', async () => {
+      // Mock metric not found
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [], // No metrics found
+        }),
+      });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'non-existent-metric' }} />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Metric not found')).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Navigation', () => {
     it('navigates back when back button is clicked', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'lead-conversion',
+              display_title: 'Lead Conversion Time',
+              canonical_stage: 'Lead Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'D001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-18T00:00:00.000Z',
+                duration_seconds: 259200, // 3 days
+              },
+            ],
+          }),
+        });
+
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
@@ -245,47 +595,112 @@ describe('FlowMetricDetailPage', () => {
     });
   });
 
-  describe('Invalid Metric', () => {
-    it('shows error for invalid metric ID', () => {
-      render(<FlowMetricDetailPage params={{ 'metric-id': 'invalid-metric' }} />);
+  describe('Custom Metrics', () => {
+    it('renders custom metric detail page correctly', async () => {
+      // Mock custom metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: 'custom-1',
+              metric_key: 'custom-metric',
+              display_title: 'Custom Lead Time',
+              canonical_stage: 'Custom Stage',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: 'C001',
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-20T00:00:00.000Z',
+                duration_seconds: 432000, // 5 days
+              },
+              {
+                deal_id: 'C002',
+                start_date: '2024-01-16T00:00:00.000Z',
+                end_date: '2024-01-25T00:00:00.000Z',
+                duration_seconds: 777600, // 9 days
+              },
+            ],
+          }),
+        });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'custom-metric' }} />);
       
-      expect(screen.getByText('Metric Not Found')).toBeInTheDocument();
-      expect(screen.getByText('The requested metric could not be found.')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Custom Lead Time')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        // Expected calculation: (5 + 9) / 2 = 7 days
+        const averageCard = screen.getByText('Average').closest('.rounded-lg');
+        expect(averageCard).toHaveTextContent('7 days');
+        
+        const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
+        expect(bestCard).toHaveTextContent('5 days');
+        
+        const worstCard = screen.getByText('Worst Performance').closest('.rounded-lg');
+        expect(worstCard).toHaveTextContent('9 days');
+        
+        expect(screen.getByText('Based on 2 deals')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Manufacturing Metric Calculation', () => {
     it('calculates correct average for manufacturing metric with test data', async () => {
-      // Mock manufacturing data with the test scenario
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: [
-            // 8 deals with 4 days each
-            ...Array.from({ length: 8 }, (_, i) => ({
-              deal_id: `M${i + 1}`,
-              start_date: '2024-01-15T00:00:00.000Z',
-              end_date: '2024-01-19T00:00:00.000Z',
-              duration_seconds: 345600, // 4 days
-            })),
-            // 6 deals with 6 days each
-            ...Array.from({ length: 6 }, (_, i) => ({
-              deal_id: `N${i + 1}`,
-              start_date: '2024-01-15T00:00:00.000Z',
-              end_date: '2024-01-21T00:00:00.000Z',
-              duration_seconds: 518400, // 6 days
-            })),
-            // 2 deals with 7 days each
-            ...Array.from({ length: 2 }, (_, i) => ({
-              deal_id: `O${i + 1}`,
-              start_date: '2024-01-15T00:00:00.000Z',
-              end_date: '2024-01-22T00:00:00.000Z',
-              duration_seconds: 604800, // 7 days
-            })),
-          ],
-        }),
-      });
+      // Mock manufacturing metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: 'manufacturing-1',
+              metric_key: 'manufacturing',
+              display_title: 'Manufacturing Lead Time',
+              canonical_stage: 'Manufacturing',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              // 8 deals with 4 days each
+              ...Array.from({ length: 8 }, (_, i) => ({
+                deal_id: `M${i + 1}`,
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-19T00:00:00.000Z',
+                duration_seconds: 345600, // 4 days
+              })),
+              // 6 deals with 6 days each
+              ...Array.from({ length: 6 }, (_, i) => ({
+                deal_id: `N${i + 1}`,
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-21T00:00:00.000Z',
+                duration_seconds: 518400, // 6 days
+              })),
+              // 2 deals with 7 days each
+              ...Array.from({ length: 2 }, (_, i) => ({
+                deal_id: `O${i + 1}`,
+                start_date: '2024-01-15T00:00:00.000Z',
+                end_date: '2024-01-22T00:00:00.000Z',
+                duration_seconds: 604800, // 7 days
+              })),
+            ],
+          }),
+        });
 
       render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
       
@@ -307,27 +722,41 @@ describe('FlowMetricDetailPage', () => {
 
   describe('OEM Order Lead Time', () => {
     it('renders OEM Order Lead Time detail page correctly', async () => {
-      // Mock OEM Order Conversion data
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: [
-            {
-              deal_id: '1467',
-              start_date: '2025-08-07T11:16:49.000Z',
-              end_date: '2025-08-11T12:28:28.000Z',
-              duration_seconds: 349899, // ~4.05 days
-            },
-            {
-              deal_id: '1375',
-              start_date: '2025-08-04T10:59:43.000Z',
-              end_date: '2025-08-06T05:23:25.000Z',
-              duration_seconds: 152622, // ~1.77 days
-            },
-          ],
-        }),
-      });
+      // Mock OEM Order Conversion configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: 'oem-1',
+              metric_key: 'oem-order-conversion',
+              display_title: 'OEM Order Lead Time',
+              canonical_stage: 'OEM Order Conversion',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: '1467',
+                start_date: '2025-08-07T11:16:49.000Z',
+                end_date: '2025-08-11T12:28:28.000Z',
+                duration_seconds: 349899, // ~4.05 days
+              },
+              {
+                deal_id: '1375',
+                start_date: '2025-08-04T10:59:43.000Z',
+                end_date: '2025-08-06T05:23:25.000Z',
+                duration_seconds: 152622, // ~1.77 days
+              },
+            ],
+          }),
+        });
 
       render(<FlowMetricDetailPage params={{ 'metric-id': 'oem-order-conversion' }} />);
       
