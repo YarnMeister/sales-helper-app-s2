@@ -47,16 +47,7 @@
 ---
 
 ## Preview Deployment (Vercel)
-- Push feature branch to GitHub → triggers Vercel preview.
-- **Monitor status:**
-  - `vercel ls` → confirm preview deployment exists.
-  - `vercel inspect <deployment-url>` → verify build logs.
-- Confirm deployment shows “Ready”.
-- Echo preview URL on screen so user can do manual smoke test
-- Verify the preview URL is accessible and core flows work (create request, add contact, add line items).
-- If preview fails:
-  - Check for TS errors, env var misconfig, or dependency issues.
-  - Fix locally, recommit, re-push.
+- SKIP preview deployments, we DO NOT use preview environment.
 
 ---
 

@@ -1,8 +1,5 @@
 # Sales Helper App — Flow Efficiency Tracking (Design)
 
-**Status:** Draft v2.0  
-**Owner:** Jan / Sales Helper Team  
-**Date:** 2025-08-24 (AEST)
 
 ---
 
@@ -211,6 +208,7 @@ JOIN per_deal pd ON e2e.deal_id = pd.deal_id;
 - KPI cards for each major stage. Shows Average, Best, Worst, Trend for selected period.  
 - Period selector: 7d, 14d, 1m, 3m, 6m, 12m.
 - Clicking “More Info” opens Detail View.
+- here is a sample ui I've built in another project: https://github.com/YarnMeister/flow-metrics-report use it as the template for the new report section in the app
 
 ### 5.2 Detail View
 - Summary tiles: Average, Best, Worst.  
@@ -238,7 +236,9 @@ JOIN per_deal pd ON e2e.deal_id = pd.deal_id;
 ---
 
 ## 7) Non-functional Considerations
-- Security: HMAC on ingestion, role-based auth for admin endpoints.  
+- Security: Make the webhook endpoint hard to guess by baking a long, random token into the path.
+Example URL Zapier will POST to: https://your-app.com/api/integrations/pd/final-stage/3a6f1f6b4f2a9e8d0c7b12f4c3a1d9e7/ingest
+- Store the token in an Env var like PD_FINAL_STAGE_PATH_SECRET so you can rotate it.
 - Observability: structured JSON logs, ingest counters, view refresh metrics.  
 - Performance: partitioning if >5k events/day.  
 - Backfill: script to fetch flow history for closed deals.
@@ -247,13 +247,24 @@ JOIN per_deal pd ON e2e.deal_id = pd.deal_id;
 
 ## 8) Rollout Plan
 1. Ship DB migrations + seeds.  
-2. Implement ingestion route + worker; backfill last 90 days.  
+2. Implement ingestion route + worker with temp UI to ingest one deal at a time from Pipedrive
 3. Ship reporting endpoints.  
 4. Add Report Main Page UI.  
 5. Add Detail View.  
 6. Add Admin Mapping UI.  
-7. Iterate mappings with version v2.
+7. Backfill history, one deal at a time until we have confidence in the report
+8. Iterate mappings with version v2.
+9. Add Google Workplace Auth to the app
+10. Add Zapier automation to add deals as they complete in Pipedrive
+
 
 ---
+
+Todo list
+[x] Mappings, need to edit, delete mappings
+[ ] (maybe) Mappings need to upgrade to be a complete collection and version controlled
+[ ] Metrics: implement Average on the summary card and on the More Info page
+[ ] Period: implement it so that it only picks up the deals in the period selected
+[ ] Fix the new metric added for OEM Order Lead time, the More info page is not loading. Can't test if it is picking up deals for avg calc
 
 *End of doc.*
