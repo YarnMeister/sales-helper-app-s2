@@ -22,6 +22,16 @@ vi.mock('../components/CommonFooter', () => ({
   ),
 }));
 
+vi.mock('../components/LeadTimeChart', () => ({
+  default: ({ deals, metricTitle, canonicalStage }: any) => (
+    <div data-testid="lead-time-chart">
+      <h3>{metricTitle}</h3>
+      <p>Canonical Stage: {canonicalStage}</p>
+      <p>Deals Count: {deals?.length || 0}</p>
+    </div>
+  ),
+}));
+
 const mockRouter = {
   push: vi.fn(),
   back: vi.fn(),
@@ -95,7 +105,7 @@ describe('FlowMetricDetailPage', () => {
       });
       
       expect(screen.getByText('Last 7 days')).toBeInTheDocument();
-      expect(screen.getByRole('button')).toBeInTheDocument(); // Back button
+      expect(screen.getAllByRole('button').length).toBeGreaterThan(0); // Back button and view buttons
     });
 
     it('shows loading state initially', () => {
@@ -588,7 +598,8 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
-        const backButton = screen.getByRole('button');
+        const buttons = screen.getAllByRole('button');
+        const backButton = buttons[0]; // First button is the back button
         fireEvent.click(backButton);
         expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report');
       });
@@ -777,6 +788,222 @@ describe('FlowMetricDetailPage', () => {
         
         expect(screen.getByText('Based on 2 deals')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Chart View Functionality', () => {
+    it('should show chart view when Chart View button is clicked', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'manufacturing',
+              display_title: 'Manufacturing Lead Time',
+              canonical_stage: 'Manufacturing',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: '1371',
+                start_date: '2025-08-14T00:00:00.000Z',
+                end_date: '2025-08-18T00:00:00.000Z',
+                duration_seconds: 345600, // 4 days
+              },
+              {
+                deal_id: '1388',
+                start_date: '2025-08-14T00:00:00.000Z',
+                end_date: '2025-08-18T00:00:00.000Z',
+                duration_seconds: 345600, // 4 days
+              },
+            ],
+          }),
+        });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      });
+
+      // Initially should show list view
+      expect(screen.getByText('Deal ID')).toBeInTheDocument();
+      expect(screen.queryByTestId('lead-time-chart')).not.toBeInTheDocument();
+
+      // Click Chart View button
+      const chartViewButton = screen.getByText('Chart View');
+      fireEvent.click(chartViewButton);
+
+      // Should now show chart view
+      await waitFor(() => {
+        expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
+      const chartElement = screen.getByTestId('lead-time-chart');
+      expect(chartElement).toHaveTextContent('Manufacturing Lead Time');
+      expect(chartElement).toHaveTextContent('Canonical Stage: Manufacturing');
+      expect(chartElement).toHaveTextContent('Deals Count: 2');
+    });
+
+    it('should show list view when List View button is clicked', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'manufacturing',
+              display_title: 'Manufacturing Lead Time',
+              canonical_stage: 'Manufacturing',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: '1371',
+                start_date: '2025-08-14T00:00:00.000Z',
+                end_date: '2025-08-18T00:00:00.000Z',
+                duration_seconds: 345600, // 4 days
+              },
+            ],
+          }),
+        });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      });
+
+      // Switch to chart view first
+      const chartViewButton = screen.getByText('Chart View');
+      fireEvent.click(chartViewButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
+      });
+
+      // Switch back to list view
+      const listViewButton = screen.getByText('List View');
+      fireEvent.click(listViewButton);
+
+      // Should now show list view
+      await waitFor(() => {
+        expect(screen.getByText('Deal ID')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('lead-time-chart')).not.toBeInTheDocument();
+    });
+
+    it('should handle chart view with no data gracefully', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'empty-metric',
+              display_title: 'Empty Metric',
+              canonical_stage: 'Empty Stage',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [],
+          }),
+        });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'empty-metric' }} />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Empty Metric')).toBeInTheDocument();
+      });
+
+      // Click Chart View button
+      const chartViewButton = screen.getByText('Chart View');
+      fireEvent.click(chartViewButton);
+
+      // Should show no data message
+      await waitFor(() => {
+        expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
+      });
+    });
+
+    it('should show correct button states for view modes', async () => {
+      // Mock metric configuration
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [{
+              id: '1',
+              metric_key: 'manufacturing',
+              display_title: 'Manufacturing Lead Time',
+              canonical_stage: 'Manufacturing',
+              is_active: true,
+            }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                deal_id: '1371',
+                start_date: '2025-08-14T00:00:00.000Z',
+                end_date: '2025-08-18T00:00:00.000Z',
+                duration_seconds: 345600, // 4 days
+              },
+            ],
+          }),
+        });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      });
+
+      // Initially List View should be active (default)
+      const listViewButton = screen.getByText('List View');
+      const chartViewButton = screen.getByText('Chart View');
+      
+      expect(listViewButton).toHaveClass('bg-rtse-red');
+      expect(chartViewButton).toHaveClass('bg-background');
+
+      // Switch to chart view
+      fireEvent.click(chartViewButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
+      });
+
+      // Now Chart View should be active
+      expect(listViewButton).toHaveClass('bg-background');
+      expect(chartViewButton).toHaveClass('bg-rtse-red');
     });
   });
 });

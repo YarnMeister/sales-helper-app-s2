@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logError('Error fetching deal flow data', error);
+    logError('Error fetching deal flow data', { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(
       { 
         success: false, 

@@ -6,6 +6,7 @@ import { CommonHeader } from '../../components/CommonHeader';
 import { CommonFooter } from '../../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
+import LeadTimeChart from '../../components/LeadTimeChart';
 
 interface DealData {
   deal_id: string;
@@ -43,6 +44,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metricConfig, setMetricConfig] = useState<MetricConfig | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'chart'>('list');
 
   // Calculate metrics from the actual deals data
   const calculatedMetrics: CalculatedMetrics = useMemo(() => {
@@ -225,24 +227,44 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
           </Card>
         </div>
 
-        {/* Individual Deal Performance Table */}
+        {/* Individual Deal Performance */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <CardTitle className="text-lg">Individual Deal Performance</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <CardTitle className="text-lg">Individual Deal Performance</CardTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="text-xs"
+                >
+                  List View
+                </Button>
+                <Button
+                  variant={viewMode === 'chart' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('chart')}
+                  className="text-xs"
+                >
+                  Chart View
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -258,6 +280,12 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               <div className="flex items-center justify-center py-8">
                 <div className="text-gray-500">No deals found for this canonical stage</div>
               </div>
+            ) : viewMode === 'chart' ? (
+              <LeadTimeChart 
+                deals={deals}
+                metricTitle={metricConfig?.display_title || 'Lead Time'}
+                canonicalStage={metricConfig?.canonical_stage || ''}
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
