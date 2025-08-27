@@ -94,9 +94,8 @@ describe('LeadTimeChart', () => {
       const barSeries = JSON.parse(screen.getByTestId('bar-series').textContent || '{}');
       expect(barSeries).toEqual({
         categories: ['Days'],
-        colors: ['skyblue'],
+        colors: ['blue'],
         yAxisWidth: 60,
-        yAxisLabel: 'Duration (days)',
         showYAxis: true,
         allowDecimals: false,
       });
@@ -105,7 +104,7 @@ describe('LeadTimeChart', () => {
       const lineSeries = JSON.parse(screen.getByTestId('line-series').textContent || '{}');
       expect(lineSeries).toEqual({
         categories: ['Average'],
-        colors: ['orange'],
+        colors: ['amber'],
         yAxisLabel: 'Average (days)',
         showYAxis: false,
       });
