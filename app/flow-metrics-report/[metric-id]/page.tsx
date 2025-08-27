@@ -271,7 +271,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
                   </thead>
                   <tbody>
                     {deals.map((deal) => {
-                      const durationDays = Math.ceil(deal.duration_seconds / 86400);
+                      const durationDays = Math.round(deal.duration_seconds / 86400);
                       const startDate = new Date(deal.start_date).toLocaleDateString();
                       const endDate = new Date(deal.end_date).toLocaleDateString();
                       
