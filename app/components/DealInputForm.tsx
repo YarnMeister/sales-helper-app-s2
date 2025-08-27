@@ -6,7 +6,7 @@ import { Input } from './ui/input';
 import { useToast } from '../hooks/use-toast';
 
 interface DealInputFormProps {
-  onFetchSuccess: (data: any[], dealId?: number) => void;
+  onFetchSuccess: (data: any[]) => void;
   isLoading?: boolean;
 }
 
@@ -46,7 +46,7 @@ export const DealInputForm: React.FC<DealInputFormProps> = ({
           title: "Success",
           description: result.message || `Successfully fetched flow data for deal ${dealId}`,
         });
-        onFetchSuccess(result.data || [], parseInt(dealId));
+        onFetchSuccess(result.data || []);
       } else {
         toast({
           title: "Error",

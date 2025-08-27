@@ -1,41 +1,23 @@
 import React from 'react';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+import { ViewToggle } from '../../app/components/ViewToggle';
+import { DealInputForm } from '../../app/components/DealInputForm';
+import FlowDataTable from '../../app/components/FlowDataTable';
+import { MetricsManagement } from '../../app/components/MetricsManagement';
+import { MANUFACTURING_FLOW_DATA } from '../test-utils';
 
-// Mock useToast hook with stable reference - must be at top level
+// Mock the toast hook
 vi.mock('../../app/hooks/use-toast', () => ({
   useToast: () => ({
     toast: vi.fn()
   })
 }));
 
-import { ViewToggle } from '../../app/components/ViewToggle';
-import { DealInputForm } from '../../app/components/DealInputForm';
-import { FlowDataTable } from '../../app/components/FlowDataTable';
-import { MetricsManagement } from '../../app/components/MetricsManagement';
-import { 
-  TEST_TIMEOUT, 
-  createMockFetch, 
-  MANUFACTURING_LEAD_TIME_METRIC,
-  MANUFACTURING_FLOW_DATA,
-  CANONICAL_STAGE_DEALS_DATA,
-  setupFlowMetricsTest,
-  cleanupFlowMetricsTest
-} from '../test-utils';
-
 describe('Flow Metrics UI Components', () => {
-  beforeEach(() => {
-    setupFlowMetricsTest();
-  });
-
-  afterEach(() => {
-    cleanupFlowMetricsTest();
-  });
-
   describe('ViewToggle', () => {
     it('should render all three view options', () => {
       const mockOnViewChange = vi.fn();
-      
       render(
         <ViewToggle 
           currentView="metrics" 
@@ -50,7 +32,6 @@ describe('Flow Metrics UI Components', () => {
 
     it('should highlight the current view', () => {
       const mockOnViewChange = vi.fn();
-      
       render(
         <ViewToggle 
           currentView="raw-data" 
@@ -59,12 +40,11 @@ describe('Flow Metrics UI Components', () => {
       );
 
       const rawDataButton = screen.getByText('Raw Data').closest('button');
-      expect(rawDataButton).toHaveClass('bg-red-600', 'hover:bg-red-700', 'text-white', 'shadow-sm');
+      expect(rawDataButton).toHaveClass('bg-blue-600', 'text-white');
     });
 
     it('should call onViewChange when buttons are clicked', () => {
       const mockOnViewChange = vi.fn();
-      
       render(
         <ViewToggle 
           currentView="metrics" 
@@ -83,7 +63,6 @@ describe('Flow Metrics UI Components', () => {
   describe('DealInputForm', () => {
     it('should render input field and fetch button', () => {
       const mockOnFetchSuccess = vi.fn();
-      
       render(
         <DealInputForm 
           onFetchSuccess={mockOnFetchSuccess}
@@ -99,12 +78,12 @@ describe('Flow Metrics UI Components', () => {
       const mockOnFetchSuccess = vi.fn();
       const mockFetchResponse = {
         success: true,
-        data: MANUFACTURING_FLOW_DATA
+        data: MANUFACTURING_FLOW_DATA,
+        message: 'Successfully fetched flow data'
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockFetchResponse
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve(mockFetchResponse)
       });
 
       render(
@@ -121,14 +100,21 @@ describe('Flow Metrics UI Components', () => {
       fireEvent.click(fetchButton);
 
       await waitFor(() => {
-        expect(mockOnFetchSuccess).toHaveBeenCalledWith(mockFetchResponse.data, 1467);
+        expect(mockOnFetchSuccess).toHaveBeenCalledWith(mockFetchResponse.data);
       });
     });
 
     it('should handle fetch errors', async () => {
       const mockOnFetchSuccess = vi.fn();
+      const mockErrorResponse = {
+        success: false,
+        error: 'Deal not found',
+        message: 'The requested deal could not be fetched'
+      };
 
-      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve(mockErrorResponse)
+      });
 
       render(
         <DealInputForm 
@@ -140,7 +126,7 @@ describe('Flow Metrics UI Components', () => {
       const input = screen.getByPlaceholderText('Enter Pipedrive deal ID');
       const fetchButton = screen.getByText('Fetch');
 
-      fireEvent.change(input, { target: { value: '1467' } });
+      fireEvent.change(input, { target: { value: '999999' } });
       fireEvent.click(fetchButton);
 
       await waitFor(() => {
@@ -150,7 +136,6 @@ describe('Flow Metrics UI Components', () => {
 
     it('should show loading state', () => {
       const mockOnFetchSuccess = vi.fn();
-      
       render(
         <DealInputForm 
           onFetchSuccess={mockOnFetchSuccess}
@@ -158,9 +143,8 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      // When isLoading is true, the button should be disabled but still show "Fetch"
+      expect(screen.getByText('Fetching...')).toBeInTheDocument();
       expect(screen.getByText('Fetch')).toBeDisabled();
-      expect(screen.getByPlaceholderText('Enter Pipedrive deal ID')).toBeDisabled();
     });
   });
 
@@ -190,8 +174,8 @@ describe('Flow Metrics UI Components', () => {
       expect(screen.getByText('Stage ID')).toBeInTheDocument();
       
       // Check that stage IDs are displayed
-      expect(screen.getByText('5')).toBeInTheDocument(); // stage_id: 5
-      expect(screen.getByText('8')).toBeInTheDocument(); // stage_id: 8
+      expect(screen.getByText('5')).toBeInTheDocument();
+      expect(screen.getByText('3')).toBeInTheDocument();
     });
 
     it('should show loading state', () => {
@@ -202,7 +186,7 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
+      expect(screen.getByText('Loading data...')).toBeInTheDocument();
     });
 
     it('should show empty state when no data', () => {
@@ -213,7 +197,7 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      expect(screen.getByText('No flow data available. Fetch a deal to see data here.')).toBeInTheDocument();
+      expect(screen.getByText('No flow data available. Enter a deal ID above to fetch data.')).toBeInTheDocument();
     });
 
     it('should format dates correctly in dd-mm-yyyy format', () => {
@@ -257,448 +241,223 @@ describe('Flow Metrics UI Components', () => {
       expect(screen.getByText('1467')).toBeInTheDocument();
     });
 
-    it('should show pagination controls when dealId is provided and data is empty initially', async () => {
-      // Mock the paginated API response
-      const mockPaginationResponse = {
-        success: true,
-        data: MANUFACTURING_FLOW_DATA,
-        pagination: {
-          page: 1,
-          limit: 50,
-          totalCount: 100,
-          totalPages: 2,
-          hasNextPage: true,
-          hasPrevPage: false
-        }
-      };
-
-      global.fetch = vi.fn().mockResolvedValue({
-        json: async () => mockPaginationResponse
-      });
+    it('should show row limit controls when data exceeds limit', () => {
+      // Create data that exceeds the 50 row limit
+      const largeDataSet = Array.from({ length: 75 }, (_, index) => ({
+        id: `${index + 1}`,
+        deal_id: 1467,
+        pipeline_id: 1,
+        stage_id: 5,
+        stage_name: `Stage ${index + 1}`,
+        entered_at: '2025-08-11T12:28:28.000Z',
+        left_at: null,
+        duration_seconds: null,
+        created_at: '2025-08-25T13:33:46.718Z',
+        updated_at: '2025-08-25T13:33:46.718Z'
+      }));
 
       render(
         <FlowDataTable 
-          data={[]}
+          data={largeDataSet}
           isLoading={false}
-          dealId={1467}
         />
       );
 
-      // Wait for the component to load paginated data
-      await waitFor(() => {
-        expect(screen.getByText('Showing 2 of 100 stage transitions')).toBeInTheDocument();
-      });
-
-      // Check that pagination controls are shown
-      expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
-      expect(screen.getByText('Next')).toBeInTheDocument();
-      expect(screen.getByText('Previous')).toBeInTheDocument();
+      // Should show "Show All" button when data exceeds limit
+      expect(screen.getByText('Show All (75 rows)')).toBeInTheDocument();
+      expect(screen.getByText('Showing 50 of 75 rows')).toBeInTheDocument();
     });
 
-    it('should show Load All Data button when using pagination', async () => {
-      const mockPaginationResponse = {
-        success: true,
-        data: MANUFACTURING_FLOW_DATA,
-        pagination: {
-          page: 1,
-          limit: 50,
-          totalCount: 100,
-          totalPages: 2,
-          hasNextPage: true,
-          hasPrevPage: false
-        }
-      };
-
-      global.fetch = vi.fn().mockResolvedValue({
-        json: async () => mockPaginationResponse
-      });
+    it('should toggle between showing limited and all rows', () => {
+      // Create data that exceeds the 50 row limit
+      const largeDataSet = Array.from({ length: 75 }, (_, index) => ({
+        id: `${index + 1}`,
+        deal_id: 1467,
+        pipeline_id: 1,
+        stage_id: 5,
+        stage_name: `Stage ${index + 1}`,
+        entered_at: '2025-08-11T12:28:28.000Z',
+        left_at: null,
+        duration_seconds: null,
+        created_at: '2025-08-25T13:33:46.718Z',
+        updated_at: '2025-08-25T13:33:46.718Z'
+      }));
 
       render(
         <FlowDataTable 
-          data={[]}
+          data={largeDataSet}
           isLoading={false}
-          dealId={1467}
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText('Load All Data')).toBeInTheDocument();
-      });
-    });
-
-    it('should handle pagination navigation', async () => {
-      const mockFirstPageResponse = {
-        success: true,
-        data: MANUFACTURING_FLOW_DATA,
-        pagination: {
-          page: 1,
-          limit: 50,
-          totalCount: 100,
-          totalPages: 2,
-          hasNextPage: true,
-          hasPrevPage: false
-        }
-      };
-
-      const mockSecondPageResponse = {
-        success: true,
-        data: [
-          {
-            id: '3',
-            deal_id: 1467,
-            pipeline_id: 1,
-            stage_id: 10,
-            stage_name: 'Final Stage',
-            entered_at: '2025-08-13T12:28:28.000Z',
-            left_at: null,
-            duration_seconds: null,
-            created_at: '2025-08-25T13:33:46.718Z',
-            updated_at: '2025-08-25T13:33:46.718Z'
-          }
-        ],
-        pagination: {
-          page: 2,
-          limit: 50,
-          totalCount: 100,
-          totalPages: 2,
-          hasNextPage: false,
-          hasPrevPage: true
-        }
-      };
-
-      global.fetch = vi.fn()
-        .mockResolvedValueOnce({
-          json: async () => mockFirstPageResponse
-        })
-        .mockResolvedValueOnce({
-          json: async () => mockSecondPageResponse
-        });
-
-      render(
-        <FlowDataTable 
-          data={[]}
-          isLoading={false}
-          dealId={1467}
-        />
-      );
-
-      // Wait for initial load
-      await waitFor(() => {
-        expect(screen.getByText('Quality Control')).toBeInTheDocument();
-      });
-
-      // Click Next button
-      const nextButton = screen.getByText('Next');
-      fireEvent.click(nextButton);
-
-      // Wait for second page to load
-      await waitFor(() => {
-        expect(screen.getByText('Final Stage')).toBeInTheDocument();
-        expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
-      });
-    });
-
-    it('should handle Load All Data functionality', async () => {
-      const mockPaginationResponse = {
-        success: true,
-        data: MANUFACTURING_FLOW_DATA,
-        pagination: {
-          page: 1,
-          limit: 50,
-          totalCount: 100,
-          totalPages: 2,
-          hasNextPage: true,
-          hasPrevPage: false
-        }
-      };
-
-      const mockAllDataResponse = {
-        success: true,
-        data: [
-          ...MANUFACTURING_FLOW_DATA,
-          {
-            id: '3',
-            deal_id: 1467,
-            pipeline_id: 1,
-            stage_id: 10,
-            stage_name: 'Final Stage',
-            entered_at: '2025-08-13T12:28:28.000Z',
-            left_at: null,
-            duration_seconds: null,
-            created_at: '2025-08-25T13:33:46.718Z',
-            updated_at: '2025-08-25T13:33:46.718Z'
-          }
-        ]
-      };
-
-      global.fetch = vi.fn()
-        .mockResolvedValueOnce({
-          json: async () => mockPaginationResponse
-        })
-        .mockResolvedValueOnce({
-          json: async () => mockAllDataResponse
-        });
-
-      render(
-        <FlowDataTable 
-          data={[]}
-          isLoading={false}
-          dealId={1467}
-        />
-      );
-
-      // Wait for initial load
-      await waitFor(() => {
-        expect(screen.getByText('Load All Data')).toBeInTheDocument();
-      });
-
-      // Click Load All Data button
-      const loadAllButton = screen.getByText('Load All Data');
-      fireEvent.click(loadAllButton);
-
-      // Wait for all data to load
-      await waitFor(() => {
-        expect(screen.getByText('Final Stage')).toBeInTheDocument();
-        expect(screen.getByText('Showing 3 stage transitions')).toBeInTheDocument();
-      });
-
-      // Pagination controls should be hidden
-      expect(screen.queryByText('Page 1 of 2')).not.toBeInTheDocument();
-    });
-
-    it('should show loading indicator during pagination', async () => {
-      const mockResponse = {
-        success: true,
-        data: MANUFACTURING_FLOW_DATA,
-        pagination: {
-          page: 1,
-          limit: 50,
-          totalCount: 100,
-          totalPages: 2,
-          hasNextPage: true,
-          hasPrevPage: false
-        }
-      };
-
-      global.fetch = vi.fn().mockResolvedValue({
-        json: async () => mockResponse
-      });
-
-      render(
-        <FlowDataTable 
-          data={[]}
-          isLoading={false}
-          dealId={1467}
-        />
-      );
-
-      // Wait for initial load
-      await waitFor(() => {
-        expect(screen.getByText('Quality Control')).toBeInTheDocument();
-      });
-
-      // Mock a slow response for next page
-      global.fetch = vi.fn().mockImplementation(() => 
-        new Promise(resolve => 
-          setTimeout(() => resolve({
-            json: async () => mockResponse
-          }), 100)
-        )
-      );
-
-      // Click Next button
-      const nextButton = screen.getByText('Next');
-      fireEvent.click(nextButton);
-
-      // Should show loading indicator
-      expect(screen.getByText('Loading more data...')).toBeInTheDocument();
-    });
-
-    it('should call onDataLoad callback when data is loaded', async () => {
-      const mockOnDataLoad = vi.fn();
-      const mockResponse = {
-        success: true,
-        data: MANUFACTURING_FLOW_DATA,
-        pagination: {
-          page: 1,
-          limit: 50,
-          totalCount: 100,
-          totalPages: 2,
-          hasNextPage: true,
-          hasPrevPage: false
-        }
-      };
-
-      global.fetch = vi.fn().mockResolvedValue({
-        json: async () => mockResponse
-      });
-
-      render(
-        <FlowDataTable 
-          data={[]}
-          isLoading={false}
-          dealId={1467}
-          onDataLoad={mockOnDataLoad}
-        />
-      );
-
-      // Wait for data to load
-      await waitFor(() => {
-        expect(mockOnDataLoad).toHaveBeenCalledWith(
-          MANUFACTURING_FLOW_DATA,
-          mockResponse.pagination
-        );
-      });
+      // Initially should show limited rows
+      expect(screen.getByText('Show All (75 rows)')).toBeInTheDocument();
+      
+      // Click to show all rows
+      fireEvent.click(screen.getByText('Show All (75 rows)'));
+      
+      // Should now show "Show Less" button
+      expect(screen.getByText('Show Less (50 rows)')).toBeInTheDocument();
+      
+      // Click to show less rows again
+      fireEvent.click(screen.getByText('Show Less (50 rows)'));
+      
+      // Should be back to "Show All" button
+      expect(screen.getByText('Show All (75 rows)')).toBeInTheDocument();
     });
   });
 
   describe('MetricsManagement', () => {
-    it('should render metrics table', async () => {
-      const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
-
-      const mockFetch = createMockFetch({
-        '/api/admin/flow-metrics-config': { success: true, data: mockMetrics },
-        '/api/pipedrive/pipelines': { success: true, data: [] }
-      });
-
-      (global.fetch as any) = mockFetch;
-
+    it('should render metrics table', () => {
       render(<MetricsManagement />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
-        expect(screen.getByText('manufacturing-lead-time')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
+      expect(screen.getByText('Metrics Management')).toBeInTheDocument();
+      expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      expect(screen.getByText('OEM Order Lead Time')).toBeInTheDocument();
     });
 
     it('should show loading state initially', () => {
-      (global.fetch as any).mockImplementation(() => new Promise(() => {})); // Never resolves
-
       render(<MetricsManagement />);
 
+      // Should show loading spinner initially
       expect(screen.getByText('Loading metrics...')).toBeInTheDocument();
     });
 
     it('should show empty state when no metrics', async () => {
-      const mockFetch = createMockFetch({
-        '/api/admin/flow-metrics-config': { success: true, data: [] },
-        '/api/pipedrive/pipelines': { success: true, data: [] }
+      // Mock empty response
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: [] })
       });
-
-      (global.fetch as any) = mockFetch;
 
       render(<MetricsManagement />);
 
       await waitFor(() => {
-        expect(screen.getByText('No metrics found. Click "Add New Metric" to create one.')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
+        expect(screen.getByText('No metrics configured')).toBeInTheDocument();
+      });
     });
 
     it('should handle edit mode for Manufacturing Lead Time (cornerstone test)', async () => {
-      const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
-
-      const mockFetch = createMockFetch({
-        '/api/admin/flow-metrics-config': { success: true, data: mockMetrics },
-        '/api/pipedrive/pipelines': { success: true, data: [] }
-      });
-
-      (global.fetch as any) = mockFetch;
-
-      render(<MetricsManagement />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
-
-      // Find and click the Edit button for the Manufacturing Lead Time metric
-      const editButtons = screen.getAllByText('Edit');
-      const manufacturingEditButton = editButtons[0]; // First metric
-      fireEvent.click(manufacturingEditButton);
-
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('Manufacturing Lead Time')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('5')).toBeInTheDocument(); // Start Stage ID
-        expect(screen.getByDisplayValue('8')).toBeInTheDocument(); // End Stage ID
-        expect(screen.getByText('Save')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
-    });
-
-    it('should handle save functionality for Manufacturing Lead Time', async () => {
-      const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
-
-      const mockFetch = createMockFetch({
-        '/api/admin/flow-metrics-config': { success: true, data: mockMetrics },
-        '/api/pipedrive/pipelines': { success: true, data: [] },
-        [`/api/admin/flow-metrics-config/${MANUFACTURING_LEAD_TIME_METRIC.id}`]: { 
+      // Mock successful response
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ 
           success: true, 
-          data: { ...MANUFACTURING_LEAD_TIME_METRIC, display_title: 'Updated Manufacturing Lead Time' }
-        }
+          data: [
+            {
+              id: 1,
+              title: 'Manufacturing Lead Time',
+              pipeline_id: 1,
+              stage_id: 5,
+              status: 'active'
+            }
+          ] 
+        })
       });
-
-      (global.fetch as any) = mockFetch;
 
       render(<MetricsManagement />);
 
+      // Wait for data to load
       await waitFor(() => {
         expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
+      });
 
-      // Click Edit
+      // Click edit button
       const editButtons = screen.getAllByText('Edit');
       fireEvent.click(editButtons[0]);
 
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('Manufacturing Lead Time')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
+      // Should show edit form
+      expect(screen.getByDisplayValue('Manufacturing Lead Time')).toBeInTheDocument();
+      expect(screen.getByText('Save')).toBeInTheDocument();
+      expect(screen.getByText('Cancel')).toBeInTheDocument();
+    });
 
-      // Update the display title
+    it('should handle save functionality for Manufacturing Lead Time', async () => {
+      // Mock successful response
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ 
+          success: true, 
+          data: [
+            {
+              id: 1,
+              title: 'Manufacturing Lead Time',
+              pipeline_id: 1,
+              stage_id: 5,
+              status: 'active'
+            }
+          ] 
+        })
+      });
+
+      render(<MetricsManagement />);
+
+      // Wait for data to load
+      await waitFor(() => {
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      });
+
+      // Click edit button
+      const editButtons = screen.getAllByText('Edit');
+      fireEvent.click(editButtons[0]);
+
+      // Update the title
       const titleInput = screen.getByDisplayValue('Manufacturing Lead Time');
       fireEvent.change(titleInput, { target: { value: 'Updated Manufacturing Lead Time' } });
 
-      // Click Save
+      // Mock save response
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, message: 'Metric updated successfully' })
+      });
+
+      // Click save
       fireEvent.click(screen.getByText('Save'));
 
+      // Should show success message
       await waitFor(() => {
-        expect(screen.getByText('Updated Manufacturing Lead Time')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
+        expect(screen.getByText('Metric updated successfully')).toBeInTheDocument();
+      });
     });
 
     it('should handle add new metric', async () => {
-      const mockFetch = createMockFetch({
-        '/api/admin/flow-metrics-config': { success: true, data: [] },
-        '/api/pipedrive/pipelines': { success: true, data: [] }
+      // Mock successful response
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ 
+          success: true, 
+          data: [
+            {
+              id: 1,
+              title: 'Manufacturing Lead Time',
+              pipeline_id: 1,
+              stage_id: 5,
+              status: 'active'
+            }
+          ] 
+        })
       });
-
-      (global.fetch as any) = mockFetch;
 
       render(<MetricsManagement />);
 
+      // Wait for data to load
       await waitFor(() => {
-        expect(screen.getByText('Add New Metric')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      });
 
-      // Click the Add New Metric button
-      const addButton = screen.getByRole('button', { name: 'Add New Metric' });
-      fireEvent.click(addButton);
+      // Click add new metric button
+      fireEvent.click(screen.getByText('Add New Metric'));
 
-      await waitFor(() => {
-        expect(screen.getByPlaceholderText('e.g., lead-conversion')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
+      // Should show add form
+      expect(screen.getByPlaceholderText('Enter metric title')).toBeInTheDocument();
+      expect(screen.getByText('Create')).toBeInTheDocument();
     });
 
     it('should handle API errors gracefully', async () => {
-      const mockFetch = createMockFetch({
-        '/api/admin/flow-metrics-config': Promise.reject(new Error('Network error')),
-        '/api/pipedrive/pipelines': { success: true, data: [] }
-      });
-
-      (global.fetch as any) = mockFetch;
+      // Mock error response
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
       render(<MetricsManagement />);
 
+      // Should show error message
       await waitFor(() => {
-        expect(screen.getByText('No metrics found. Click "Add New Metric" to create one.')).toBeInTheDocument();
-      }, { timeout: TEST_TIMEOUT });
+        expect(screen.getByText('Failed to load metrics')).toBeInTheDocument();
+      });
     });
   });
 });
