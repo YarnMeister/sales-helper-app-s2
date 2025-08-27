@@ -76,7 +76,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
       };
     }
 
-    // Convert duration_seconds to days and round to 2 decimal places
+    // Convert duration_seconds to days with precise calculation
     const durationsInDays = deals.map(deal => 
       Math.round((deal.duration_seconds / 86400) * 100) / 100
     );
@@ -187,7 +187,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {isLoading ? '...' : calculatedMetrics.average} days
+                {isLoading ? '...' : Math.round(calculatedMetrics.average)} days
               </div>
               {!isLoading && calculatedMetrics.totalDeals > 0 && (
                 <div className="text-xs text-gray-500 mt-1">
@@ -203,7 +203,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {isLoading ? '...' : calculatedMetrics.best} days
+                {isLoading ? '...' : Math.round(calculatedMetrics.best)} days
               </div>
             </CardContent>
           </Card>
@@ -214,7 +214,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                {isLoading ? '...' : calculatedMetrics.worst} days
+                {isLoading ? '...' : Math.round(calculatedMetrics.worst)} days
               </div>
             </CardContent>
           </Card>
@@ -266,13 +266,14 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
                   </thead>
                   <tbody>
                     {deals.map((deal) => {
-                      const durationDays = Math.round((deal.duration_seconds / 86400) * 100) / 100;
+                      const durationDays = Math.ceil(deal.duration_seconds / 86400);
                       const startDate = new Date(deal.start_date).toLocaleDateString();
                       const endDate = new Date(deal.end_date).toLocaleDateString();
                       
-                      // Highlight best and worst performers
-                      const isBest = durationDays === calculatedMetrics.best;
-                      const isWorst = durationDays === calculatedMetrics.worst;
+                      // Highlight best and worst performers (using precise values for comparison)
+                      const preciseDuration = Math.round((deal.duration_seconds / 86400) * 100) / 100;
+                      const isBest = preciseDuration === calculatedMetrics.best;
+                      const isWorst = preciseDuration === calculatedMetrics.worst;
                       
                       return (
                         <tr 

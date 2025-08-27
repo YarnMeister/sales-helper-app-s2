@@ -94,7 +94,7 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
-        // Average: (3 + 12 + 45) / 3 = 20 days
+        // Average: (3 + 12 + 45) / 3 = 20 days (displayed as whole number)
         const averageCard = screen.getByText('Average').closest('.rounded-lg');
         expect(averageCard).toHaveTextContent('20 days');
         
@@ -290,9 +290,9 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
       
       await waitFor(() => {
-        // Expected calculation: (8*4 + 6*6 + 2*7) / 16 = 82/16 = 5.125 days
+        // Expected calculation: (8*4 + 6*6 + 2*7) / 16 = 82/16 = 5.125 days, rounded to 5
         const averageCard = screen.getByText('Average').closest('.rounded-lg');
-        expect(averageCard).toHaveTextContent('5.13 days');
+        expect(averageCard).toHaveTextContent('5 days');
         
         const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
         expect(bestCard).toHaveTextContent('4 days');
