@@ -1,281 +1,37 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { CommonHeader } from '../../components/CommonHeader';
 import { CommonFooter } from '../../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 
-// Mock data for individual deals
-const mockDealsData = {
-  'lead-conversion': [
-    {
-      id: 'D001',
-      startDate: '2024-01-15',
-      endDate: '2024-01-18',
-      duration: 3,
-      isBest: true,
-    },
-    {
-      id: 'D002',
-      startDate: '2024-01-16',
-      endDate: '2024-01-28',
-      duration: 12,
-      isBest: false,
-    },
-    {
-      id: 'D004',
-      startDate: '2024-01-10',
-      endDate: '2024-01-25',
-      duration: 15,
-      isBest: false,
-    },
-    {
-      id: 'D007',
-      startDate: '2024-01-05',
-      endDate: '2024-02-19',
-      duration: 45,
-      isWorst: true,
-    },
-    {
-      id: 'D008',
-      startDate: '2024-01-12',
-      endDate: '2024-01-20',
-      duration: 8,
-      isBest: false,
-    },
-  ],
-  'quote-conversion': [
-    {
-      id: 'D003',
-      startDate: '2024-01-20',
-      endDate: '2024-01-28',
-      duration: 8,
-      isBest: true,
-    },
-    {
-      id: 'D005',
-      startDate: '2024-01-25',
-      endDate: '2024-02-02',
-      duration: 8,
-      isBest: false,
-    },
-    {
-      id: 'D009',
-      startDate: '2024-01-30',
-      endDate: '2024-02-07',
-      duration: 8,
-      isBest: false,
-    },
-    {
-      id: 'D010',
-      startDate: '2024-02-01',
-      endDate: '2024-02-09',
-      duration: 8,
-      isBest: false,
-    },
-    {
-      id: 'D011',
-      startDate: '2024-02-05',
-      endDate: '2024-02-13',
-      duration: 8,
-      isWorst: false,
-    },
-  ],
-  'order-conversion': [
-    {
-      id: 'D012',
-      startDate: '2024-01-10',
-      endDate: '2024-01-15',
-      duration: 5,
-      isBest: true,
-    },
-    {
-      id: 'D013',
-      startDate: '2024-01-15',
-      endDate: '2024-01-30',
-      duration: 15,
-      isBest: false,
-    },
-    {
-      id: 'D014',
-      startDate: '2024-01-20',
-      endDate: '2024-02-04',
-      duration: 15,
-      isBest: false,
-    },
-    {
-      id: 'D015',
-      startDate: '2024-01-25',
-      endDate: '2024-03-26',
-      duration: 60,
-      isWorst: true,
-    },
-    {
-      id: 'D016',
-      startDate: '2024-02-01',
-      endDate: '2024-02-16',
-      duration: 15,
-      isBest: false,
-    },
-  ],
-  'procurement': [
-    {
-      id: 'D017',
-      startDate: '2024-01-15',
-      endDate: '2024-01-25',
-      duration: 10,
-      isBest: true,
-    },
-    {
-      id: 'D018',
-      startDate: '2024-01-20',
-      endDate: '2024-02-19',
-      duration: 30,
-      isBest: false,
-    },
-    {
-      id: 'D019',
-      startDate: '2024-01-25',
-      endDate: '2024-03-26',
-      duration: 60,
-      isBest: false,
-    },
-    {
-      id: 'D020',
-      startDate: '2024-02-01',
-      endDate: '2024-05-02',
-      duration: 90,
-      isWorst: true,
-    },
-    {
-      id: 'D021',
-      startDate: '2024-02-05',
-      endDate: '2024-03-07',
-      duration: 30,
-      isBest: false,
-    },
-  ],
-  'manufacturing': [
-    {
-      id: 'D022',
-      startDate: '2024-01-15',
-      endDate: '2024-02-04',
-      duration: 20,
-      isBest: true,
-    },
-    {
-      id: 'D023',
-      startDate: '2024-01-20',
-      endDate: '2024-03-21',
-      duration: 60,
-      isBest: false,
-    },
-    {
-      id: 'D024',
-      startDate: '2024-01-25',
-      endDate: '2024-04-25',
-      duration: 90,
-      isBest: false,
-    },
-    {
-      id: 'D025',
-      startDate: '2024-02-01',
-      endDate: '2024-06-01',
-      duration: 120,
-      isWorst: true,
-    },
-    {
-      id: 'D026',
-      startDate: '2024-02-05',
-      endDate: '2024-04-06',
-      duration: 60,
-      isBest: false,
-    },
-  ],
-  'delivery': [
-    {
-      id: 'D027',
-      startDate: '2024-01-15',
-      endDate: '2024-01-17',
-      duration: 2,
-      isBest: true,
-    },
-    {
-      id: 'D028',
-      startDate: '2024-01-20',
-      endDate: '2024-01-27',
-      duration: 7,
-      isBest: false,
-    },
-    {
-      id: 'D029',
-      startDate: '2024-01-25',
-      endDate: '2024-02-01',
-      duration: 7,
-      isBest: false,
-    },
-    {
-      id: 'D030',
-      startDate: '2024-02-01',
-      endDate: '2024-02-22',
-      duration: 21,
-      isWorst: true,
-    },
-    {
-      id: 'D031',
-      startDate: '2024-02-05',
-      endDate: '2024-02-12',
-      duration: 7,
-      isBest: false,
-    },
-  ],
-};
-
-// Metric configuration
+// Metric configuration - now only contains titles and canonical stages
 const metricConfig = {
   'lead-conversion': {
     title: 'Lead Conversion Time',
     canonicalStage: 'Lead Conversion',
-    average: 17,
-    best: 3,
-    worst: 45,
   },
   'quote-conversion': {
     title: 'Quote Conversion Time',
     canonicalStage: 'Quote Conversion',
-    average: 8,
-    best: 8,
-    worst: 8,
   },
   'order-conversion': {
     title: 'Order Conversion Time',
     canonicalStage: 'Order Conversion',
-    average: 22,
-    best: 5,
-    worst: 60,
   },
   'procurement': {
     title: 'Procurement Lead Time',
     canonicalStage: 'Procurement',
-    average: 44,
-    best: 10,
-    worst: 90,
   },
   'manufacturing': {
     title: 'Manufacturing Lead Time',
     canonicalStage: 'Manufacturing',
-    average: 70,
-    best: 20,
-    worst: 120,
   },
   'delivery': {
     title: 'Delivery Lead Time',
     canonicalStage: 'Delivery',
-    average: 9,
-    best: 2,
-    worst: 21,
   },
 };
 
@@ -284,6 +40,13 @@ interface DealData {
   start_date: string;
   end_date: string;
   duration_seconds: number;
+}
+
+interface CalculatedMetrics {
+  average: number;
+  best: number;
+  worst: number;
+  totalDeals: number;
 }
 
 interface PageProps {
@@ -301,6 +64,38 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
 
   const config = metricConfig[metricId as keyof typeof metricConfig];
+
+  // Calculate metrics from the actual deals data
+  const calculatedMetrics: CalculatedMetrics = useMemo(() => {
+    if (!deals || deals.length === 0) {
+      return {
+        average: 0,
+        best: 0,
+        worst: 0,
+        totalDeals: 0
+      };
+    }
+
+    // Convert duration_seconds to days and round to 2 decimal places
+    const durationsInDays = deals.map(deal => 
+      Math.round((deal.duration_seconds / 86400) * 100) / 100
+    );
+
+    // Calculate average
+    const totalDays = durationsInDays.reduce((sum, days) => sum + days, 0);
+    const average = Math.round((totalDays / durationsInDays.length) * 100) / 100;
+
+    // Find best (minimum) and worst (maximum)
+    const best = Math.min(...durationsInDays);
+    const worst = Math.max(...durationsInDays);
+
+    return {
+      average,
+      best,
+      worst,
+      totalDeals: deals.length
+    };
+  }, [deals]);
 
   // Fetch deals data for the canonical stage
   useEffect(() => {
@@ -391,7 +186,14 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               <CardTitle className="text-sm font-medium text-gray-600">Average</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{config.average} days</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {isLoading ? '...' : calculatedMetrics.average} days
+              </div>
+              {!isLoading && calculatedMetrics.totalDeals > 0 && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Based on {calculatedMetrics.totalDeals} deals
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -400,7 +202,9 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               <CardTitle className="text-sm font-medium text-green-600">Best Performance</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{config.best} days</div>
+              <div className="text-2xl font-bold text-green-600">
+                {isLoading ? '...' : calculatedMetrics.best} days
+              </div>
             </CardContent>
           </Card>
 
@@ -409,7 +213,9 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               <CardTitle className="text-sm font-medium text-red-600">Worst Performance</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{config.worst} days</div>
+              <div className="text-2xl font-bold text-red-600">
+                {isLoading ? '...' : calculatedMetrics.worst} days
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -460,17 +266,30 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
                   </thead>
                   <tbody>
                     {deals.map((deal) => {
-                      const durationDays = Math.ceil(deal.duration_seconds / 86400);
+                      const durationDays = Math.round((deal.duration_seconds / 86400) * 100) / 100;
                       const startDate = new Date(deal.start_date).toLocaleDateString();
                       const endDate = new Date(deal.end_date).toLocaleDateString();
                       
+                      // Highlight best and worst performers
+                      const isBest = durationDays === calculatedMetrics.best;
+                      const isWorst = durationDays === calculatedMetrics.worst;
+                      
                       return (
-                        <tr key={deal.deal_id} className="border-b border-gray-100">
+                        <tr 
+                          key={deal.deal_id} 
+                          className={`border-b border-gray-100 ${
+                            isBest ? 'bg-green-50' : isWorst ? 'bg-red-50' : ''
+                          }`}
+                        >
                           <td className="py-3 px-4 font-medium text-gray-900">{deal.deal_id}</td>
                           <td className="py-3 px-4 text-gray-700">{startDate}</td>
                           <td className="py-3 px-4 text-gray-700">{endDate}</td>
                           <td className="py-3 px-4">
-                            <span className="font-medium text-gray-900">
+                            <span className={`font-medium ${
+                              isBest ? 'text-green-600' : 
+                              isWorst ? 'text-red-600' : 
+                              'text-gray-900'
+                            }`}>
                               {durationDays} days
                             </span>
                           </td>

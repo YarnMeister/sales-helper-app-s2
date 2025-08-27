@@ -90,13 +90,21 @@ describe('FlowMetricDetailPage', () => {
       expect(screen.getByText('Loading deals data...')).toBeInTheDocument();
     });
 
-    it('displays summary statistics correctly', async () => {
+    it('displays calculated summary statistics correctly', async () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
-        expect(screen.getByText('17 days')).toBeInTheDocument(); // Average
-        expect(screen.getByText('3 days')).toBeInTheDocument(); // Best
-        expect(screen.getByText('45 days')).toBeInTheDocument(); // Worst
+        // Average: (3 + 12 + 45) / 3 = 20 days
+        const averageCard = screen.getByText('Average').closest('.rounded-lg');
+        expect(averageCard).toHaveTextContent('20 days');
+        
+        const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
+        expect(bestCard).toHaveTextContent('3 days');
+        
+        const worstCard = screen.getByText('Worst Performance').closest('.rounded-lg');
+        expect(worstCard).toHaveTextContent('45 days');
+        
+        expect(screen.getByText('Based on 3 deals')).toBeInTheDocument();
       });
     });
   });
@@ -134,6 +142,20 @@ describe('FlowMetricDetailPage', () => {
         expect(screen.getByText('D001')).toBeInTheDocument();
         expect(screen.getByText('D002')).toBeInTheDocument();
         expect(screen.getByText('D007')).toBeInTheDocument();
+      });
+    });
+
+    it('highlights best and worst performers', async () => {
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
+      
+      await waitFor(() => {
+        // Best performer (3 days) should have green styling
+        const bestDeal = screen.getByText('D001').closest('tr');
+        expect(bestDeal).toHaveClass('bg-green-50');
+        
+        // Worst performer (45 days) should have red styling
+        const worstDeal = screen.getByText('D007').closest('tr');
+        expect(worstDeal).toHaveClass('bg-red-50');
       });
     });
   });
@@ -190,6 +212,25 @@ describe('FlowMetricDetailPage', () => {
         expect(screen.getByText('Failed to fetch deals data')).toBeInTheDocument();
       });
     });
+
+    it('handles empty deals data', async () => {
+      // Mock empty response
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [],
+        }),
+      });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
+        const averageCard = screen.getByText('Average').closest('.rounded-lg');
+        expect(averageCard).toHaveTextContent('0 days');
+      });
+    });
   });
 
   describe('Navigation', () => {
@@ -210,6 +251,57 @@ describe('FlowMetricDetailPage', () => {
       
       expect(screen.getByText('Metric Not Found')).toBeInTheDocument();
       expect(screen.getByText('The requested metric could not be found.')).toBeInTheDocument();
+    });
+  });
+
+  describe('Manufacturing Metric Calculation', () => {
+    it('calculates correct average for manufacturing metric with test data', async () => {
+      // Mock manufacturing data with the test scenario
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            // 8 deals with 4 days each
+            ...Array.from({ length: 8 }, (_, i) => ({
+              deal_id: `M${i + 1}`,
+              start_date: '2024-01-15T00:00:00.000Z',
+              end_date: '2024-01-19T00:00:00.000Z',
+              duration_seconds: 345600, // 4 days
+            })),
+            // 6 deals with 6 days each
+            ...Array.from({ length: 6 }, (_, i) => ({
+              deal_id: `N${i + 1}`,
+              start_date: '2024-01-15T00:00:00.000Z',
+              end_date: '2024-01-21T00:00:00.000Z',
+              duration_seconds: 518400, // 6 days
+            })),
+            // 2 deals with 7 days each
+            ...Array.from({ length: 2 }, (_, i) => ({
+              deal_id: `O${i + 1}`,
+              start_date: '2024-01-15T00:00:00.000Z',
+              end_date: '2024-01-22T00:00:00.000Z',
+              duration_seconds: 604800, // 7 days
+            })),
+          ],
+        }),
+      });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
+      
+      await waitFor(() => {
+        // Expected calculation: (8*4 + 6*6 + 2*7) / 16 = 82/16 = 5.125 days
+        const averageCard = screen.getByText('Average').closest('.rounded-lg');
+        expect(averageCard).toHaveTextContent('5.13 days');
+        
+        const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
+        expect(bestCard).toHaveTextContent('4 days');
+        
+        const worstCard = screen.getByText('Worst Performance').closest('.rounded-lg');
+        expect(worstCard).toHaveTextContent('7 days');
+        
+        expect(screen.getByText('Based on 16 deals')).toBeInTheDocument();
+      });
     });
   });
 });
