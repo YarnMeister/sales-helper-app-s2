@@ -122,21 +122,21 @@ export default function FlowMetricsReportPage() {
     const fetchMetrics = async () => {
       try {
         setIsLoadingMetrics(true);
-        const response = await fetch('/api/admin/flow-metrics-config');
+        
+        // Fetch calculated metrics from the new API endpoint
+        const response = await fetch(`/api/flow/metrics?period=${selectedPeriod}`);
         const result = await response.json();
         
         if (result.success) {
-          // Convert database data to the format expected by KPICard
-          const activeMetrics = result.data
-            .filter((metric: any) => metric.is_active)
-            .map((metric: any) => ({
-              id: metric.metric_key,
-              title: metric.display_title,
-              mainMetric: 'Calculating...', // TODO: Calculate actual metrics
-              best: 'N/A',
-              worst: 'N/A',
-              trend: 'stable' as const,
-            }));
+          // Convert API response to the format expected by KPICard
+          const activeMetrics = result.data.map((metric: any) => ({
+            id: metric.id,
+            title: metric.title,
+            mainMetric: `${metric.mainMetric} days`,
+            best: `${metric.best} days`,
+            worst: `${metric.worst} days`,
+            trend: metric.trend,
+          }));
           
           setMetricsData(activeMetrics);
         } else {
@@ -152,7 +152,7 @@ export default function FlowMetricsReportPage() {
     };
 
     fetchMetrics();
-  }, []);
+  }, [selectedPeriod]);
 
   // Load existing flow data on component mount
   useEffect(() => {
