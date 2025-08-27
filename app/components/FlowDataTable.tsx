@@ -46,31 +46,6 @@ export const FlowDataTable: React.FC<FlowDataTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [usePagination, setUsePagination] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
-    } catch (error) {
-      console.error('Error formatting date:', dateString, error);
-      return '-';
-    }
-  };
-
-  // Load initial data with pagination if we have a dealId
-  useEffect(() => {
-    if (dealId && data.length === 0) {
-      setUsePagination(true);
-      loadPaginatedData(1);
-    } else {
-      setCurrentData(data);
-      setUsePagination(false);
-    }
-  }, [dealId, data, loadPaginatedData]);
-
   const loadPaginatedData = useCallback(async (page: number) => {
     if (!dealId) return;
 
@@ -95,6 +70,31 @@ export const FlowDataTable: React.FC<FlowDataTableProps> = ({
       setIsLoadingMore(false);
     }
   }, [dealId, onDataLoad]);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    } catch (error) {
+      console.error('Error formatting date:', dateString, error);
+      return '-';
+    }
+  };
+
+  // Load initial data with pagination if we have a dealId
+  useEffect(() => {
+    if (dealId && data.length === 0) {
+      setUsePagination(true);
+      loadPaginatedData(1);
+    } else {
+      setCurrentData(data);
+      setUsePagination(false);
+    }
+  }, [dealId, data, loadPaginatedData]);
 
   const handleNextPage = () => {
     if (pagination?.hasNextPage) {
