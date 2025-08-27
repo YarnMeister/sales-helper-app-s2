@@ -304,4 +304,50 @@ describe('FlowMetricDetailPage', () => {
       });
     });
   });
+
+  describe('OEM Order Lead Time', () => {
+    it('renders OEM Order Lead Time detail page correctly', async () => {
+      // Mock OEM Order Conversion data
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            {
+              deal_id: '1467',
+              start_date: '2025-08-07T11:16:49.000Z',
+              end_date: '2025-08-11T12:28:28.000Z',
+              duration_seconds: 349899, // ~4.05 days
+            },
+            {
+              deal_id: '1375',
+              start_date: '2025-08-04T10:59:43.000Z',
+              end_date: '2025-08-06T05:23:25.000Z',
+              duration_seconds: 152622, // ~1.77 days
+            },
+          ],
+        }),
+      });
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'oem-order-conversion' }} />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('OEM Order Lead Time')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        // Expected calculation: (4.05 + 1.77) / 2 = 2.91 days, rounded to 3
+        const averageCard = screen.getByText('Average').closest('.rounded-lg');
+        expect(averageCard).toHaveTextContent('3 days');
+        
+        const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
+        expect(bestCard).toHaveTextContent('2 days');
+        
+        const worstCard = screen.getByText('Worst Performance').closest('.rounded-lg');
+        expect(worstCard).toHaveTextContent('4 days');
+        
+        expect(screen.getByText('Based on 2 deals')).toBeInTheDocument();
+      });
+    });
+  });
 });

@@ -33,6 +33,10 @@ const metricConfig = {
     title: 'Delivery Lead Time',
     canonicalStage: 'Delivery',
   },
+  'oem-order-conversion': {
+    title: 'OEM Order Lead Time',
+    canonicalStage: 'OEM Order Conversion',
+  },
 };
 
 interface DealData {
