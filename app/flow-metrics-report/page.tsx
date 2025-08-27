@@ -115,6 +115,7 @@ export default function FlowMetricsReportPage() {
   const [currentView, setCurrentView] = useState<'metrics' | 'raw-data' | 'mappings'>('metrics');
   const [flowData, setFlowData] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [currentDealId, setCurrentDealId] = useState<number | undefined>(undefined);
 
   // Load active metrics from database
   useEffect(() => {
@@ -174,7 +175,12 @@ export default function FlowMetricsReportPage() {
     }
   };
 
-  const handleFetchSuccess = (newData: any[]) => {
+  const handleFetchSuccess = (newData: any[], dealId?: number) => {
+    // Set the current deal ID for pagination
+    if (dealId) {
+      setCurrentDealId(dealId);
+    }
+    
     // Add new data to existing data, avoiding duplicates
     setFlowData(prevData => {
       const existingIds = new Set(prevData.map(item => item.id));
@@ -262,6 +268,7 @@ export default function FlowMetricsReportPage() {
             <FlowDataTable 
               data={flowData} 
               isLoading={isLoadingData}
+              dealId={currentDealId}
             />
           </>
         )}

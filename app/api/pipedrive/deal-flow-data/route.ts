@@ -1,24 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDealFlowData } from '../../../../lib/db';
+import { getDealFlowData, getDealFlowDataPaginated } from '../../../../lib/db';
 import { logInfo, logError } from '../../../../lib/log';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const dealId = searchParams.get('deal_id');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const usePagination = searchParams.get('paginated') === 'true';
 
-    logInfo('Fetching stored deal flow data', { deal_id: dealId });
+    logInfo('Fetching stored deal flow data', { 
+      deal_id: dealId, 
+      page, 
+      limit, 
+      usePagination 
+    });
 
-    const data = await getDealFlowData(dealId ? parseInt(dealId) : undefined);
+    let data;
+    let totalCount = 0;
+
+    if (usePagination) {
+      const result = await getDealFlowDataPaginated(
+        dealId ? parseInt(dealId) : undefined,
+        page,
+        limit
+      );
+      data = result.data;
+      totalCount = result.totalCount;
+    } else {
+      data = await getDealFlowData(dealId ? parseInt(dealId) : undefined);
+      totalCount = data?.length || 0;
+    }
 
     logInfo('Successfully fetched deal flow data', { 
       deal_id: dealId, 
-      recordCount: data?.length || 0 
+      recordCount: data?.length || 0,
+      totalCount,
+      page,
+      limit
     });
 
     return NextResponse.json({
       success: true,
       data: data || [],
+      pagination: usePagination ? {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasNextPage: page * limit < totalCount,
+        hasPrevPage: page > 1
+      } : undefined,
       message: 'Successfully fetched deal flow data'
     });
 

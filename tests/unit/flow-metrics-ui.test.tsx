@@ -121,7 +121,7 @@ describe('Flow Metrics UI Components', () => {
       fireEvent.click(fetchButton);
 
       await waitFor(() => {
-        expect(mockOnFetchSuccess).toHaveBeenCalledWith(mockFetchResponse.data);
+        expect(mockOnFetchSuccess).toHaveBeenCalledWith(mockFetchResponse.data, 1467);
       });
     });
 
@@ -240,8 +240,8 @@ describe('Flow Metrics UI Components', () => {
           entered_at: '2025-08-11T12:28:28.000Z',
           left_at: undefined,
           duration_seconds: undefined,
-          created_at: '2025-08-11T12:28:28.000Z',
-          updated_at: '2025-08-11T12:28:28.000Z'
+          created_at: '2025-08-25T13:33:46.718Z',
+          updated_at: '2025-08-25T13:33:46.718Z'
         }
       ];
 
@@ -252,9 +252,303 @@ describe('Flow Metrics UI Components', () => {
         />
       );
 
-      expect(screen.getByText('1467')).toBeInTheDocument();
+      // Should render without errors
       expect(screen.getByText('Quality Control')).toBeInTheDocument();
-      // Should handle null left_at and duration_seconds
+      expect(screen.getByText('1467')).toBeInTheDocument();
+    });
+
+    it('should show pagination controls when dealId is provided and data is empty initially', async () => {
+      // Mock the paginated API response
+      const mockPaginationResponse = {
+        success: true,
+        data: MANUFACTURING_FLOW_DATA,
+        pagination: {
+          page: 1,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false
+        }
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        json: async () => mockPaginationResponse
+      });
+
+      render(
+        <FlowDataTable 
+          data={[]}
+          isLoading={false}
+          dealId={1467}
+        />
+      );
+
+      // Wait for the component to load paginated data
+      await waitFor(() => {
+        expect(screen.getByText('Showing 2 of 100 stage transitions')).toBeInTheDocument();
+      });
+
+      // Check that pagination controls are shown
+      expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+      expect(screen.getByText('Next')).toBeInTheDocument();
+      expect(screen.getByText('Previous')).toBeInTheDocument();
+    });
+
+    it('should show Load All Data button when using pagination', async () => {
+      const mockPaginationResponse = {
+        success: true,
+        data: MANUFACTURING_FLOW_DATA,
+        pagination: {
+          page: 1,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false
+        }
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        json: async () => mockPaginationResponse
+      });
+
+      render(
+        <FlowDataTable 
+          data={[]}
+          isLoading={false}
+          dealId={1467}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Load All Data')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle pagination navigation', async () => {
+      const mockFirstPageResponse = {
+        success: true,
+        data: MANUFACTURING_FLOW_DATA,
+        pagination: {
+          page: 1,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false
+        }
+      };
+
+      const mockSecondPageResponse = {
+        success: true,
+        data: [
+          {
+            id: '3',
+            deal_id: 1467,
+            pipeline_id: 1,
+            stage_id: 10,
+            stage_name: 'Final Stage',
+            entered_at: '2025-08-13T12:28:28.000Z',
+            left_at: null,
+            duration_seconds: null,
+            created_at: '2025-08-25T13:33:46.718Z',
+            updated_at: '2025-08-25T13:33:46.718Z'
+          }
+        ],
+        pagination: {
+          page: 2,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: false,
+          hasPrevPage: true
+        }
+      };
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          json: async () => mockFirstPageResponse
+        })
+        .mockResolvedValueOnce({
+          json: async () => mockSecondPageResponse
+        });
+
+      render(
+        <FlowDataTable 
+          data={[]}
+          isLoading={false}
+          dealId={1467}
+        />
+      );
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('Quality Control')).toBeInTheDocument();
+      });
+
+      // Click Next button
+      const nextButton = screen.getByText('Next');
+      fireEvent.click(nextButton);
+
+      // Wait for second page to load
+      await waitFor(() => {
+        expect(screen.getByText('Final Stage')).toBeInTheDocument();
+        expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle Load All Data functionality', async () => {
+      const mockPaginationResponse = {
+        success: true,
+        data: MANUFACTURING_FLOW_DATA,
+        pagination: {
+          page: 1,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false
+        }
+      };
+
+      const mockAllDataResponse = {
+        success: true,
+        data: [
+          ...MANUFACTURING_FLOW_DATA,
+          {
+            id: '3',
+            deal_id: 1467,
+            pipeline_id: 1,
+            stage_id: 10,
+            stage_name: 'Final Stage',
+            entered_at: '2025-08-13T12:28:28.000Z',
+            left_at: null,
+            duration_seconds: null,
+            created_at: '2025-08-25T13:33:46.718Z',
+            updated_at: '2025-08-25T13:33:46.718Z'
+          }
+        ]
+      };
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          json: async () => mockPaginationResponse
+        })
+        .mockResolvedValueOnce({
+          json: async () => mockAllDataResponse
+        });
+
+      render(
+        <FlowDataTable 
+          data={[]}
+          isLoading={false}
+          dealId={1467}
+        />
+      );
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('Load All Data')).toBeInTheDocument();
+      });
+
+      // Click Load All Data button
+      const loadAllButton = screen.getByText('Load All Data');
+      fireEvent.click(loadAllButton);
+
+      // Wait for all data to load
+      await waitFor(() => {
+        expect(screen.getByText('Final Stage')).toBeInTheDocument();
+        expect(screen.getByText('Showing 3 stage transitions')).toBeInTheDocument();
+      });
+
+      // Pagination controls should be hidden
+      expect(screen.queryByText('Page 1 of 2')).not.toBeInTheDocument();
+    });
+
+    it('should show loading indicator during pagination', async () => {
+      const mockResponse = {
+        success: true,
+        data: MANUFACTURING_FLOW_DATA,
+        pagination: {
+          page: 1,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false
+        }
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        json: async () => mockResponse
+      });
+
+      render(
+        <FlowDataTable 
+          data={[]}
+          isLoading={false}
+          dealId={1467}
+        />
+      );
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('Quality Control')).toBeInTheDocument();
+      });
+
+      // Mock a slow response for next page
+      global.fetch = vi.fn().mockImplementation(() => 
+        new Promise(resolve => 
+          setTimeout(() => resolve({
+            json: async () => mockResponse
+          }), 100)
+        )
+      );
+
+      // Click Next button
+      const nextButton = screen.getByText('Next');
+      fireEvent.click(nextButton);
+
+      // Should show loading indicator
+      expect(screen.getByText('Loading more data...')).toBeInTheDocument();
+    });
+
+    it('should call onDataLoad callback when data is loaded', async () => {
+      const mockOnDataLoad = vi.fn();
+      const mockResponse = {
+        success: true,
+        data: MANUFACTURING_FLOW_DATA,
+        pagination: {
+          page: 1,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false
+        }
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        json: async () => mockResponse
+      });
+
+      render(
+        <FlowDataTable 
+          data={[]}
+          isLoading={false}
+          dealId={1467}
+          onDataLoad={mockOnDataLoad}
+        />
+      );
+
+      // Wait for data to load
+      await waitFor(() => {
+        expect(mockOnDataLoad).toHaveBeenCalledWith(
+          MANUFACTURING_FLOW_DATA,
+          mockResponse.pagination
+        );
+      });
     });
   });
 

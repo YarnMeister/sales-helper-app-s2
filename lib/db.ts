@@ -411,6 +411,47 @@ export const getDealFlowData = async (dealId?: number) => {
   }, 'getDealFlowData');
 };
 
+export const getDealFlowDataPaginated = async (dealId?: number, page: number = 1, limit: number = 50) => {
+  return withDbErrorHandling(async () => {
+    const offset = (page - 1) * limit;
+    logInfo('Fetching paginated deal flow data', { dealId, page, limit, offset });
+    
+    // Build the base query
+    let baseQuery = sql`FROM pipedrive_deal_flow_data`;
+    let whereClause = sql``;
+    
+    if (dealId) {
+      whereClause = sql`WHERE deal_id = ${dealId}`;
+    }
+    
+    // Get total count
+    const countResult = await sql`
+      SELECT COUNT(*) as total 
+      ${baseQuery} 
+      ${whereClause}
+    `;
+    const totalCount = parseInt(countResult[0].total);
+    
+    // Get paginated data
+    const dataResult = await sql`
+      SELECT * 
+      ${baseQuery} 
+      ${whereClause}
+      ORDER BY entered_at DESC 
+      LIMIT ${limit} 
+      OFFSET ${offset}
+    `;
+    
+    return {
+      data: dataResult,
+      totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit)
+    };
+  }, 'getDealFlowDataPaginated');
+};
+
 // Canonical Stage Mappings Functions
 export const getCanonicalStageMappings = async () => {
   return withDbErrorHandling(async () => {

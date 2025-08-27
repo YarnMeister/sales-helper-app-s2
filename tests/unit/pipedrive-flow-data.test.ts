@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { POST } from '../../app/api/pipedrive/deal-flow/route';
 import { GET } from '../../app/api/pipedrive/deal-flow-data/route';
 import { fetchDealFlow } from '../../lib/pipedrive';
-import { insertDealFlowData, insertDealMetadata, getDealFlowData } from '../../lib/db';
+import { insertDealFlowData, insertDealMetadata, getDealFlowData, getDealFlowDataPaginated } from '../../lib/db';
 
 // Mock the Pipedrive API
 vi.mock('../../lib/pipedrive', () => ({
@@ -15,6 +15,7 @@ vi.mock('../../lib/db', () => ({
   insertDealFlowData: vi.fn(),
   insertDealMetadata: vi.fn(),
   getDealFlowData: vi.fn(),
+  getDealFlowDataPaginated: vi.fn(),
   logInfo: vi.fn(),
   logError: vi.fn()
 }));
@@ -271,18 +272,6 @@ describe('Pipedrive Flow Data', () => {
           left_at: null,
           duration_seconds: null,
           created_at: '2025-08-25T13:33:46.718Z'
-        },
-        {
-          id: '2',
-          pipedrive_event_id: 12344,
-          deal_id: 1467,
-          pipeline_id: 1,
-          stage_id: 3,
-          stage_name: 'Order Received - Johan',
-          entered_at: '2025-08-07T11:16:49.000Z',
-          left_at: '2025-08-11T12:28:28.000Z',
-          duration_seconds: 349899,
-          created_at: '2025-08-25T13:33:46.718Z'
         }
       ];
 
@@ -335,10 +324,110 @@ describe('Pipedrive Flow Data', () => {
       });
     });
 
+    it('should handle pagination parameters correctly', async () => {
+      const dealId = 1467;
+      const page = 2;
+      const limit = 25;
+      const mockPaginatedData = {
+        data: [
+          {
+            id: '1',
+            pipedrive_event_id: 12345,
+            deal_id: dealId,
+            pipeline_id: 1,
+            stage_id: 5,
+            stage_name: 'Quality Control',
+            entered_at: '2025-08-11T12:28:28.000Z',
+            left_at: null,
+            duration_seconds: null,
+            created_at: '2025-08-25T13:33:46.718Z'
+          }
+        ],
+        totalCount: 100,
+        page: 2,
+        limit: 25,
+        totalPages: 4
+      };
+
+      vi.mocked(getDealFlowDataPaginated).mockResolvedValue(mockPaginatedData);
+
+      const request = new NextRequest(
+        `http://localhost:3000/api/pipedrive/deal-flow-data?deal_id=${dealId}&page=${page}&limit=${limit}&paginated=true`
+      );
+      const response = await GET(request);
+
+      expect(getDealFlowDataPaginated).toHaveBeenCalledWith(dealId, page, limit);
+      expect(response).toEqual({
+        data: {
+          success: true,
+          data: mockPaginatedData.data,
+          pagination: {
+            page: 2,
+            limit: 25,
+            totalCount: 100,
+            totalPages: 4,
+            hasNextPage: true,
+            hasPrevPage: true
+          },
+          message: 'Successfully fetched deal flow data'
+        },
+        options: undefined
+      });
+    });
+
+    it('should use default pagination values when not provided', async () => {
+      const mockPaginatedData = {
+        data: [],
+        totalCount: 0,
+        page: 1,
+        limit: 50,
+        totalPages: 0
+      };
+
+      vi.mocked(getDealFlowDataPaginated).mockResolvedValue(mockPaginatedData);
+
+      const request = new NextRequest('http://localhost:3000/api/pipedrive/deal-flow-data?paginated=true');
+      const response = await GET(request);
+
+      expect(getDealFlowDataPaginated).toHaveBeenCalledWith(undefined, 1, 50);
+      expect(response).toEqual({
+        data: {
+          success: true,
+          data: [],
+          pagination: {
+            page: 1,
+            limit: 50,
+            totalCount: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPrevPage: false
+          },
+          message: 'Successfully fetched deal flow data'
+        },
+        options: undefined
+      });
+    });
+
     it('should handle database errors gracefully', async () => {
       vi.mocked(getDealFlowData).mockRejectedValue(new Error('Database connection failed'));
 
       const request = new NextRequest('http://localhost:3000/api/pipedrive/deal-flow-data');
+      const response = await GET(request);
+
+      expect(response).toEqual({
+        data: {
+          success: false,
+          error: 'Failed to fetch deal flow data',
+          message: 'Database connection failed'
+        },
+        options: { status: 500 }
+      });
+    });
+
+    it('should handle pagination database errors gracefully', async () => {
+      vi.mocked(getDealFlowDataPaginated).mockRejectedValue(new Error('Database connection failed'));
+
+      const request = new NextRequest('http://localhost:3000/api/pipedrive/deal-flow-data?paginated=true');
       const response = await GET(request);
 
       expect(response).toEqual({
@@ -418,6 +507,77 @@ describe('Pipedrive Flow Data', () => {
         const result = await getDealFlowData(dealId);
 
         expect(result).toEqual(mockData);
+      });
+    });
+
+    describe('getDealFlowDataPaginated', () => {
+      it('should fetch paginated deal flow data when no dealId provided', async () => {
+        const mockPaginatedData = {
+          data: [
+            {
+              id: '1',
+              deal_id: 1467,
+              stage_name: 'Quality Control',
+              entered_at: '2025-08-11T12:28:28.000Z'
+            }
+          ],
+          totalCount: 100,
+          page: 1,
+          limit: 50,
+          totalPages: 2
+        };
+
+        vi.mocked(getDealFlowDataPaginated).mockResolvedValue(mockPaginatedData);
+
+        const result = await getDealFlowDataPaginated();
+
+        expect(result).toEqual(mockPaginatedData);
+        expect(getDealFlowDataPaginated).toHaveBeenCalledWith();
+      });
+
+      it('should fetch paginated deal flow data for specific dealId', async () => {
+        const dealId = 1467;
+        const page = 2;
+        const limit = 25;
+        const mockPaginatedData = {
+          data: [
+            {
+              id: '1',
+              deal_id: dealId,
+              stage_name: 'Quality Control',
+              entered_at: '2025-08-11T12:28:28.000Z'
+            }
+          ],
+          totalCount: 100,
+          page: 2,
+          limit: 25,
+          totalPages: 4
+        };
+
+        vi.mocked(getDealFlowDataPaginated).mockResolvedValue(mockPaginatedData);
+
+        const result = await getDealFlowDataPaginated(dealId, page, limit);
+
+        expect(result).toEqual(mockPaginatedData);
+        expect(getDealFlowDataPaginated).toHaveBeenCalledWith(dealId, page, limit);
+      });
+
+      it('should handle empty results correctly', async () => {
+        const mockPaginatedData = {
+          data: [],
+          totalCount: 0,
+          page: 1,
+          limit: 50,
+          totalPages: 0
+        };
+
+        vi.mocked(getDealFlowDataPaginated).mockResolvedValue(mockPaginatedData);
+
+        const result = await getDealFlowDataPaginated();
+
+        expect(result).toEqual(mockPaginatedData);
+        expect(result.totalCount).toBe(0);
+        expect(result.totalPages).toBe(0);
       });
     });
   });

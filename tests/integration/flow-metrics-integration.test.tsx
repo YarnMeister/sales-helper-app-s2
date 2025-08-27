@@ -265,6 +265,137 @@ describe('Flow Metrics Integration Tests', () => {
       }, { timeout: TEST_TIMEOUT });
     });
 
+    it('should test Raw Data tab with pagination functionality', async () => {
+      // Mock the paginated API response
+      const mockPaginatedResponse = {
+        success: true,
+        data: MANUFACTURING_FLOW_DATA,
+        pagination: {
+          page: 1,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false
+        }
+      };
+
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: [] },
+        '/api/pipedrive/deal-flow-data': mockPaginatedResponse,
+        '/api/pipedrive/deal-flow': { success: true, data: MANUFACTURING_FLOW_DATA }
+      });
+      (global.fetch as any) = mockFetch;
+
+      render(<FlowMetricsReportPage />);
+
+      // Switch to Raw Data tab
+      fireEvent.click(screen.getByText('Raw Data'));
+
+      // Test fetching data
+      const input = screen.getByPlaceholderText('Enter Pipedrive deal ID');
+      const fetchButton = screen.getByText('Fetch');
+
+      fireEvent.change(input, { target: { value: '1467' } });
+      fireEvent.click(fetchButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('1467')).toBeInTheDocument();
+        expect(screen.getByText('Quality Control')).toBeInTheDocument();
+        expect(screen.getByText('Order Inv Paid')).toBeInTheDocument();
+        expect(screen.getByText('Showing 2 of 100 stage transitions')).toBeInTheDocument();
+        expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+        expect(screen.getByText('Load All Data')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
+    });
+
+    it('should test pagination navigation in Raw Data view', async () => {
+      // Mock first page response
+      const mockFirstPageResponse = {
+        success: true,
+        data: MANUFACTURING_FLOW_DATA,
+        pagination: {
+          page: 1,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPrevPage: false
+        }
+      };
+
+      // Mock second page response
+      const mockSecondPageResponse = {
+        success: true,
+        data: [
+          {
+            id: '3',
+            deal_id: 1467,
+            pipeline_id: 1,
+            stage_id: 10,
+            stage_name: 'Final Stage',
+            entered_at: '2025-08-13T12:28:28.000Z',
+            left_at: null,
+            duration_seconds: null,
+            created_at: '2025-08-25T13:33:46.718Z',
+            updated_at: '2025-08-25T13:33:46.718Z'
+          }
+        ],
+        pagination: {
+          page: 2,
+          limit: 50,
+          totalCount: 100,
+          totalPages: 2,
+          hasNextPage: false,
+          hasPrevPage: true
+        }
+      };
+
+      let callCount = 0;
+      const mockFetch = vi.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.resolve({
+            json: () => Promise.resolve(mockFirstPageResponse)
+          });
+        } else {
+          return Promise.resolve({
+            json: () => Promise.resolve(mockSecondPageResponse)
+          });
+        }
+      });
+
+      (global.fetch as any) = mockFetch;
+
+      render(<FlowMetricsReportPage />);
+
+      // Switch to Raw Data tab
+      fireEvent.click(screen.getByText('Raw Data'));
+
+      // Test fetching data
+      const input = screen.getByPlaceholderText('Enter Pipedrive deal ID');
+      const fetchButton = screen.getByText('Fetch');
+
+      fireEvent.change(input, { target: { value: '1467' } });
+      fireEvent.click(fetchButton);
+
+      // Wait for first page to load
+      await waitFor(() => {
+        expect(screen.getByText('Quality Control')).toBeInTheDocument();
+        expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
+
+      // Click Next button
+      const nextButton = screen.getByText('Next');
+      fireEvent.click(nextButton);
+
+      // Wait for second page to load
+      await waitFor(() => {
+        expect(screen.getByText('Final Stage')).toBeInTheDocument();
+        expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
+    });
+
     it('should test Mappings tab functionality', async () => {
       const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
 
