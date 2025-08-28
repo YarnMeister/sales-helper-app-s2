@@ -76,7 +76,7 @@ describe('LeadTimeChart', () => {
       expect(titleElements.length).toBeGreaterThan(0);
 
       // Check that the computed average is displayed
-      expect(screen.getByText('Average (computed): 5.3 days')).toBeInTheDocument();
+      expect(screen.getByText('Average (computed): 5.25 days')).toBeInTheDocument();
 
       // Check that the toggle checkbox is present
       const checkbox = screen.getByRole('checkbox');
@@ -116,8 +116,8 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      // Average should be (4+4+6+7)/4 = 5.25 rounded to 5.3
-      expect(screen.getByText('Average (computed): 5.3 days')).toBeInTheDocument();
+      // Average should be (4+4+6+7)/4 = 5.25 with precise calculation
+      expect(screen.getByText('Average (computed): 5.25 days')).toBeInTheDocument();
     });
 
     it('should handle computed average toggle', async () => {
@@ -227,7 +227,7 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      expect(screen.getByText('Average (computed): 0.5 days')).toBeInTheDocument();
+      expect(screen.getByText('Average (computed): 0.50 days')).toBeInTheDocument();
     });
 
     it('should handle very large durations', () => {

@@ -26,7 +26,7 @@ interface LeadTimeChartProps {
   canonicalStage: string;
 }
 
-const parseDuration = (seconds: number) => Math.round(seconds / 86400);
+const parseDuration = (seconds: number) => Math.round((seconds / 86400) * 100) / 100;
 
 const prettyDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -75,9 +75,13 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
       return { chartData: [], avg: 0, maxDays: 0 };
     }
 
-    const durations = deals.map(deal => parseDuration(deal.duration_seconds));
-    const computedAvg = durations.reduce((a, b) => a + b, 0) / durations.length;
-    const maxDuration = Math.max(...durations);
+    // Use the same precise calculation as the detail page
+    const durationsInDays = deals.map(deal => 
+      Math.round((deal.duration_seconds / 86400) * 100) / 100
+    );
+    const totalDays = durationsInDays.reduce((sum, days) => sum + days, 0);
+    const computedAvg = Math.round((totalDays / durationsInDays.length) * 100) / 100;
+    const maxDuration = Math.max(...durationsInDays);
     
     // Sort deals by start_date in ascending order (earliest to latest)
     const sortedDeals = [...deals].sort((a, b) => 
@@ -85,7 +89,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
     );
     
     const data = sortedDeals.map((deal) => {
-      const days = parseDuration(deal.duration_seconds);
+      const days = Math.round((deal.duration_seconds / 86400) * 100) / 100;
       
       return {
         name: formatDateForChart(deal.start_date),
@@ -95,13 +99,13 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
         endDate: deal.end_date,
         Days: days,
         Average: 5, // constant line
-        AverageComputed: Number.isFinite(computedAvg) ? Number(computedAvg.toFixed(1)) : 0,
+        AverageComputed: computedAvg,
       };
     });
 
     return { 
       chartData: data, 
-      avg: Number(computedAvg.toFixed(1)),
+      avg: computedAvg,
       maxDays: maxDuration
     };
   }, [deals]);
@@ -119,7 +123,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
       <div className="flex items-center gap-3 flex-wrap">
         <h2 className="text-xl font-semibold">{metricTitle}</h2>
         <span className="text-sm text-gray-500">
-          Average (computed): {avg} days
+          Average (computed): {avg.toFixed(2)} days
         </span>
         <label className="ml-auto flex items-center gap-2 text-sm">
           <input
@@ -177,7 +181,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
       <div className="text-sm text-gray-500 space-y-2">
         <p>
           X-axis shows each deal by its start date (dd-mm format). 
-          Bar = duration in days. Line = average ({useComputedAverage ? avg : 5} days).
+          Bar = duration in days. Line = average ({useComputedAverage ? avg.toFixed(2) : 5} days).
         </p>
         <p>
           <strong>Total deals:</strong> {deals.length} | <strong>Canonical stage:</strong> {canonicalStage}
