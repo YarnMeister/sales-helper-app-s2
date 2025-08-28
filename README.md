@@ -355,11 +355,9 @@ reorderFlowMetrics(reorderData: ReorderData[]): Promise<void>
 - **Historical Tracking**: Add audit trail for metric changes
 - **Performance Optimization**: Add caching layer for frequently accessed metrics
 
-#### **Migration Strategy**
-- **Backward Compatibility**: Existing hardcoded metrics preserved in database
-- **Gradual Migration**: Old and new systems can coexist during transition
-- **Data Integrity**: Foreign key constraints ensure data consistency
-- **Rollback Support**: Previous system can be restored if needed
+### Graphs
+- Using  https://recharts.org/en-US/api for draing bar charts and other visuals in the Metrics/Report pages
+
 
 ## Development
 
@@ -410,19 +408,7 @@ npm run dev
 - All testing should be done locally or via production deployment
 - Git integration has been disconnected to prevent automatic preview deployments
 
-#### Preview Deployment Configuration
-The following configuration has been implemented to prevent preview deployments:
 
-**`vercel.json` Configuration:**
-```json
-{
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  },
-  "ignoreCommand": "echo 'Preview deployments disabled' && exit 1"
-}
 ```
 
 **`.vercelignore` File:**
@@ -452,4 +438,4 @@ git commit --no-verify  # Skip pre-commit hook
 git push --no-verify    # Skip pre-push hook
 ```
 
-**⚠️ Warning**: Only use these commands in true emergencies. The hooks exist to protect production.
+

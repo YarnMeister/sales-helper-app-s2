@@ -79,7 +79,12 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
     const computedAvg = durations.reduce((a, b) => a + b, 0) / durations.length;
     const maxDuration = Math.max(...durations);
     
-    const data = deals.map((deal) => {
+    // Sort deals by start_date in ascending order (earliest to latest)
+    const sortedDeals = [...deals].sort((a, b) => 
+      new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+    );
+    
+    const data = sortedDeals.map((deal) => {
       const days = parseDuration(deal.duration_seconds);
       
       return {

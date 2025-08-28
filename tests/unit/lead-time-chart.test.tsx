@@ -89,11 +89,11 @@ describe('LeadTimeChart', () => {
       expect(screen.getByTestId('bar')).toBeInTheDocument();
       expect(screen.getByTestId('line')).toBeInTheDocument();
 
-      // Check chart data
+      // Check chart data (now sorted by date, earliest first)
       const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
       expect(chartData).toHaveLength(4);
-      expect(chartData[0].name).toBe('14-08');
-      expect(chartData[0].Days).toBe(4);
+      expect(chartData[0].name).toBe('12-08'); // Earliest date first
+      expect(chartData[0].Days).toBe(7);
 
       // Check footer information
       const totalDealsElements = screen.getAllByText((content, element) => {
@@ -264,10 +264,10 @@ describe('LeadTimeChart', () => {
 
       const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
       
-      expect(chartData[0].name).toBe('14-08');
-      expect(chartData[1].name).toBe('14-08');
-      expect(chartData[2].name).toBe('13-08');
-      expect(chartData[3].name).toBe('12-08');
+      expect(chartData[0].name).toBe('12-08'); // Earliest date first
+      expect(chartData[1].name).toBe('13-08');
+      expect(chartData[2].name).toBe('14-08');
+      expect(chartData[3].name).toBe('14-08');
     });
 
     it('should calculate days correctly from duration_seconds', () => {
@@ -281,10 +281,10 @@ describe('LeadTimeChart', () => {
 
       const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
       
-      expect(chartData[0].Days).toBe(4); // 345600 seconds = 4 days
-      expect(chartData[1].Days).toBe(4); // 345600 seconds = 4 days
-      expect(chartData[2].Days).toBe(6); // 518400 seconds = 6 days
-      expect(chartData[3].Days).toBe(7); // 604800 seconds = 7 days
+      expect(chartData[0].Days).toBe(7); // 604800 seconds = 7 days (earliest date)
+      expect(chartData[1].Days).toBe(6); // 518400 seconds = 6 days
+      expect(chartData[2].Days).toBe(4); // 345600 seconds = 4 days
+      expect(chartData[3].Days).toBe(4); // 345600 seconds = 4 days
     });
   });
 

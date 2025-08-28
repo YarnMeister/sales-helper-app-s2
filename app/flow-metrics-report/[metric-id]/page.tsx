@@ -36,6 +36,14 @@ interface PageProps {
   };
 }
 
+// Time period options
+const TIME_PERIODS = [
+  { value: '7d', label: '7 days', days: 7 },
+  { value: '14d', label: '14 days', days: 14 },
+  { value: '1m', label: '1 month', days: 30 },
+  { value: '3m', label: '3 months', days: 90 },
+];
+
 export default function FlowMetricDetailPage({ params }: PageProps) {
   const router = useRouter();
   const metricId = params['metric-id'];
@@ -46,9 +54,25 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const [metricConfig, setMetricConfig] = useState<MetricConfig | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'chart'>('chart');
 
-  // Calculate metrics from the actual deals data
+  // Filter deals based on selected time period
+  const filteredDeals = useMemo(() => {
+    if (!deals || deals.length === 0) return [];
+    
+    const selectedPeriodConfig = TIME_PERIODS.find(p => p.value === selectedPeriod);
+    if (!selectedPeriodConfig) return deals;
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - selectedPeriodConfig.days);
+    
+    return deals.filter(deal => {
+      const dealDate = new Date(deal.start_date);
+      return dealDate >= cutoffDate;
+    });
+  }, [deals, selectedPeriod]);
+
+  // Calculate metrics from the filtered deals data
   const calculatedMetrics: CalculatedMetrics = useMemo(() => {
-    if (!deals || deals.length === 0) {
+    if (!filteredDeals || filteredDeals.length === 0) {
       return {
         average: 0,
         best: 0,
@@ -58,7 +82,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
     }
 
     // Convert duration_seconds to days with precise calculation
-    const durationsInDays = deals.map(deal => 
+    const durationsInDays = filteredDeals.map(deal => 
       Math.round((deal.duration_seconds / 86400) * 100) / 100
     );
 
@@ -74,9 +98,9 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
       average,
       best,
       worst,
-      totalDeals: deals.length
+      totalDeals: filteredDeals.length
     };
-  }, [deals]);
+  }, [filteredDeals]);
 
   // Fetch metric configuration from database
   useEffect(() => {
@@ -178,7 +202,9 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{metricConfig?.display_title || 'Loading...'}</h1>
-              <p className="text-gray-600">Last 7 days</p>
+              <p className="text-gray-600">
+                {TIME_PERIODS.find(p => p.value === selectedPeriod)?.label || 'Last 7 days'}
+              </p>
             </div>
           </div>
         </div>
@@ -186,6 +212,41 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
 
       {/* Main Content */}
       <div className="px-4 py-4 pb-24">
+        {/* Time Period Selectors */}
+        <div className="mb-6">
+          {/* Desktop: Row of buttons */}
+          <div className="hidden md:block">
+            <div className="flex gap-2">
+              {TIME_PERIODS.map((period) => (
+                <Button
+                  key={period.value}
+                  variant={selectedPeriod === period.value ? 'default' : 'outline'}
+                  size="sm"
+                  className={`flex-1 ${selectedPeriod === period.value ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+                  onClick={() => setSelectedPeriod(period.value)}
+                >
+                  {period.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Mobile: Dropdown */}
+          <div className="md:hidden">
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+              {TIME_PERIODS.map((period) => (
+                <option key={period.value} value={period.value}>
+                  {period.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {/* Summary Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
@@ -284,13 +345,15 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               <div className="flex items-center justify-center py-8">
                 <div className="text-red-500">{error}</div>
               </div>
-            ) : deals.length === 0 ? (
+            ) : filteredDeals.length === 0 ? (
               <div className="flex items-center justify-center py-8">
-                <div className="text-gray-500">No deals found for this canonical stage</div>
+                <div className="text-gray-500">
+                  No deals found for this canonical stage in the selected time period
+                </div>
               </div>
             ) : viewMode === 'chart' ? (
               <LeadTimeChart 
-                deals={deals}
+                deals={filteredDeals}
                 metricTitle={metricConfig?.display_title || 'Lead Time'}
                 canonicalStage={metricConfig?.canonical_stage || ''}
               />
@@ -306,7 +369,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {deals.map((deal) => {
+                    {filteredDeals.map((deal) => {
                       const durationDays = Math.round(deal.duration_seconds / 86400);
                       const startDate = new Date(deal.start_date).toLocaleDateString();
                       const endDate = new Date(deal.end_date).toLocaleDateString();
