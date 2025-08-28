@@ -563,7 +563,6 @@ const ComboChart = React.forwardRef<HTMLDivElement, ComboChartProps>(
                   dataKey={category}
                   fill={color}
                   radius={[4, 4, 0, 0]}
-                  className="fill-tremor-background-muted"
                   stackId={barSeries.type === "stacked" ? "stack" : undefined}
                   isAnimationActive={true}
                   animationEasing="ease-out"
@@ -587,7 +586,6 @@ const ComboChart = React.forwardRef<HTMLDivElement, ComboChartProps>(
                   strokeWidth={2}
                   dot={false}
                   type="monotone"
-                  className="stroke-tremor-background-muted"
                   yAxisId={enableBiaxial ? "right" : undefined}
                   connectNulls={lineSeries.connectNulls ?? false}
                   isAnimationActive={true}

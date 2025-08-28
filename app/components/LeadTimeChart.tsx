@@ -109,7 +109,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
           }}
           lineSeries={{
             categories: ["Average"],
-            colors: ["amber"],
+            colors: ["pink"],
             valueFormatter: (value) => `${value} days`,
             yAxisLabel: "Average (days)",
             showYAxis: false,
