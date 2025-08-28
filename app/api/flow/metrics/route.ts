@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
     const calculatedMetrics = await Promise.all(
       activeMetrics.map(async (metric) => {
         try {
-          // Get deals for this canonical stage
-          const deals = await getDealsForCanonicalStage(metric.canonical_stage);
+          // Get deals for this canonical stage with period filtering
+          const deals = await getDealsForCanonicalStage(metric.canonical_stage, period);
           
           if (!deals || deals.length === 0) {
             return {

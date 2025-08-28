@@ -58,21 +58,8 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const [metricConfig, setMetricConfig] = useState<MetricConfig | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'chart'>('chart');
 
-  // Filter deals based on selected time period
-  const filteredDeals = useMemo(() => {
-    if (!deals || deals.length === 0) return [];
-    
-    const selectedPeriodConfig = TIME_PERIODS.find(p => p.value === selectedPeriod);
-    if (!selectedPeriodConfig) return deals;
-    
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - selectedPeriodConfig.days);
-    
-    return deals.filter(deal => {
-      const dealDate = new Date(deal.start_date);
-      return dealDate >= cutoffDate;
-    });
-  }, [deals, selectedPeriod]);
+  // Deals are now filtered at the database level, so we use them directly
+  const filteredDeals = deals;
 
   // Calculate metrics from the filtered deals data
   const calculatedMetrics: CalculatedMetrics = useMemo(() => {
@@ -148,7 +135,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
     fetchMetricConfig();
   }, [metricId]);
 
-  // Fetch deals data for the canonical stage
+  // Fetch deals data for the canonical stage with period filtering
   useEffect(() => {
     const fetchDeals = async () => {
       if (!metricConfig?.canonical_stage) {
@@ -157,7 +144,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
 
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/flow/canonical-stage-deals?canonicalStage=${encodeURIComponent(metricConfig.canonical_stage)}`);
+        const response = await fetch(`/api/flow/canonical-stage-deals?canonicalStage=${encodeURIComponent(metricConfig.canonical_stage)}&period=${selectedPeriod}`);
         const result = await response.json();
 
         if (result.success) {
@@ -174,7 +161,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
     };
 
     fetchDeals();
-  }, [metricConfig?.canonical_stage]);
+  }, [metricConfig?.canonical_stage, selectedPeriod]);
 
   if (error && !metricConfig) {
     return (

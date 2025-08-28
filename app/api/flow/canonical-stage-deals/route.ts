@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const canonicalStage = searchParams.get('canonicalStage');
+    const period = searchParams.get('period');
 
     if (!canonicalStage) {
       return NextResponse.json(
@@ -14,9 +15,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    logInfo('Fetching deals for canonical stage', { canonicalStage });
+    logInfo('Fetching deals for canonical stage', { canonicalStage, period });
 
-    const deals = await getDealsForCanonicalStage(canonicalStage);
+    const deals = await getDealsForCanonicalStage(canonicalStage, period || undefined);
 
     logInfo('Successfully fetched deals for canonical stage', {
       canonicalStage,
