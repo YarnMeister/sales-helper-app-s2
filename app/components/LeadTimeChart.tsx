@@ -37,11 +37,25 @@ const prettyDate = (dateString: string) => {
   });
 };
 
+const formatDateForChart = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  return `${day}-${month}`;
+};
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    // Find the deal data for this bar
+    const dealData = payload[0]?.payload;
+    const dealId = dealData?.dealId;
+    const fullDate = dealData?.dateLabel;
+    
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-        <p className="font-medium text-gray-900 mb-2">{label}</p>
+        <p className="font-medium text-gray-900 mb-2">
+          {fullDate} (Deal #{dealId})
+        </p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             {entry.name}: {entry.value} days
@@ -69,7 +83,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
       const days = parseDuration(deal.duration_seconds);
       
       return {
-        name: `#${deal.deal_id}`,
+        name: formatDateForChart(deal.start_date),
         dateLabel: prettyDate(deal.start_date),
         dealId: deal.deal_id,
         startDate: deal.start_date,
@@ -157,7 +171,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
 
       <div className="text-sm text-gray-500 space-y-2">
         <p>
-          X-axis shows each deal by its ID (labelled as <em>#ID</em>). 
+          X-axis shows each deal by its start date (dd-mm format). 
           Bar = duration in days. Line = average ({useComputedAverage ? avg : 5} days).
         </p>
         <p>

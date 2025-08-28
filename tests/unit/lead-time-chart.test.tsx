@@ -92,7 +92,7 @@ describe('LeadTimeChart', () => {
       // Check chart data
       const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
       expect(chartData).toHaveLength(4);
-      expect(chartData[0].name).toBe('#1371');
+      expect(chartData[0].name).toBe('14-08');
       expect(chartData[0].Days).toBe(4);
 
       // Check footer information
@@ -253,7 +253,7 @@ describe('LeadTimeChart', () => {
   });
 
   describe('Chart data formatting', () => {
-    it('should format deal indices correctly', () => {
+    it('should format dates correctly', () => {
       render(
         <LeadTimeChart
           deals={mockDeals}
@@ -264,10 +264,10 @@ describe('LeadTimeChart', () => {
 
       const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
       
-      expect(chartData[0].name).toBe('#1371');
-      expect(chartData[1].name).toBe('#1388');
-      expect(chartData[2].name).toBe('#1205');
-      expect(chartData[3].name).toBe('#1357');
+      expect(chartData[0].name).toBe('14-08');
+      expect(chartData[1].name).toBe('14-08');
+      expect(chartData[2].name).toBe('13-08');
+      expect(chartData[3].name).toBe('12-08');
     });
 
     it('should calculate days correctly from duration_seconds', () => {
