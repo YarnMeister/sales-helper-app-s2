@@ -3,16 +3,26 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import LeadTimeChart from '../../app/components/LeadTimeChart';
 
-// Mock the RechartsLeadTimeChart component
-vi.mock('../../app/components/RechartsLeadTimeChart', () => ({
-  default: ({ deals, metricTitle, canonicalStage, useComputedAverage }: any) => (
-    <div data-testid="recharts-lead-time-chart">
-      <div data-testid="recharts-deals">{JSON.stringify(deals)}</div>
-      <div data-testid="recharts-metric-title">{metricTitle}</div>
-      <div data-testid="recharts-canonical-stage">{canonicalStage}</div>
-      <div data-testid="recharts-use-computed-average">{useComputedAverage.toString()}</div>
+// Mock Recharts components
+vi.mock('recharts', () => ({
+  ComposedChart: ({ children, data }: any) => (
+    <div data-testid="composed-chart">
+      <div data-testid="chart-data">{JSON.stringify(data)}</div>
+      {children}
     </div>
   ),
+  Bar: ({ dataKey, fill }: any) => (
+    <div data-testid="bar" data-data-key={dataKey} data-fill={fill} />
+  ),
+  Line: ({ dataKey, stroke }: any) => (
+    <div data-testid="line" data-data-key={dataKey} data-stroke={stroke} />
+  ),
+  XAxis: () => <div data-testid="x-axis" />,
+  YAxis: () => <div data-testid="y-axis" />,
+  CartesianGrid: () => <div data-testid="cartesian-grid" />,
+  Tooltip: () => <div data-testid="tooltip" />,
+  Legend: () => <div data-testid="legend" />,
+  ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>,
 }));
 
 describe('LeadTimeChart', () => {
@@ -73,13 +83,17 @@ describe('LeadTimeChart', () => {
       expect(checkbox).toBeInTheDocument();
       expect(screen.getByText('Use computed average instead of 5')).toBeInTheDocument();
 
-      // Check that the RechartsLeadTimeChart is rendered
-      expect(screen.getByTestId('recharts-lead-time-chart')).toBeInTheDocument();
+      // Check that the Recharts components are rendered
+      expect(screen.getByTestId('composed-chart')).toBeInTheDocument();
+      expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
+      expect(screen.getByTestId('bar')).toBeInTheDocument();
+      expect(screen.getByTestId('line')).toBeInTheDocument();
 
-      // Check that Recharts chart receives correct props
-      expect(screen.getByTestId('recharts-metric-title')).toHaveTextContent('Manufacturing Lead Time');
-      expect(screen.getByTestId('recharts-canonical-stage')).toHaveTextContent('Manufacturing');
-      expect(screen.getByTestId('recharts-use-computed-average')).toHaveTextContent('false');
+      // Check chart data
+      const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
+      expect(chartData).toHaveLength(4);
+      expect(chartData[0].name).toBe('#1371');
+      expect(chartData[0].Days).toBe(4);
 
       // Check footer information
       const totalDealsElements = screen.getAllByText((content, element) => {
@@ -119,16 +133,13 @@ describe('LeadTimeChart', () => {
       
       // Initially unchecked (using constant 5)
       expect(checkbox).not.toBeChecked();
-      expect(screen.getByTestId('recharts-use-computed-average')).toHaveTextContent('false');
 
       // Check the checkbox
       fireEvent.click(checkbox);
       expect(checkbox).toBeChecked();
 
-      // Now should use computed average
-      await waitFor(() => {
-        expect(screen.getByTestId('recharts-use-computed-average')).toHaveTextContent('true');
-      });
+      // Verify the line component updates (this would be tested in integration tests)
+      expect(screen.getByTestId('line')).toBeInTheDocument();
     });
   });
 
@@ -143,7 +154,7 @@ describe('LeadTimeChart', () => {
       );
 
       expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
-      expect(screen.queryByTestId('recharts-lead-time-chart')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('composed-chart')).not.toBeInTheDocument();
     });
 
     it('should display no data message when deals is null', () => {
@@ -156,7 +167,7 @@ describe('LeadTimeChart', () => {
       );
 
       expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
-      expect(screen.queryByTestId('recharts-lead-time-chart')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('composed-chart')).not.toBeInTheDocument();
     });
 
     it('should display no data message when deals is undefined', () => {
@@ -169,7 +180,7 @@ describe('LeadTimeChart', () => {
       );
 
       expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
-      expect(screen.queryByTestId('recharts-lead-time-chart')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('composed-chart')).not.toBeInTheDocument();
     });
   });
 
@@ -251,12 +262,12 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      const chartData = JSON.parse(screen.getByTestId('recharts-deals').textContent || '[]');
+      const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
       
-      expect(chartData[0].deal_id).toBe('1371');
-      expect(chartData[1].deal_id).toBe('1388');
-      expect(chartData[2].deal_id).toBe('1205');
-      expect(chartData[3].deal_id).toBe('1357');
+      expect(chartData[0].name).toBe('#1371');
+      expect(chartData[1].name).toBe('#1388');
+      expect(chartData[2].name).toBe('#1205');
+      expect(chartData[3].name).toBe('#1357');
     });
 
     it('should calculate days correctly from duration_seconds', () => {
@@ -268,12 +279,12 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      const chartData = JSON.parse(screen.getByTestId('recharts-deals').textContent || '[]');
+      const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
       
-      expect(chartData[0].duration_seconds).toBe(345600); // 4 days
-      expect(chartData[1].duration_seconds).toBe(345600); // 4 days
-      expect(chartData[2].duration_seconds).toBe(518400); // 6 days
-      expect(chartData[3].duration_seconds).toBe(604800); // 7 days
+      expect(chartData[0].Days).toBe(4); // 345600 seconds = 4 days
+      expect(chartData[1].Days).toBe(4); // 345600 seconds = 4 days
+      expect(chartData[2].Days).toBe(6); // 518400 seconds = 6 days
+      expect(chartData[3].Days).toBe(7); // 604800 seconds = 7 days
     });
   });
 
@@ -308,6 +319,102 @@ describe('LeadTimeChart', () => {
       const checkbox = screen.getByRole('checkbox');
       const label = screen.getByText('Use computed average instead of 5');
       expect(label).toBeInTheDocument();
+    });
+  });
+
+  describe('Recharts Integration', () => {
+    it('should render bar with correct data key and color', () => {
+      render(
+        <LeadTimeChart
+          deals={mockDeals}
+          metricTitle="Test Metric"
+          canonicalStage="Test Stage"
+        />
+      );
+
+      const bar = screen.getByTestId('bar');
+      expect(bar).toHaveAttribute('data-data-key', 'Days');
+      expect(bar).toHaveAttribute('data-fill', '#447DF7');
+    });
+
+    it('should render line with correct data key and stroke color', () => {
+      render(
+        <LeadTimeChart
+          deals={mockDeals}
+          metricTitle="Test Metric"
+          canonicalStage="Test Stage"
+        />
+      );
+
+      const line = screen.getByTestId('line');
+      expect(line).toHaveAttribute('data-data-key', 'Average');
+      expect(line).toHaveAttribute('data-stroke', '#FF6B35');
+    });
+
+    it('should update line data key when computed average is toggled', async () => {
+      render(
+        <LeadTimeChart
+          deals={mockDeals}
+          metricTitle="Test Metric"
+          canonicalStage="Test Stage"
+        />
+      );
+
+      // Initially should use 'Average' (constant 5)
+      let line = screen.getByTestId('line');
+      expect(line).toHaveAttribute('data-data-key', 'Average');
+
+      // Toggle to computed average
+      const checkbox = screen.getByRole('checkbox');
+      fireEvent.click(checkbox);
+
+      // Should now use 'AverageComputed'
+      await waitFor(() => {
+        line = screen.getByTestId('line');
+        expect(line).toHaveAttribute('data-data-key', 'AverageComputed');
+      });
+    });
+
+    it('should render all required Recharts components', () => {
+      render(
+        <LeadTimeChart
+          deals={mockDeals}
+          metricTitle="Test Metric"
+          canonicalStage="Test Stage"
+        />
+      );
+
+      expect(screen.getByTestId('composed-chart')).toBeInTheDocument();
+      expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
+      expect(screen.getByTestId('bar')).toBeInTheDocument();
+      expect(screen.getByTestId('line')).toBeInTheDocument();
+      expect(screen.getByTestId('x-axis')).toBeInTheDocument();
+      expect(screen.getByTestId('y-axis')).toBeInTheDocument();
+      expect(screen.getByTestId('cartesian-grid')).toBeInTheDocument();
+      expect(screen.getByTestId('tooltip')).toBeInTheDocument();
+      expect(screen.getByTestId('legend')).toBeInTheDocument();
+    });
+
+    it('should pass correct chart data structure', () => {
+      render(
+        <LeadTimeChart
+          deals={mockDeals}
+          metricTitle="Test Metric"
+          canonicalStage="Test Stage"
+        />
+      );
+
+      const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
+      
+      // Check data structure
+      expect(chartData[0]).toHaveProperty('name');
+      expect(chartData[0]).toHaveProperty('Days');
+      expect(chartData[0]).toHaveProperty('Average');
+      expect(chartData[0]).toHaveProperty('AverageComputed');
+      expect(chartData[0]).toHaveProperty('dateLabel');
+      expect(chartData[0]).toHaveProperty('dealId');
+      expect(chartData[0]).toHaveProperty('startDate');
+      expect(chartData[0]).toHaveProperty('endDate');
     });
   });
 });

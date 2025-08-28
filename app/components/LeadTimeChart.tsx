@@ -1,7 +1,17 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import RechartsLeadTimeChart from "./RechartsLeadTimeChart";
+import {
+  ComposedChart,
+  Line,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 interface DealData {
   deal_id: string;
@@ -27,6 +37,22 @@ const prettyDate = (dateString: string) => {
   });
 };
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+        <p className="font-medium text-gray-900 mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.name}: {entry.value} days
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: LeadTimeChartProps) {
   const [useComputedAverage, setUseComputedAverage] = useState(false);
 
@@ -43,7 +69,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
       const days = parseDuration(deal.duration_seconds);
       
       return {
-        index: `#${deal.deal_id}`,
+        name: `#${deal.deal_id}`,
         dateLabel: prettyDate(deal.start_date),
         dealId: deal.deal_id,
         startDate: deal.start_date,
@@ -87,12 +113,47 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
         </label>
       </div>
 
-      <RechartsLeadTimeChart 
-        deals={deals}
-        metricTitle={metricTitle}
-        canonicalStage={canonicalStage}
-        useComputedAverage={useComputedAverage}
-      />
+      <div className="h-80 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={chartData}
+            margin={{
+              top: 20,
+              right: 30,
+              left: 20,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis 
+              dataKey="name" 
+              tick={{ fontSize: 12 }}
+              angle={-45}
+              textAnchor="end"
+              height={80}
+            />
+            <YAxis 
+              domain={[0, maxDays + 1]}
+              tick={{ fontSize: 12 }}
+              label={{ value: 'Days', angle: -90, position: 'insideLeft' }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+            <Bar 
+              dataKey="Days" 
+              fill="#447DF7" 
+              radius={[4, 4, 0, 0]}
+            />
+            <Line 
+              type="monotone" 
+              dataKey={useComputedAverage ? "AverageComputed" : "Average"} 
+              stroke="#FF6B35" 
+              strokeWidth={2}
+              dot={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
 
       <div className="text-sm text-gray-500 space-y-2">
         <p>
