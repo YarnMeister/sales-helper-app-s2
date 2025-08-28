@@ -131,6 +131,12 @@ After successful import:
    - The script should handle this automatically
    - If persistent, increase `RATE_LIMIT_DELAY_MS`
 
+5. **"null value in column 'id' of relation 'pipedrive_metric_data' violates not-null constraint"**
+   - **KNOWN ISSUE**: The metadata insertion has a bug where `firstEvent.deal_id` is undefined
+   - **IMPACT**: Metadata insertion fails, but flow data insertion succeeds
+   - **WORKAROUND**: Use the `dealId` parameter instead of `firstEvent.deal_id`
+   - **FIX NEEDED**: Change line in `processDeal()` function from `id: firstEvent.deal_id` to `id: dealId`
+
 ### Monitoring
 
 - Watch the heartbeat indicators to ensure the script is running
@@ -143,3 +149,27 @@ After successful import:
 - The script includes duplicate prevention via `pipedrive_event_id`
 - Safe to run multiple times (will skip existing records)
 - No impact on production data or user workflows
+
+## Known Issues & Fixes
+
+### Metadata Insertion Bug
+**Issue**: The script fails to insert deal metadata due to `firstEvent.deal_id` being undefined.
+
+**Fix Required**: In `scripts/import-deal-flow-data.js`, line ~185, change:
+```javascript
+// CURRENT (BROKEN):
+const dealMetadata = {
+  id: firstEvent.deal_id,  // This is undefined!
+};
+
+// FIXED:
+const dealMetadata = {
+  id: dealId,  // Use the dealId parameter we already have
+  title: `Deal ${dealId}`,
+  pipeline_id: 1,
+  stage_id: 1,
+  status: 'active'
+};
+```
+
+**Impact**: Metadata insertion fails, but flow data insertion succeeds. The import will work for flow data but won't populate the deal metadata table.
