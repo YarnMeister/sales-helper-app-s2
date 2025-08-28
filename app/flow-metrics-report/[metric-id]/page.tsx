@@ -44,7 +44,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metricConfig, setMetricConfig] = useState<MetricConfig | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'chart'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'chart'>('chart');
 
   // Calculate metrics from the actual deals data
   const calculatedMetrics: CalculatedMetrics = useMemo(() => {
@@ -249,20 +249,28 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant={viewMode === 'list' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="text-xs"
-                >
-                  List View
-                </Button>
-                <Button
                   variant={viewMode === 'chart' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('chart')}
-                  className="text-xs"
+                  className={`text-xs ${
+                    viewMode === 'chart'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
                   Chart View
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className={`text-xs ${
+                    viewMode === 'list'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  List View
                 </Button>
               </div>
             </div>

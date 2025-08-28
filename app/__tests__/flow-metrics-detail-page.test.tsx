@@ -225,6 +225,14 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
+
+      // Switch to list view to see the table
+      const listViewButton = screen.getByText('List View');
+      fireEvent.click(listViewButton);
+
+      await waitFor(() => {
         expect(screen.getByText('Deal ID')).toBeInTheDocument();
         expect(screen.getByText('Start Date')).toBeInTheDocument();
         expect(screen.getByText('End Date')).toBeInTheDocument();
@@ -265,6 +273,14 @@ describe('FlowMetricDetailPage', () => {
 
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
+
+      // Switch to list view to see the table
+      const listViewButton = screen.getByText('List View');
+      fireEvent.click(listViewButton);
+
       await waitFor(() => {
         expect(screen.getByText('D001')).toBeInTheDocument();
         expect(screen.getByText('1/15/2024')).toBeInTheDocument();
@@ -322,6 +338,14 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
+
+      // Switch to list view to see the table
+      const listViewButton = screen.getByText('List View');
+      fireEvent.click(listViewButton);
+
+      await waitFor(() => {
         expect(screen.getByText('D001')).toBeInTheDocument();
         expect(screen.getByText('D002')).toBeInTheDocument();
         expect(screen.getByText('D007')).toBeInTheDocument();
@@ -374,6 +398,14 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
+
+      // Switch to list view to see the table
+      const listViewButton = screen.getByText('List View');
+      fireEvent.click(listViewButton);
+
+      await waitFor(() => {
         // Best performer (3 days) should have green styling
         const bestDeal = screen.getByText('D001').closest('tr');
         expect(bestDeal).toHaveClass('bg-green-50');
@@ -420,6 +452,14 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
+
+      // Switch to list view to see the table
+      const listViewButton = screen.getByText('List View');
+      fireEvent.click(listViewButton);
+
+      await waitFor(() => {
         // Find the table container with overflow-x-auto class
         const tableContainer = screen.getByRole('table').closest('div');
         expect(tableContainer).toHaveClass('overflow-x-auto');
@@ -461,6 +501,14 @@ describe('FlowMetricDetailPage', () => {
 
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
+      await waitFor(() => {
+        expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
+      });
+
+      // Switch to list view to see the table
+      const listViewButton = screen.getByText('List View');
+      fireEvent.click(listViewButton);
+
       await waitFor(() => {
         expect(screen.getByRole('table')).toBeInTheDocument();
         const rowgroups = screen.getAllByRole('rowgroup');
@@ -835,23 +883,19 @@ describe('FlowMetricDetailPage', () => {
         expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
       });
 
-      // Initially should show list view
-      expect(screen.getByText('Deal ID')).toBeInTheDocument();
-      expect(screen.queryByTestId('lead-time-chart')).not.toBeInTheDocument();
-
-      // Click Chart View button
-      const chartViewButton = screen.getByText('Chart View');
-      fireEvent.click(chartViewButton);
-
-      // Should now show chart view
-      await waitFor(() => {
-        expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
-      });
+      // Initially should show chart view (default)
       expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
-      const chartElement = screen.getByTestId('lead-time-chart');
-      expect(chartElement).toHaveTextContent('Manufacturing Lead Time');
-      expect(chartElement).toHaveTextContent('Canonical Stage: Manufacturing');
-      expect(chartElement).toHaveTextContent('Deals Count: 2');
+      expect(screen.queryByText('Deal ID')).not.toBeInTheDocument();
+
+      // Click List View button
+      const listViewButton = screen.getByText('List View');
+      fireEvent.click(listViewButton);
+
+      // Should now show list view
+      await waitFor(() => {
+        expect(screen.getByText('Deal ID')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('lead-time-chart')).not.toBeInTheDocument();
     });
 
     it('should show list view when List View button is clicked', async () => {
@@ -891,15 +935,10 @@ describe('FlowMetricDetailPage', () => {
         expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
       });
 
-      // Switch to chart view first
-      const chartViewButton = screen.getByText('Chart View');
-      fireEvent.click(chartViewButton);
+      // Initially should be in chart view (default)
+      expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
-      });
-
-      // Switch back to list view
+      // Switch to list view
       const listViewButton = screen.getByText('List View');
       fireEvent.click(listViewButton);
 
@@ -987,23 +1026,23 @@ describe('FlowMetricDetailPage', () => {
         expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
       });
 
-      // Initially List View should be active (default)
+      // Initially Chart View should be active (default)
       const listViewButton = screen.getByText('List View');
       const chartViewButton = screen.getByText('Chart View');
       
-      expect(listViewButton).toHaveClass('bg-rtse-red');
-      expect(chartViewButton).toHaveClass('bg-background');
+      expect(chartViewButton).toHaveClass('bg-red-600');
+      expect(listViewButton).toHaveClass('text-gray-600');
 
-      // Switch to chart view
-      fireEvent.click(chartViewButton);
+      // Switch to list view
+      fireEvent.click(listViewButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId('lead-time-chart')).toBeInTheDocument();
+        expect(screen.getByText('Deal ID')).toBeInTheDocument();
       });
 
-      // Now Chart View should be active
-      expect(listViewButton).toHaveClass('bg-background');
-      expect(chartViewButton).toHaveClass('bg-rtse-red');
+      // Now List View should be active
+      expect(listViewButton).toHaveClass('bg-red-600');
+      expect(chartViewButton).toHaveClass('text-gray-600');
     });
   });
 });
