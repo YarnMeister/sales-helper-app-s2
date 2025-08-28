@@ -99,7 +99,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
           index="index"
           barSeries={{
             categories: ["Days"],
-            colors: ["cyan"],
+            colors: ["violet"],
             valueFormatter: (value) => `${value} days`,
             yAxisWidth: 60,
             showYAxis: true,
