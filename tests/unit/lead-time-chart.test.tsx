@@ -75,13 +75,11 @@ describe('LeadTimeChart', () => {
       const titleElements = screen.getAllByText('Manufacturing Lead Time');
       expect(titleElements.length).toBeGreaterThan(0);
 
-      // Check that the computed average is displayed
-      expect(screen.getByText('Average (computed): 5.25 days')).toBeInTheDocument();
+      // Check that the average is displayed
+      expect(screen.getByText('Average: 5.25 days')).toBeInTheDocument();
 
-      // Check that the toggle checkbox is present
-      const checkbox = screen.getByRole('checkbox');
-      expect(checkbox).toBeInTheDocument();
-      expect(screen.getByText('Use constant 5-day line instead of computed average')).toBeInTheDocument();
+      // Check that the average is displayed
+      expect(screen.getByText('Average: 5.25 days')).toBeInTheDocument();
 
       // Check that the Recharts components are rendered
       expect(screen.getByTestId('composed-chart')).toBeInTheDocument();
@@ -117,30 +115,10 @@ describe('LeadTimeChart', () => {
       );
 
       // Average should be (4+4+6+7)/4 = 5.25 with precise calculation
-      expect(screen.getByText('Average (computed): 5.25 days')).toBeInTheDocument();
+      expect(screen.getByText('Average: 5.25 days')).toBeInTheDocument();
     });
 
-    it('should handle computed average toggle', async () => {
-      render(
-        <LeadTimeChart
-          deals={mockDeals}
-          metricTitle="Test Metric"
-          canonicalStage="Test Stage"
-        />
-      );
 
-      const checkbox = screen.getByRole('checkbox');
-      
-      // Initially checked (using computed average)
-      expect(checkbox).toBeChecked();
-
-      // Uncheck the checkbox to use constant 5
-      fireEvent.click(checkbox);
-      expect(checkbox).not.toBeChecked();
-
-      // Verify the line component updates (this would be tested in integration tests)
-      expect(screen.getByTestId('line')).toBeInTheDocument();
-    });
   });
 
   describe('Empty data handling', () => {
@@ -196,7 +174,7 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      expect(screen.getByText(/Average \(computed\): 4.*days/)).toBeInTheDocument();
+      expect(screen.getByText(/Average: 4.*days/)).toBeInTheDocument();
       const totalDealsElements = screen.getAllByText((content, element) => {
         return element?.textContent?.includes('Total deals: 1') || false;
       });
@@ -227,7 +205,7 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      expect(screen.getByText('Average (computed): 0.50 days')).toBeInTheDocument();
+      expect(screen.getByText('Average: 0.50 days')).toBeInTheDocument();
     });
 
     it('should handle very large durations', () => {
@@ -248,7 +226,7 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      expect(screen.getByText(/Average \(computed\): 30.*days/)).toBeInTheDocument();
+      expect(screen.getByText(/Average: 30.*days/)).toBeInTheDocument();
     });
   });
 
@@ -298,9 +276,8 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      const checkbox = screen.getByRole('checkbox');
-      expect(checkbox).toBeInTheDocument();
-      expect(checkbox).toHaveAttribute('type', 'checkbox');
+      // No checkbox anymore, just check for average display
+      expect(screen.getByText('Average: 5.25 days')).toBeInTheDocument();
     });
 
     it('should have semantic HTML structure', () => {
@@ -315,10 +292,8 @@ describe('LeadTimeChart', () => {
       // Check for proper heading structure
       expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument();
       
-      // Check for proper label association
-      const checkbox = screen.getByRole('checkbox');
-      const label = screen.getByText('Use constant 5-day line instead of computed average');
-      expect(label).toBeInTheDocument();
+      // Check for proper average display
+      expect(screen.getByText('Average: 5.25 days')).toBeInTheDocument();
     });
   });
 
@@ -347,33 +322,11 @@ describe('LeadTimeChart', () => {
       );
 
       const line = screen.getByTestId('line');
-      expect(line).toHaveAttribute('data-data-key', 'AverageComputed');
+      expect(line).toHaveAttribute('data-data-key', 'Average');
       expect(line).toHaveAttribute('data-stroke', '#FF6B35');
     });
 
-    it('should update line data key when computed average is toggled', async () => {
-      render(
-        <LeadTimeChart
-          deals={mockDeals}
-          metricTitle="Test Metric"
-          canonicalStage="Test Stage"
-        />
-      );
 
-      // Initially should use 'AverageComputed' (computed average)
-      let line = screen.getByTestId('line');
-      expect(line).toHaveAttribute('data-data-key', 'AverageComputed');
-
-      // Toggle to constant 5
-      const checkbox = screen.getByRole('checkbox');
-      fireEvent.click(checkbox);
-
-      // Should now use 'Average'
-      await waitFor(() => {
-        line = screen.getByTestId('line');
-        expect(line).toHaveAttribute('data-data-key', 'Average');
-      });
-    });
 
     it('should render all required Recharts components', () => {
       render(
@@ -410,7 +363,7 @@ describe('LeadTimeChart', () => {
       expect(chartData[0]).toHaveProperty('name');
       expect(chartData[0]).toHaveProperty('Days');
       expect(chartData[0]).toHaveProperty('Average');
-      expect(chartData[0]).toHaveProperty('AverageComputed');
+
       expect(chartData[0]).toHaveProperty('dateLabel');
       expect(chartData[0]).toHaveProperty('dealId');
       expect(chartData[0]).toHaveProperty('startDate');

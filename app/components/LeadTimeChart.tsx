@@ -68,8 +68,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: LeadTimeChartProps) {
-  const [useComputedAverage, setUseComputedAverage] = useState(true);
-
   const { chartData, avg, maxDays } = useMemo(() => {
     if (!deals || deals.length === 0) {
       return { chartData: [], avg: 0, maxDays: 0 };
@@ -98,8 +96,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
         startDate: deal.start_date,
         endDate: deal.end_date,
         Days: days,
-        Average: 5, // constant line
-        AverageComputed: computedAvg,
+        Average: computedAvg,
       };
     });
 
@@ -123,17 +120,8 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
       <div className="flex items-center gap-3 flex-wrap">
         <h2 className="text-xl font-semibold">{metricTitle}</h2>
         <span className="text-sm text-gray-500">
-          Average (computed): {avg.toFixed(2)} days
+          Average: {avg.toFixed(2)} days
         </span>
-        <label className="ml-auto flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300"
-            checked={useComputedAverage}
-            onChange={(e) => setUseComputedAverage(e.target.checked)}
-          />
-          Use constant 5-day line instead of computed average
-        </label>
       </div>
 
       <div className="h-80 w-full">
@@ -169,7 +157,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
             />
             <Line 
               type="monotone" 
-              dataKey={useComputedAverage ? "AverageComputed" : "Average"} 
+              dataKey="Average" 
               stroke="#FF6B35" 
               strokeWidth={2}
               dot={false}
@@ -181,7 +169,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
       <div className="text-sm text-gray-500 space-y-2">
         <p>
           X-axis shows each deal by its start date (dd-mm format). 
-          Bar = duration in days. Line = average ({useComputedAverage ? avg.toFixed(2) : 5} days).
+          Bar = duration in days. Line = average ({avg.toFixed(2)} days).
         </p>
         <p>
           <strong>Total deals:</strong> {deals.length} | <strong>Canonical stage:</strong> {canonicalStage}

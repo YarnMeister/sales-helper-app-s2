@@ -267,7 +267,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {isLoading ? '...' : Math.round(calculatedMetrics.average)} days
+                {isLoading ? '...' : calculatedMetrics.average.toFixed(2)} days
               </div>
               {!isLoading && calculatedMetrics.totalDeals > 0 && (
                 <div className="text-xs text-gray-500 mt-1">
