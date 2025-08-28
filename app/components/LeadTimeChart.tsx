@@ -104,6 +104,8 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
             yAxisWidth: 60,
             showYAxis: true,
             allowDecimals: false,
+            minValue: 0,
+            maxValue: maxDays + 1,
           }}
           lineSeries={{
             categories: ["Average"],
