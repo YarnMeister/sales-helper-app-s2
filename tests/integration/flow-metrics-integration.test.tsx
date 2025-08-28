@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import FlowMetricsReportPage from '../../app/flow-metrics-report/page';
 import FlowMetricDetailPage from '../../app/flow-metrics-report/[metric-id]/page';
 import { 
@@ -11,11 +11,12 @@ import {
   MANUFACTURING_FLOW_DATA
 } from '../test-utils';
 
-// Mock Next.js router
+// Mock Next.js router and search params
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
+  useSearchParams: vi.fn(),
   useParams: vi.fn(),
-  usePathname: vi.fn()
+  usePathname: vi.fn(() => '/flow-metrics-report')
 }));
 
 // Mock useToast hook
@@ -28,12 +29,16 @@ vi.mock('../../app/hooks/use-toast', () => ({
 describe('Flow Metrics Integration Tests', () => {
   const mockRouter = {
     push: vi.fn(),
+    replace: vi.fn(),
     back: vi.fn()
   };
+
+  const mockSearchParams = new URLSearchParams();
 
   beforeEach(() => {
     vi.clearAllMocks();
     (useRouter as any).mockReturnValue(mockRouter);
+    (useSearchParams as any).mockReturnValue(mockSearchParams);
   });
 
   afterEach(() => {
@@ -153,7 +158,37 @@ describe('Flow Metrics Integration Tests', () => {
       const moreInfoButtons = screen.getAllByText('More info');
       if (moreInfoButtons.length > 0) {
         fireEvent.click(moreInfoButtons[0]);
-        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report/manufacturing-lead-time');
+        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report/manufacturing-lead-time?period=7d');
+      }
+    });
+
+    it('should handle period selection and pass to detail page', async () => {
+      const mockMetrics = [MANUFACTURING_LEAD_TIME_METRIC];
+
+      // Mock initial data loading
+      const mockFetch = createMockFetch({
+        '/api/admin/flow-metrics-config': { success: true, data: mockMetrics },
+        '/api/pipedrive/deal-flow-data': { success: true, data: [] },
+        '/api/flow/metrics?period=1m': { success: true, data: mockMetrics }
+      });
+      (global.fetch as any) = mockFetch;
+
+      render(<FlowMetricsReportPage />);
+
+      // Select 1 month period
+      const oneMonthButton = screen.getByText('1 month');
+      fireEvent.click(oneMonthButton);
+
+      // Wait for metrics to load
+      await waitFor(() => {
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+      }, { timeout: TEST_TIMEOUT });
+
+      // Find and click More Info button
+      const moreInfoButtons = screen.getAllByText('More info');
+      if (moreInfoButtons.length > 0) {
+        fireEvent.click(moreInfoButtons[0]);
+        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report/manufacturing-lead-time?period=1m');
       }
     });
   });
@@ -205,7 +240,31 @@ describe('Flow Metrics Integration Tests', () => {
       
       if (backButton) {
         fireEvent.click(backButton);
-        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report');
+        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report?period=7d');
+      }
+    });
+
+    it('should preserve period when navigating back from detail page', async () => {
+      // Set period in URL
+      mockSearchParams.set('period', '1m');
+
+      // Mock the canonical stage deals API
+      const mockFetch = createMockFetch({
+        '/api/flow/canonical-stage-deals': { success: true, data: [] }
+      });
+      (global.fetch as any) = mockFetch;
+
+      render(<FlowMetricDetailPage params={{ 'metric-id': 'manufacturing' }} />);
+
+      // Find and click back button
+      const backButtons = screen.getAllByRole('button');
+      const backButton = backButtons.find(button => 
+        button.innerHTML.includes('M15 19l-7-7 7-7')
+      );
+      
+      if (backButton) {
+        fireEvent.click(backButton);
+        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report?period=1m');
       }
     });
   });
