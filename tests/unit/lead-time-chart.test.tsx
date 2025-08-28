@@ -81,7 +81,7 @@ describe('LeadTimeChart', () => {
       // Check that the toggle checkbox is present
       const checkbox = screen.getByRole('checkbox');
       expect(checkbox).toBeInTheDocument();
-      expect(screen.getByText('Use computed average instead of 5')).toBeInTheDocument();
+      expect(screen.getByText('Use constant 5-day line instead of computed average')).toBeInTheDocument();
 
       // Check that the Recharts components are rendered
       expect(screen.getByTestId('composed-chart')).toBeInTheDocument();
@@ -131,12 +131,12 @@ describe('LeadTimeChart', () => {
 
       const checkbox = screen.getByRole('checkbox');
       
-      // Initially unchecked (using constant 5)
-      expect(checkbox).not.toBeChecked();
-
-      // Check the checkbox
-      fireEvent.click(checkbox);
+      // Initially checked (using computed average)
       expect(checkbox).toBeChecked();
+
+      // Uncheck the checkbox to use constant 5
+      fireEvent.click(checkbox);
+      expect(checkbox).not.toBeChecked();
 
       // Verify the line component updates (this would be tested in integration tests)
       expect(screen.getByTestId('line')).toBeInTheDocument();
@@ -317,7 +317,7 @@ describe('LeadTimeChart', () => {
       
       // Check for proper label association
       const checkbox = screen.getByRole('checkbox');
-      const label = screen.getByText('Use computed average instead of 5');
+      const label = screen.getByText('Use constant 5-day line instead of computed average');
       expect(label).toBeInTheDocument();
     });
   });
@@ -347,7 +347,7 @@ describe('LeadTimeChart', () => {
       );
 
       const line = screen.getByTestId('line');
-      expect(line).toHaveAttribute('data-data-key', 'Average');
+      expect(line).toHaveAttribute('data-data-key', 'AverageComputed');
       expect(line).toHaveAttribute('data-stroke', '#FF6B35');
     });
 
@@ -360,18 +360,18 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      // Initially should use 'Average' (constant 5)
+      // Initially should use 'AverageComputed' (computed average)
       let line = screen.getByTestId('line');
-      expect(line).toHaveAttribute('data-data-key', 'Average');
+      expect(line).toHaveAttribute('data-data-key', 'AverageComputed');
 
-      // Toggle to computed average
+      // Toggle to constant 5
       const checkbox = screen.getByRole('checkbox');
       fireEvent.click(checkbox);
 
-      // Should now use 'AverageComputed'
+      // Should now use 'Average'
       await waitFor(() => {
         line = screen.getByTestId('line');
-        expect(line).toHaveAttribute('data-data-key', 'AverageComputed');
+        expect(line).toHaveAttribute('data-data-key', 'Average');
       });
     });
 

@@ -68,7 +68,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: LeadTimeChartProps) {
-  const [useComputedAverage, setUseComputedAverage] = useState(false);
+  const [useComputedAverage, setUseComputedAverage] = useState(true);
 
   const { chartData, avg, maxDays } = useMemo(() => {
     if (!deals || deals.length === 0) {
@@ -132,7 +132,7 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
             checked={useComputedAverage}
             onChange={(e) => setUseComputedAverage(e.target.checked)}
           />
-          Use computed average instead of 5
+          Use constant 5-day line instead of computed average
         </label>
       </div>
 
