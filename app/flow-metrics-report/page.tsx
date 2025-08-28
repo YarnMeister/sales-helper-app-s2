@@ -5,11 +5,19 @@ import { CommonHeader } from '../components/CommonHeader';
 import { CommonFooter } from '../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { DealInputForm } from '../components/DealInputForm';
 import FlowDataTable from '../components/FlowDataTable';
 import { ViewToggle } from '../components/ViewToggle';
 import { MetricsManagement } from '../components/MetricsManagement';
+
+// Time period options
+const TIME_PERIODS = [
+  { value: '7d', label: '7 days', days: 7 },
+  { value: '14d', label: '14 days', days: 14 },
+  { value: '1m', label: '1 month', days: 30 },
+  { value: '3m', label: '3 months', days: 90 },
+];
 
 // Interface for flow metric data
 interface FlowMetricData {
@@ -57,12 +65,12 @@ const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
 };
 
 // KPI Card component
-const KPICard = ({ data }: { data: FlowMetricData }) => {
+const KPICard = ({ data, selectedPeriod }: { data: FlowMetricData; selectedPeriod: string }) => {
   const router = useRouter();
   
   const handleMoreInfo = () => {
-    // Navigate to the detail page
-    router.push(`/flow-metrics-report/${data.id}`);
+    // Navigate to the detail page with the selected period
+    router.push(`/flow-metrics-report/${data.id}?period=${selectedPeriod}`);
   };
 
   return (
@@ -109,7 +117,12 @@ const KPICard = ({ data }: { data: FlowMetricData }) => {
 };
 
 export default function FlowMetricsReportPage() {
-  const [selectedPeriod, setSelectedPeriod] = useState('7d');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get period from URL query parameter, default to '7d'
+  const urlPeriod = searchParams.get('period');
+  const [selectedPeriod, setSelectedPeriod] = useState(urlPeriod || '7d');
   const [metricsData, setMetricsData] = useState<FlowMetricData[]>([]);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
   const [currentView, setCurrentView] = useState<'metrics' | 'raw-data' | 'mappings'>('metrics');
@@ -154,6 +167,20 @@ export default function FlowMetricsReportPage() {
     fetchMetrics();
   }, [selectedPeriod]);
 
+  // Update URL when period changes
+  useEffect(() => {
+    const newUrl = `/flow-metrics-report?period=${selectedPeriod}`;
+    router.replace(newUrl, { scroll: false });
+  }, [selectedPeriod, router]);
+
+  // Sync state when URL changes
+  useEffect(() => {
+    const urlPeriod = searchParams.get('period');
+    if (urlPeriod && urlPeriod !== selectedPeriod) {
+      setSelectedPeriod(urlPeriod);
+    }
+  }, [searchParams, selectedPeriod]);
+
   // Load existing flow data on component mount
   useEffect(() => {
     loadExistingFlowData();
@@ -191,42 +218,60 @@ export default function FlowMetricsReportPage() {
 
       {/* Main Content */}
       <div className="px-4 py-4 pb-24">
-        {/* Header Section */}
+        {/* View Toggle - On its own row */}
         <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Lead Time Overview
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Track efficiency across your sales pipeline stages
-              </p>
-            </div>
-            
-            {/* View Toggle */}
-            <ViewToggle 
-              currentView={currentView} 
-              onViewChange={setCurrentView} 
-            />
-          </div>
+          <ViewToggle 
+            currentView={currentView} 
+            onViewChange={setCurrentView} 
+          />
         </div>
 
         {/* Content based on current view */}
         {currentView === 'metrics' && (
           <>
-            {/* Period Selector for Metrics View */}
+            {/* Header Section - Moved down one row */}
             <div className="mb-6">
-              <div className="flex items-center gap-2">
-                <label htmlFor="period-select" className="text-sm font-medium text-gray-700">
-                  Period:
-                </label>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Lead Time Overview
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Track efficiency across your sales pipeline stages
+                </p>
+              </div>
+            </div>
+
+            {/* Time Period Selectors */}
+            <div className="mb-6">
+              {/* Desktop: Row of buttons */}
+              <div className="hidden md:block">
+                <div className="flex gap-2">
+                  {TIME_PERIODS.map((period) => (
+                    <Button
+                      key={period.value}
+                      variant={selectedPeriod === period.value ? 'default' : 'outline'}
+                      size="sm"
+                      className={`flex-1 ${selectedPeriod === period.value ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+                      onClick={() => setSelectedPeriod(period.value)}
+                    >
+                      {period.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Mobile: Dropdown */}
+              <div className="md:hidden">
                 <select
-                  id="period-select"
                   value={selectedPeriod}
                   onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 >
-                  <option value="7d">Last 7 days</option>
+                  {TIME_PERIODS.map((period) => (
+                    <option key={period.value} value={period.value}>
+                      {period.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -243,7 +288,7 @@ export default function FlowMetricsReportPage() {
                 </div>
               ) : (
                 metricsData.map((metric) => (
-                  <KPICard key={metric.id} data={metric} />
+                  <KPICard key={metric.id} data={metric} selectedPeriod={selectedPeriod} />
                 ))
               )}
             </div>

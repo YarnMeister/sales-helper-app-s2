@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CommonHeader } from '../../components/CommonHeader';
 import { CommonFooter } from '../../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -46,8 +46,12 @@ const TIME_PERIODS = [
 
 export default function FlowMetricDetailPage({ params }: PageProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const metricId = params['metric-id'];
-  const [selectedPeriod, setSelectedPeriod] = useState('7d');
+  
+  // Get period from URL query parameter, default to '7d'
+  const urlPeriod = searchParams.get('period');
+  const [selectedPeriod, setSelectedPeriod] = useState(urlPeriod || '7d');
   const [deals, setDeals] = useState<DealData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,7 +175,8 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   }
 
   const handleBack = () => {
-    router.push('/flow-metrics-report');
+    // Preserve the selected period when going back to the main page
+    router.push(`/flow-metrics-report?period=${selectedPeriod}`);
   };
 
   return (
