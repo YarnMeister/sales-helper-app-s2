@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { ComboChart } from "./ComboChart";
+import RechartsLeadTimeChart from "./RechartsLeadTimeChart";
 
 interface DealData {
   deal_id: string;
@@ -29,6 +30,7 @@ const prettyDate = (dateString: string) => {
 
 export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: LeadTimeChartProps) {
   const [useComputedAverage, setUseComputedAverage] = useState(false);
+  const [useRecharts, setUseRecharts] = useState(false);
 
   const { chartData, avg, maxDays } = useMemo(() => {
     if (!deals || deals.length === 0) {
@@ -82,47 +84,66 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
         <span className="text-sm text-gray-500">
           Average (computed): {avg} days
         </span>
-        <label className="ml-auto flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300"
-            checked={useComputedAverage}
-            onChange={(e) => setUseComputedAverage(e.target.checked)}
-          />
-          Use computed average instead of 5
-        </label>
+        <div className="ml-auto flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300"
+              checked={useComputedAverage}
+              onChange={(e) => setUseComputedAverage(e.target.checked)}
+            />
+            Use computed average instead of 5
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300"
+              checked={useRecharts}
+              onChange={(e) => setUseRecharts(e.target.checked)}
+            />
+            Use Recharts (pure) instead of Tremor
+          </label>
+        </div>
       </div>
 
-      <div className="h-80 w-full">
-        <ComboChart
-          data={dataForChart}
-          index="index"
-          barSeries={{
-            categories: ["Days"],
-            colors: ["violet"],
-            valueFormatter: (value) => `${value} days`,
-            yAxisWidth: 60,
-            showYAxis: true,
-            allowDecimals: false,
-            minValue: 0,
-            maxValue: maxDays + 1,
-          }}
-          lineSeries={{
-            categories: ["Average"],
-            colors: ["amber"],
-            valueFormatter: (value) => `${value} days`,
-            yAxisLabel: "Average (days)",
-            showYAxis: false,
-          }}
-          showLegend={true}
-          showTooltip={true}
-          showXAxis={true}
-          showGridLines={true}
-          tickGap={2}
-
-          className="h-full"
+      {useRecharts ? (
+        <RechartsLeadTimeChart 
+          deals={deals}
+          metricTitle={metricTitle}
+          canonicalStage={canonicalStage}
         />
-      </div>
+      ) : (
+        <div className="h-80 w-full">
+          <ComboChart
+            data={dataForChart}
+            index="index"
+            barSeries={{
+              categories: ["Days"],
+              colors: ["violet"],
+              valueFormatter: (value) => `${value} days`,
+              yAxisWidth: 60,
+              showYAxis: true,
+              allowDecimals: false,
+              minValue: 0,
+              maxValue: maxDays + 1,
+            }}
+            lineSeries={{
+              categories: ["Average"],
+              colors: ["amber"],
+              valueFormatter: (value) => `${value} days`,
+              yAxisLabel: "Average (days)",
+              showYAxis: false,
+            }}
+            showLegend={true}
+            showTooltip={true}
+            showXAxis={true}
+            showGridLines={true}
+            tickGap={2}
+
+            className="h-full"
+          />
+        </div>
+      )}
 
       <div className="text-sm text-gray-500 space-y-2">
         <p>

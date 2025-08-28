@@ -22,6 +22,17 @@ vi.mock('../../app/components/ComboChart', () => ({
   ),
 }));
 
+// Mock the RechartsLeadTimeChart component
+vi.mock('../../app/components/RechartsLeadTimeChart', () => ({
+  default: ({ deals, metricTitle, canonicalStage }: any) => (
+    <div data-testid="recharts-lead-time-chart">
+      <div data-testid="recharts-deals">{JSON.stringify(deals)}</div>
+      <div data-testid="recharts-metric-title">{metricTitle}</div>
+      <div data-testid="recharts-canonical-stage">{canonicalStage}</div>
+    </div>
+  ),
+}));
+
 describe('LeadTimeChart', () => {
   const mockDeals = [
     {
@@ -74,12 +85,15 @@ describe('LeadTimeChart', () => {
       // Check that the computed average is displayed
       expect(screen.getByText('Average (computed): 5.3 days')).toBeInTheDocument();
 
-      // Check that the toggle checkbox is present
-      expect(screen.getByRole('checkbox')).toBeInTheDocument();
+      // Check that both toggle checkboxes are present
+      const checkboxes = screen.getAllByRole('checkbox');
+      expect(checkboxes).toHaveLength(2);
       expect(screen.getByText('Use computed average instead of 5')).toBeInTheDocument();
+      expect(screen.getByText('Use Recharts (pure) instead of Tremor')).toBeInTheDocument();
 
-      // Check that the ComboChart is rendered
+      // Check that the ComboChart is rendered (default Tremor chart)
       expect(screen.getByTestId('combo-chart')).toBeInTheDocument();
+      expect(screen.queryByTestId('recharts-lead-time-chart')).not.toBeInTheDocument();
 
       // Check chart data
       const chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
@@ -94,10 +108,12 @@ describe('LeadTimeChart', () => {
       const barSeries = JSON.parse(screen.getByTestId('bar-series').textContent || '{}');
       expect(barSeries).toEqual({
         categories: ['Days'],
-        colors: ['blue'],
+        colors: ['violet'],
         yAxisWidth: 60,
         showYAxis: true,
         allowDecimals: false,
+        minValue: 0,
+        maxValue: 8,
       });
 
       // Check line series configuration
@@ -116,12 +132,12 @@ describe('LeadTimeChart', () => {
 
       // Check footer information
       const totalDealsElements = screen.getAllByText((content, element) => {
-        return element?.textContent?.includes('Total deals: 4');
+        return element?.textContent?.includes('Total deals: 4') || false;
       });
       expect(totalDealsElements.length).toBeGreaterThan(0);
       
       const canonicalStageElements = screen.getAllByText((content, element) => {
-        return element?.textContent?.includes('Canonical stage: Manufacturing');
+        return element?.textContent?.includes('Canonical stage: Manufacturing') || false;
       });
       expect(canonicalStageElements.length).toBeGreaterThan(0);
     });
@@ -148,24 +164,57 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      const checkbox = screen.getByRole('checkbox');
+      const checkboxes = screen.getAllByRole('checkbox');
+      const computedAverageCheckbox = checkboxes[0]; // First checkbox is for computed average
       
       // Initially unchecked (using constant 5)
-      expect(checkbox).not.toBeChecked();
+      expect(computedAverageCheckbox).not.toBeChecked();
       
       // Check the chart data shows constant average
       let chartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
       expect(chartData[0].Average).toBe(5);
 
       // Check the checkbox
-      fireEvent.click(checkbox);
-      expect(checkbox).toBeChecked();
+      fireEvent.click(computedAverageCheckbox);
+      expect(computedAverageCheckbox).toBeChecked();
 
       // Now should use computed average
       await waitFor(() => {
         const updatedChartData = JSON.parse(screen.getByTestId('chart-data').textContent || '[]');
         expect(updatedChartData[0].Average).toBe(5.3);
       });
+    });
+
+    it('should handle Recharts toggle', async () => {
+      render(
+        <LeadTimeChart
+          deals={mockDeals}
+          metricTitle="Test Metric"
+          canonicalStage="Test Stage"
+        />
+      );
+
+      const checkboxes = screen.getAllByRole('checkbox');
+      const rechartsCheckbox = checkboxes[1]; // Second checkbox is for Recharts
+      
+      // Initially unchecked (using Tremor chart)
+      expect(rechartsCheckbox).not.toBeChecked();
+      expect(screen.getByTestId('combo-chart')).toBeInTheDocument();
+      expect(screen.queryByTestId('recharts-lead-time-chart')).not.toBeInTheDocument();
+
+      // Check the checkbox
+      fireEvent.click(rechartsCheckbox);
+      expect(rechartsCheckbox).toBeChecked();
+
+      // Now should show Recharts chart
+      await waitFor(() => {
+        expect(screen.getByTestId('recharts-lead-time-chart')).toBeInTheDocument();
+        expect(screen.queryByTestId('combo-chart')).not.toBeInTheDocument();
+      });
+
+      // Check that Recharts chart receives correct props
+      expect(screen.getByTestId('recharts-metric-title')).toHaveTextContent('Test Metric');
+      expect(screen.getByTestId('recharts-canonical-stage')).toHaveTextContent('Test Stage');
     });
   });
 
@@ -181,6 +230,7 @@ describe('LeadTimeChart', () => {
 
       expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
       expect(screen.queryByTestId('combo-chart')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('recharts-lead-time-chart')).not.toBeInTheDocument();
     });
 
     it('should display no data message when deals is null', () => {
@@ -194,6 +244,7 @@ describe('LeadTimeChart', () => {
 
       expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
       expect(screen.queryByTestId('combo-chart')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('recharts-lead-time-chart')).not.toBeInTheDocument();
     });
 
     it('should display no data message when deals is undefined', () => {
@@ -207,6 +258,7 @@ describe('LeadTimeChart', () => {
 
       expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
       expect(screen.queryByTestId('combo-chart')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('recharts-lead-time-chart')).not.toBeInTheDocument();
     });
   });
 
@@ -224,7 +276,7 @@ describe('LeadTimeChart', () => {
 
       expect(screen.getByText(/Average \(computed\): 4.*days/)).toBeInTheDocument();
       const totalDealsElements = screen.getAllByText((content, element) => {
-        return element?.textContent?.includes('Total deals: 1');
+        return element?.textContent?.includes('Total deals: 1') || false;
       });
       expect(totalDealsElements.length).toBeGreaterThan(0);
     });
@@ -324,9 +376,11 @@ describe('LeadTimeChart', () => {
         />
       );
 
-      const checkbox = screen.getByRole('checkbox');
-      expect(checkbox).toBeInTheDocument();
-      expect(checkbox).toHaveAttribute('type', 'checkbox');
+      const checkboxes = screen.getAllByRole('checkbox');
+      expect(checkboxes).toHaveLength(2);
+      checkboxes.forEach(checkbox => {
+        expect(checkbox).toHaveAttribute('type', 'checkbox');
+      });
     });
 
     it('should have semantic HTML structure', () => {
@@ -342,9 +396,13 @@ describe('LeadTimeChart', () => {
       expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument();
       
       // Check for proper label association
-      const checkbox = screen.getByRole('checkbox');
-      const label = screen.getByText('Use computed average instead of 5');
-      expect(label).toBeInTheDocument();
+      const checkboxes = screen.getAllByRole('checkbox');
+      expect(checkboxes).toHaveLength(2);
+      
+      const computedAverageLabel = screen.getByText('Use computed average instead of 5');
+      const rechartsLabel = screen.getByText('Use Recharts (pure) instead of Tremor');
+      expect(computedAverageLabel).toBeInTheDocument();
+      expect(rechartsLabel).toBeInTheDocument();
     });
   });
 });
