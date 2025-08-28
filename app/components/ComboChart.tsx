@@ -557,13 +557,11 @@ const ComboChart = React.forwardRef<HTMLDivElement, ComboChartProps>(
             />
             {barSeries.categories.map((category) => {
               const color = categoryColors.get(category) ?? "blue"
-              // Use custom colors for specific categories
-              const customColor = category === "Days" ? "#447DF7" : color
               return (
                 <Bar
                   key={category}
                   dataKey={category}
-                  fill={customColor}
+                  fill={color}
                   radius={[4, 4, 0, 0]}
                   stackId={barSeries.type === "stacked" ? "stack" : undefined}
                   isAnimationActive={true}
@@ -580,13 +578,11 @@ const ComboChart = React.forwardRef<HTMLDivElement, ComboChartProps>(
             })}
             {lineSeries.categories.map((category) => {
               const color = categoryColors.get(category) ?? "blue"
-              // Use custom colors for specific categories
-              const customColor = category === "Average" ? "orange" : color
               return (
                 <Line
                   key={category}
                   dataKey={category}
-                  stroke={customColor}
+                  stroke={color}
                   strokeWidth={2}
                   dot={false}
                   type="monotone"
