@@ -24,6 +24,7 @@ interface RechartsLeadTimeChartProps {
   deals: DealData[];
   metricTitle: string;
   canonicalStage: string;
+  useComputedAverage: boolean;
 }
 
 const parseDuration = (seconds: number) => Math.round(seconds / 86400);
@@ -53,9 +54,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export default function RechartsLeadTimeChart({ deals, metricTitle, canonicalStage }: RechartsLeadTimeChartProps) {
-  const [useComputedAverage, setUseComputedAverage] = useState(false);
-
+export default function RechartsLeadTimeChart({ deals, metricTitle, canonicalStage, useComputedAverage }: RechartsLeadTimeChartProps) {
   const { chartData, avg, maxDays } = useMemo(() => {
     if (!deals || deals.length === 0) {
       return { chartData: [], avg: 0, maxDays: 0 };
@@ -107,7 +106,7 @@ export default function RechartsLeadTimeChart({ deals, metricTitle, canonicalSta
             type="checkbox"
             className="h-4 w-4 rounded border-gray-300"
             checked={useComputedAverage}
-            onChange={(e) => setUseComputedAverage(e.target.checked)}
+            disabled
           />
           Use computed average instead of 5
         </label>

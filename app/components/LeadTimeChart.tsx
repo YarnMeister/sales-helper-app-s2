@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { ComboChart } from "./ComboChart";
 import RechartsLeadTimeChart from "./RechartsLeadTimeChart";
 
 interface DealData {
@@ -30,7 +29,6 @@ const prettyDate = (dateString: string) => {
 
 export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: LeadTimeChartProps) {
   const [useComputedAverage, setUseComputedAverage] = useState(false);
-  const [useRecharts, setUseRecharts] = useState(false);
 
   const { chartData, avg, maxDays } = useMemo(() => {
     if (!deals || deals.length === 0) {
@@ -41,20 +39,20 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
     const computedAvg = durations.reduce((a, b) => a + b, 0) / durations.length;
     const maxDuration = Math.max(...durations);
     
-          const data = deals.map((deal) => {
-        const days = parseDuration(deal.duration_seconds);
-        
-        return {
-          index: `#${deal.deal_id}`,
-          dateLabel: prettyDate(deal.start_date),
-          dealId: deal.deal_id,
-          startDate: deal.start_date,
-          endDate: deal.end_date,
-          Days: days,
-          Average: 5, // constant line
-          AverageComputed: Number.isFinite(computedAvg) ? Number(computedAvg.toFixed(1)) : 0,
-        };
-      });
+    const data = deals.map((deal) => {
+      const days = parseDuration(deal.duration_seconds);
+      
+      return {
+        index: `#${deal.deal_id}`,
+        dateLabel: prettyDate(deal.start_date),
+        dealId: deal.deal_id,
+        startDate: deal.start_date,
+        endDate: deal.end_date,
+        Days: days,
+        Average: 5, // constant line
+        AverageComputed: Number.isFinite(computedAvg) ? Number(computedAvg.toFixed(1)) : 0,
+      };
+    });
 
     return { 
       chartData: data, 
@@ -62,12 +60,6 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
       maxDays: maxDuration
     };
   }, [deals]);
-
-  const dataForChart = chartData.map(d => ({
-    index: d.index,
-    Days: d.Days,
-    Average: useComputedAverage ? d.AverageComputed : d.Average,
-  }));
 
   if (!deals || deals.length === 0) {
     return (
@@ -84,66 +76,23 @@ export default function LeadTimeChart({ deals, metricTitle, canonicalStage }: Le
         <span className="text-sm text-gray-500">
           Average (computed): {avg} days
         </span>
-        <div className="ml-auto flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300"
-              checked={useComputedAverage}
-              onChange={(e) => setUseComputedAverage(e.target.checked)}
-            />
-            Use computed average instead of 5
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300"
-              checked={useRecharts}
-              onChange={(e) => setUseRecharts(e.target.checked)}
-            />
-            Use Recharts (pure) instead of Tremor
-          </label>
-        </div>
+        <label className="ml-auto flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-gray-300"
+            checked={useComputedAverage}
+            onChange={(e) => setUseComputedAverage(e.target.checked)}
+          />
+          Use computed average instead of 5
+        </label>
       </div>
 
-      {useRecharts ? (
-        <RechartsLeadTimeChart 
-          deals={deals}
-          metricTitle={metricTitle}
-          canonicalStage={canonicalStage}
-        />
-      ) : (
-        <div className="h-80 w-full">
-          <ComboChart
-            data={dataForChart}
-            index="index"
-            barSeries={{
-              categories: ["Days"],
-              colors: ["violet"],
-              valueFormatter: (value) => `${value} days`,
-              yAxisWidth: 60,
-              showYAxis: true,
-              allowDecimals: false,
-              minValue: 0,
-              maxValue: maxDays + 1,
-            }}
-            lineSeries={{
-              categories: ["Average"],
-              colors: ["amber"],
-              valueFormatter: (value) => `${value} days`,
-              yAxisLabel: "Average (days)",
-              showYAxis: false,
-            }}
-            showLegend={true}
-            showTooltip={true}
-            showXAxis={true}
-            showGridLines={true}
-            tickGap={2}
-
-            className="h-full"
-          />
-        </div>
-      )}
+      <RechartsLeadTimeChart 
+        deals={deals}
+        metricTitle={metricTitle}
+        canonicalStage={canonicalStage}
+        useComputedAverage={useComputedAverage}
+      />
 
       <div className="text-sm text-gray-500 space-y-2">
         <p>
