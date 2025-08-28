@@ -121,8 +121,8 @@ export default function FlowMetricsReportPage() {
   const searchParams = useSearchParams();
   
   // Get period from URL query parameter, default to '7d'
-  const urlPeriod = searchParams.get('period');
-  const [selectedPeriod, setSelectedPeriod] = useState(urlPeriod || '7d');
+  const urlPeriod = searchParams.get('period') || '7d';
+  const [selectedPeriod, setSelectedPeriod] = useState(urlPeriod);
   const [metricsData, setMetricsData] = useState<FlowMetricData[]>([]);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
   const [currentView, setCurrentView] = useState<'metrics' | 'raw-data' | 'mappings'>('metrics');
@@ -167,19 +167,19 @@ export default function FlowMetricsReportPage() {
     fetchMetrics();
   }, [selectedPeriod]);
 
-  // Update URL when period changes
+  // Sync state with URL changes
   useEffect(() => {
-    const newUrl = `/flow-metrics-report?period=${selectedPeriod}`;
-    router.replace(newUrl, { scroll: false });
-  }, [selectedPeriod, router]);
-
-  // Sync state when URL changes
-  useEffect(() => {
-    const urlPeriod = searchParams.get('period');
-    if (urlPeriod && urlPeriod !== selectedPeriod) {
-      setSelectedPeriod(urlPeriod);
+    const currentUrlPeriod = searchParams.get('period') || '7d';
+    if (currentUrlPeriod !== selectedPeriod) {
+      setSelectedPeriod(currentUrlPeriod);
     }
   }, [searchParams, selectedPeriod]);
+
+  // Update URL when period changes (but avoid circular updates)
+  const updateUrl = (newPeriod: string) => {
+    const newUrl = `/flow-metrics-report?period=${newPeriod}`;
+    router.replace(newUrl, { scroll: false });
+  };
 
   // Load existing flow data on component mount
   useEffect(() => {
@@ -252,7 +252,10 @@ export default function FlowMetricsReportPage() {
                       variant={selectedPeriod === period.value ? 'default' : 'outline'}
                       size="sm"
                       className={`flex-1 ${selectedPeriod === period.value ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
-                      onClick={() => setSelectedPeriod(period.value)}
+                      onClick={() => {
+                        setSelectedPeriod(period.value);
+                        updateUrl(period.value);
+                      }}
                     >
                       {period.label}
                     </Button>
@@ -264,7 +267,10 @@ export default function FlowMetricsReportPage() {
               <div className="md:hidden">
                 <select
                   value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedPeriod(e.target.value);
+                    updateUrl(e.target.value);
+                  }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 >
                   {TIME_PERIODS.map((period) => (

@@ -50,8 +50,8 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const metricId = params['metric-id'];
   
   // Get period from URL query parameter, default to '7d'
-  const urlPeriod = searchParams.get('period');
-  const [selectedPeriod, setSelectedPeriod] = useState(urlPeriod || '7d');
+  const urlPeriod = searchParams.get('period') || '7d';
+  const [selectedPeriod, setSelectedPeriod] = useState(urlPeriod);
   const [deals, setDeals] = useState<DealData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +105,20 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
       totalDeals: filteredDeals.length
     };
   }, [filteredDeals]);
+
+  // Sync state with URL changes
+  useEffect(() => {
+    const currentUrlPeriod = searchParams.get('period') || '7d';
+    if (currentUrlPeriod !== selectedPeriod) {
+      setSelectedPeriod(currentUrlPeriod);
+    }
+  }, [searchParams, selectedPeriod]);
+
+  // Update URL when period changes (but avoid circular updates)
+  const updateUrl = (newPeriod: string) => {
+    const newUrl = `/flow-metrics-report/${metricId}?period=${newPeriod}`;
+    router.replace(newUrl, { scroll: false });
+  };
 
   // Fetch metric configuration from database
   useEffect(() => {
@@ -223,13 +237,16 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
           <div className="hidden md:block">
             <div className="flex gap-2">
               {TIME_PERIODS.map((period) => (
-                <Button
-                  key={period.value}
-                  variant={selectedPeriod === period.value ? 'default' : 'outline'}
-                  size="sm"
-                  className={`flex-1 ${selectedPeriod === period.value ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
-                  onClick={() => setSelectedPeriod(period.value)}
-                >
+                                    <Button
+                      key={period.value}
+                      variant={selectedPeriod === period.value ? 'default' : 'outline'}
+                      size="sm"
+                      className={`flex-1 ${selectedPeriod === period.value ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+                      onClick={() => {
+                        setSelectedPeriod(period.value);
+                        updateUrl(period.value);
+                      }}
+                    >
                   {period.label}
                 </Button>
               ))}
@@ -238,11 +255,14 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
           
           {/* Mobile: Dropdown */}
           <div className="md:hidden">
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            >
+                            <select
+                  value={selectedPeriod}
+                  onChange={(e) => {
+                    setSelectedPeriod(e.target.value);
+                    updateUrl(e.target.value);
+                  }}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                >
               {TIME_PERIODS.map((period) => (
                 <option key={period.value} value={period.value}>
                   {period.label}
