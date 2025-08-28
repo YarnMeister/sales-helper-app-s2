@@ -340,7 +340,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
                   onClick={() => setViewMode('chart')}
                   className={`text-xs ${
                     viewMode === 'chart'
-                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      ? 'bg-gray-700 hover:bg-gray-800 text-white'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -352,7 +352,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
                   onClick={() => setViewMode('list')}
                   className={`text-xs ${
                     viewMode === 'list'
-                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      ? 'bg-gray-700 hover:bg-gray-800 text-white'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >

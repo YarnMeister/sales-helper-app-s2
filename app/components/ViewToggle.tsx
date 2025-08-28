@@ -19,7 +19,7 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ currentView, onViewChang
         size="sm"
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
           currentView === 'metrics'
-            ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
+            ? 'bg-gray-700 hover:bg-gray-800 text-white shadow-sm'
             : 'text-gray-600 hover:text-gray-900'
         }`}
       >
@@ -31,7 +31,7 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ currentView, onViewChang
         size="sm"
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
           currentView === 'raw-data'
-            ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
+            ? 'bg-gray-700 hover:bg-gray-800 text-white shadow-sm'
             : 'text-gray-600 hover:text-gray-900'
         }`}
       >
@@ -43,7 +43,7 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ currentView, onViewChang
         size="sm"
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
           currentView === 'mappings'
-            ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
+            ? 'bg-gray-700 hover:bg-gray-800 text-white shadow-sm'
             : 'text-gray-600 hover:text-gray-900'
         }`}
       >
