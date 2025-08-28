@@ -218,8 +218,8 @@ export default function FlowMetricsReportPage() {
 
       {/* Main Content */}
       <div className="px-4 py-4 pb-24">
-        {/* View Toggle - On its own row */}
-        <div className="mb-6">
+        {/* View Toggle - On its own row, right-aligned */}
+        <div className="mb-6 flex justify-end">
           <ViewToggle 
             currentView={currentView} 
             onViewChange={setCurrentView} 
