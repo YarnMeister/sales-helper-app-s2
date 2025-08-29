@@ -33,6 +33,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 // Global variables
 let startTime;
 let totalDeals = 0;
+let processedDeals = 0;
 let successfulDeals = 0;
 let failedDeals = [];
 let retryDeals = [];
