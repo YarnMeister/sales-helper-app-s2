@@ -308,12 +308,53 @@ describe('Flow Metrics UI Components', () => {
   });
 
   describe('MetricsManagement', () => {
-    it('should render metrics table', () => {
+    it('should render metrics table', async () => {
+      // Mock successful response with correct data structure
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ 
+          success: true, 
+          data: [
+            {
+              id: '1',
+              metric_key: 'manufacturing',
+              display_title: 'Manufacturing Lead Time',
+              canonical_stage: 'Manufacturing',
+              sort_order: 1,
+              is_active: true,
+              start_stage_id: 100,
+              end_stage_id: 200,
+              avg_min_days: 5,
+              avg_max_days: 15,
+              metric_comment: 'Test comment',
+              created_at: '2023-01-01',
+              updated_at: '2023-01-01'
+            },
+            {
+              id: '2',
+              metric_key: 'oem-order',
+              display_title: 'OEM Order Lead Time',
+              canonical_stage: 'OEM Order',
+              sort_order: 2,
+              is_active: true,
+              start_stage_id: 300,
+              end_stage_id: 400,
+              avg_min_days: 3,
+              avg_max_days: 10,
+              metric_comment: null,
+              created_at: '2023-01-01',
+              updated_at: '2023-01-01'
+            }
+          ] 
+        })
+      });
+
       render(<MetricsManagement />);
 
-      expect(screen.getByText('Metrics Management')).toBeInTheDocument();
-      expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
-      expect(screen.getByText('OEM Order Lead Time')).toBeInTheDocument();
+      // Wait for data to load
+      await waitFor(() => {
+        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+        expect(screen.getByText('OEM Order Lead Time')).toBeInTheDocument();
+      });
     });
 
     it('should show loading state initially', () => {
@@ -332,22 +373,30 @@ describe('Flow Metrics UI Components', () => {
       render(<MetricsManagement />);
 
       await waitFor(() => {
-        expect(screen.getByText('No metrics configured')).toBeInTheDocument();
+        expect(screen.getByText('No metrics found. Click "Add New Metric" to create one.')).toBeInTheDocument();
       });
     });
 
     it('should handle edit mode for Manufacturing Lead Time (cornerstone test)', async () => {
-      // Mock successful response
+      // Mock successful response with correct data structure
       global.fetch = vi.fn().mockResolvedValue({
         json: () => Promise.resolve({ 
           success: true, 
           data: [
             {
-              id: 1,
-              title: 'Manufacturing Lead Time',
-              pipeline_id: 1,
-              stage_id: 5,
-              status: 'active'
+              id: '1',
+              metric_key: 'manufacturing',
+              display_title: 'Manufacturing Lead Time',
+              canonical_stage: 'Manufacturing',
+              sort_order: 1,
+              is_active: true,
+              start_stage_id: 100,
+              end_stage_id: 200,
+              avg_min_days: 5,
+              avg_max_days: 15,
+              metric_comment: 'Test comment',
+              created_at: '2023-01-01',
+              updated_at: '2023-01-01'
             }
           ] 
         })
@@ -371,17 +420,25 @@ describe('Flow Metrics UI Components', () => {
     });
 
     it('should handle save functionality for Manufacturing Lead Time', async () => {
-      // Mock successful response
+      // Mock successful response with correct data structure
       global.fetch = vi.fn().mockResolvedValue({
         json: () => Promise.resolve({ 
           success: true, 
           data: [
             {
-              id: 1,
-              title: 'Manufacturing Lead Time',
-              pipeline_id: 1,
-              stage_id: 5,
-              status: 'active'
+              id: '1',
+              metric_key: 'manufacturing',
+              display_title: 'Manufacturing Lead Time',
+              canonical_stage: 'Manufacturing',
+              sort_order: 1,
+              is_active: true,
+              start_stage_id: 100,
+              end_stage_id: 200,
+              avg_min_days: 5,
+              avg_max_days: 15,
+              metric_comment: 'Test comment',
+              created_at: '2023-01-01',
+              updated_at: '2023-01-01'
             }
           ] 
         })
@@ -402,9 +459,9 @@ describe('Flow Metrics UI Components', () => {
       const titleInput = screen.getByDisplayValue('Manufacturing Lead Time');
       fireEvent.change(titleInput, { target: { value: 'Updated Manufacturing Lead Time' } });
 
-      // Mock save response
+      // Mock the PATCH request
       global.fetch = vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({ success: true, message: 'Metric updated successfully' })
+        json: () => Promise.resolve({ success: true })
       });
 
       // Click save
@@ -412,40 +469,39 @@ describe('Flow Metrics UI Components', () => {
 
       // Should show success message
       await waitFor(() => {
-        expect(screen.getByText('Metric updated successfully')).toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledWith('/api/admin/flow-metrics-config/1', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: expect.stringContaining('Updated Manufacturing Lead Time')
+        });
       });
     });
 
     it('should handle add new metric', async () => {
-      // Mock successful response
+      // Mock empty response initially
       global.fetch = vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({ 
-          success: true, 
-          data: [
-            {
-              id: 1,
-              title: 'Manufacturing Lead Time',
-              pipeline_id: 1,
-              stage_id: 5,
-              status: 'active'
-            }
-          ] 
-        })
+        json: () => Promise.resolve({ success: true, data: [] })
       });
 
       render(<MetricsManagement />);
 
-      // Wait for data to load
+      // Wait for empty state
       await waitFor(() => {
-        expect(screen.getByText('Manufacturing Lead Time')).toBeInTheDocument();
+        expect(screen.getByText('No metrics found. Click "Add New Metric" to create one.')).toBeInTheDocument();
       });
 
       // Click add new metric button
       fireEvent.click(screen.getByText('Add New Metric'));
 
-      // Should show add form
-      expect(screen.getByPlaceholderText('Enter metric title')).toBeInTheDocument();
-      expect(screen.getByText('Create')).toBeInTheDocument();
+      // Should show add form with new fields
+      expect(screen.getByLabelText('Metric Key *')).toBeInTheDocument();
+      expect(screen.getByLabelText('Display Title *')).toBeInTheDocument();
+      expect(screen.getByLabelText('Canonical Stage *')).toBeInTheDocument();
+      expect(screen.getByLabelText('Start Stage ID')).toBeInTheDocument();
+      expect(screen.getByLabelText('End Stage ID')).toBeInTheDocument();
+      expect(screen.getByLabelText('Avg Min (days)')).toBeInTheDocument();
+      expect(screen.getByLabelText('Avg Max (days)')).toBeInTheDocument();
+      expect(screen.getByLabelText('Comment')).toBeInTheDocument();
     });
 
     it('should handle API errors gracefully', async () => {

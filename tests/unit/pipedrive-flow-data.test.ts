@@ -338,7 +338,7 @@ describe('Pipedrive Flow Data', () => {
         data: {
           success: false,
           error: 'Failed to fetch deal flow data',
-          message: 'Database connection failed'
+          details: 'Database connection failed'
         },
         options: { status: 500 }
       });

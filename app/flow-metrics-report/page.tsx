@@ -32,16 +32,22 @@ interface FlowMetricData {
 
 // Color coding function for metrics
 const getMetricColor = (average: number, avgMin?: number, avgMax?: number) => {
-  if (avgMin !== undefined && avgMax !== undefined) {
-    if (average <= avgMin) return 'text-green-600';
-    if (average >= avgMax) return 'text-red-600';
-    return 'text-amber-600';
+  // If average is 0 (no data), return grey
+  if (average === 0) return 'text-gray-600';
+  
+  // If no min and/or max thresholds are set, return grey
+  if (avgMin === undefined || avgMax === undefined || avgMin === null || avgMax === null) {
+    return 'text-gray-600';
   }
-  return 'text-gray-600';
+  
+  // Apply color coding based on thresholds
+  if (average <= avgMin) return 'text-green-600';
+  if (average >= avgMax) return 'text-red-600';
+  return 'text-amber-600';
 };
 
 // KPI Card component
-const KPICard = ({ data, selectedPeriod }: { data: FlowMetricData; selectedPeriod: string }) => {
+const KPICard = ({ data, selectedPeriod, onRefresh }: { data: FlowMetricData; selectedPeriod: string; onRefresh: () => void }) => {
   const router = useRouter();
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [comment, setComment] = useState(data.metric_comment || '');
@@ -63,11 +69,13 @@ const KPICard = ({ data, selectedPeriod }: { data: FlowMetricData; selectedPerio
         body: JSON.stringify({ comment }),
       });
 
-      if (response.ok) {
-        setIsEditingComment(false);
-      } else {
-        console.error('Failed to save comment');
-      }
+              if (response.ok) {
+          setIsEditingComment(false);
+          // Refresh the metrics data to show the updated comment
+          onRefresh();
+        } else {
+          console.error('Failed to save comment');
+        }
     } catch (error) {
       console.error('Error saving comment:', error);
     } finally {
@@ -190,41 +198,42 @@ export default function FlowMetricsReportPage() {
   const [isLoadingData, setIsLoadingData] = useState(false);
 
 
+  // Function to fetch metrics data
+  const fetchMetrics = async () => {
+    try {
+      setIsLoadingMetrics(true);
+      
+      // Fetch calculated metrics from the new API endpoint
+      const response = await fetch(`/api/flow/metrics?period=${selectedPeriod}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        // Convert API response to the format expected by KPICard
+        const activeMetrics = result.data.map((metric: any) => ({
+          id: metric.id,
+          title: metric.title,
+          mainMetric: `${metric.mainMetric} days`,
+          totalDeals: metric.totalDeals,
+          avg_min_days: metric.avg_min_days,
+          avg_max_days: metric.avg_max_days,
+          metric_comment: metric.metric_comment,
+        }));
+        
+        setMetricsData(activeMetrics);
+      } else {
+        console.error('Failed to fetch metrics:', result.error);
+        setMetricsData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      setMetricsData([]);
+    } finally {
+      setIsLoadingMetrics(false);
+    }
+  };
+
   // Load active metrics from database
   useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        setIsLoadingMetrics(true);
-        
-        // Fetch calculated metrics from the new API endpoint
-        const response = await fetch(`/api/flow/metrics?period=${selectedPeriod}`);
-        const result = await response.json();
-        
-        if (result.success) {
-          // Convert API response to the format expected by KPICard
-          const activeMetrics = result.data.map((metric: any) => ({
-            id: metric.id,
-            title: metric.title,
-            mainMetric: `${metric.mainMetric} days`,
-            totalDeals: metric.totalDeals,
-            avg_min_days: metric.avg_min_days,
-            avg_max_days: metric.avg_max_days,
-            metric_comment: metric.metric_comment,
-          }));
-          
-          setMetricsData(activeMetrics);
-        } else {
-          console.error('Failed to fetch metrics:', result.error);
-          setMetricsData([]);
-        }
-      } catch (error) {
-        console.error('Error fetching metrics:', error);
-        setMetricsData([]);
-      } finally {
-        setIsLoadingMetrics(false);
-      }
-    };
-
     fetchMetrics();
   }, [selectedPeriod]);
 
@@ -353,11 +362,16 @@ export default function FlowMetricsReportPage() {
                 <div className="col-span-full flex items-center justify-center py-8">
                   <div className="text-gray-500">No active metrics found. Add metrics in the Mappings tab.</div>
                 </div>
-              ) : (
-                metricsData.map((metric) => (
-                  <KPICard key={metric.id} data={metric} selectedPeriod={selectedPeriod} />
-                ))
-              )}
+                              ) : (
+                  metricsData.map((metric) => (
+                    <KPICard 
+                      key={metric.id} 
+                      data={metric} 
+                      selectedPeriod={selectedPeriod} 
+                      onRefresh={fetchMetrics}
+                    />
+                  ))
+                )}
             </div>
           </>
         )}

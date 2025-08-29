@@ -112,7 +112,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
         const result = await response.json();
         
         if (result.success) {
-          const metric = result.data.find((m: any) => m.metric_key === metricId);
+          const metric = result.data.find((m: any) => m.id === metricId);
           if (metric) {
             setMetricConfig(metric);
           } else {
