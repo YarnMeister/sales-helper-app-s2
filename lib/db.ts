@@ -456,9 +456,9 @@ export const getCanonicalStageMapping = async (canonicalStage: string) => {
   }, 'getCanonicalStageMapping');
 };
 
-export const getDealsForCanonicalStage = async (canonicalStage: string) => {
+export const getDealsForCanonicalStage = async (canonicalStage: string, period?: string) => {
   return withDbErrorHandling(async () => {
-    logInfo('Fetching deals for canonical stage', { canonicalStage });
+    logInfo('Fetching deals for canonical stage', { canonicalStage, period });
     
     // Get the mapping for this canonical stage
     const mapping = await getCanonicalStageMapping(canonicalStage);
@@ -475,6 +475,18 @@ export const getDealsForCanonicalStage = async (canonicalStage: string) => {
     const endStageFilter = mapping.end_stage_id 
       ? sql`stage_id = ${mapping.end_stage_id}` 
       : sql`stage_name = ${mapping.end_stage}`;
+    
+    // Calculate cutoff date based on period
+    let cutoffDateFilter = sql``;
+    if (period) {
+      const days = period === '7d' ? 7 : period === '14d' ? 14 : period === '1m' ? 30 : period === '3m' ? 90 : 0;
+
+      if (days > 0) {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        cutoffDateFilter = sql`AND s.start_date >= ${cutoffDate.toISOString()}`;
+      }
+    }
     
     // Get all deals that have both start and end stages
     // Use entered_at for both start and end dates (not left_at)
@@ -507,6 +519,7 @@ export const getDealsForCanonicalStage = async (canonicalStage: string) => {
       FROM start_stages s
       JOIN end_stages e ON s.deal_id = e.deal_id
       WHERE e.end_date > s.start_date
+      ${cutoffDateFilter}
       ORDER BY s.start_date DESC
     `;
     

@@ -27,6 +27,7 @@ interface FlowMetricData {
   best: string;
   worst: string;
   trend: 'up' | 'down' | 'stable';
+  totalDeals: number; // Added for deal count
 }
 
 // Trend icon component
@@ -85,6 +86,13 @@ const KPICard = ({ data, selectedPeriod }: { data: FlowMetricData; selectedPerio
         <div className="text-3xl font-bold text-gray-900">
           {data.mainMetric}
         </div>
+        
+        {/* Deal Count */}
+        {data.totalDeals > 0 && (
+          <div className="text-xs text-gray-500">
+            Based on {data.totalDeals} deals
+          </div>
+        )}
         
         {/* Best/Worst Metrics */}
         <div className="flex justify-between text-sm">
@@ -149,6 +157,7 @@ export default function FlowMetricsReportPage() {
             best: `${metric.best} days`,
             worst: `${metric.worst} days`,
             trend: metric.trend,
+            totalDeals: metric.totalDeals, // Add totalDeals to the data
           }));
           
           setMetricsData(activeMetrics);

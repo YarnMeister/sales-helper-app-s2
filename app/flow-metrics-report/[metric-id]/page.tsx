@@ -58,25 +58,9 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   const [metricConfig, setMetricConfig] = useState<MetricConfig | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'chart'>('chart');
 
-  // Filter deals based on selected time period
-  const filteredDeals = useMemo(() => {
-    if (!deals || deals.length === 0) return [];
-    
-    const selectedPeriodConfig = TIME_PERIODS.find(p => p.value === selectedPeriod);
-    if (!selectedPeriodConfig) return deals;
-    
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - selectedPeriodConfig.days);
-    
-    return deals.filter(deal => {
-      const dealDate = new Date(deal.start_date);
-      return dealDate >= cutoffDate;
-    });
-  }, [deals, selectedPeriod]);
-
-  // Calculate metrics from the filtered deals data
+  // Calculate metrics from the deals data (now filtered at database level)
   const calculatedMetrics: CalculatedMetrics = useMemo(() => {
-    if (!filteredDeals || filteredDeals.length === 0) {
+    if (!deals || deals.length === 0) {
       return {
         average: 0,
         best: 0,
@@ -86,7 +70,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
     }
 
     // Convert duration_seconds to days with precise calculation
-    const durationsInDays = filteredDeals.map(deal => 
+    const durationsInDays = deals.map(deal => 
       Math.round((deal.duration_seconds / 86400) * 100) / 100
     );
 
@@ -102,9 +86,9 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
       average,
       best,
       worst,
-      totalDeals: filteredDeals.length
+      totalDeals: deals.length
     };
-  }, [filteredDeals]);
+  }, [deals]);
 
   // Sync state with URL changes
   useEffect(() => {
@@ -157,7 +141,8 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
 
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/flow/canonical-stage-deals?canonicalStage=${encodeURIComponent(metricConfig.canonical_stage)}`);
+        const response = await fetch(`/api/flow/canonical-stage-deals?canonicalStage=${encodeURIComponent(metricConfig.canonical_stage)}&period=${selectedPeriod}`);
+
         const result = await response.json();
 
         if (result.success) {
@@ -174,7 +159,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
     };
 
     fetchDeals();
-  }, [metricConfig?.canonical_stage]);
+  }, [metricConfig?.canonical_stage, selectedPeriod]);
 
   if (error && !metricConfig) {
     return (
@@ -370,7 +355,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               <div className="flex items-center justify-center py-8">
                 <div className="text-red-500">{error}</div>
               </div>
-            ) : filteredDeals.length === 0 ? (
+            ) : deals.length === 0 ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-gray-500">
                   No deals found for this canonical stage in the selected time period
@@ -378,7 +363,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
               </div>
             ) : viewMode === 'chart' ? (
               <LeadTimeChart 
-                deals={filteredDeals}
+                deals={deals}
                 metricTitle={metricConfig?.display_title || 'Lead Time'}
                 canonicalStage={metricConfig?.canonical_stage || ''}
               />
@@ -394,7 +379,7 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredDeals.map((deal) => {
+                    {deals.map((deal) => {
                       const durationDays = Math.round(deal.duration_seconds / 86400);
                       const startDate = new Date(deal.start_date).toLocaleDateString();
                       const endDate = new Date(deal.end_date).toLocaleDateString();
