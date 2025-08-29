@@ -5,9 +5,11 @@ import { generateCorrelationId, withPerformanceLogging } from '@/lib/log';
 
 // Validation schema for Zapier webhook payload
 const ZapierWebhookSchema = z.object({
-  deal_id: z.number({
-    required_error: "deal_id is required",
-    invalid_type_error: "deal_id must be a number"
+  deal_id: z.union([
+    z.number(),
+    z.string().transform((val) => parseInt(val, 10))
+  ]).refine((val) => !isNaN(val) && val > 0, {
+    message: "deal_id must be a valid positive number"
   })
 });
 
