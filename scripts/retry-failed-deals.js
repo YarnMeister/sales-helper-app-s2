@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Test script to import 80 deals (2 batches of 40) for validation
+ * Retry script for failed deal imports
  * 
- * This script tests the import process with a subset of deals to ensure
- * zero errors before proceeding with the full import of 746 deals.
+ * This script retries importing deals that failed during the main import process.
+ * It reads deal IDs from a file and attempts to import them again.
  * 
- * Usage: node scripts/test-import-80-deals.js
+ * Usage: node scripts/retry-failed-deals.js failed-deals-import.txt
  */
 
 const fs = require('fs');
@@ -18,22 +18,21 @@ const { insertDealFlowData, insertDealMetadata } = require('./db-helper');
 // Configuration
 const RATE_LIMIT_BATCH_SIZE = 40; // Pipedrive limit: 40 requests per 2 seconds
 const RATE_LIMIT_DELAY_MS = 2000; // 2 seconds between batches
-const TEST_DEAL_COUNT = 80; // Test with 80 deals (2 batches of 40)
+const MAX_RETRIES = 1; // Retry failed deals once
 const HEARTBEAT_INTERVAL = 20; // Log progress every 20 deals
 
-// Pipedrive configuration
+// Pipedrive API configuration
 const PIPEDRIVE_API_TOKEN = process.env.PIPEDRIVE_API_TOKEN;
-const PIPEDRIVE_BASE_URL = process.env.PIPEDRIVE_BASE_URL || 'https://api.pipedrive.com/v1';
+const PIPEDRIVE_BASE_URL = 'https://api.pipedrive.com/v1';
 
 // Database configuration
 const DATABASE_URL = process.env.DATABASE_URL;
 
-// Progress tracking
+// Global variables
+let startTime;
 let totalDeals = 0;
-let processedDeals = 0;
 let successfulDeals = 0;
 let failedDeals = [];
-let startTime = null;
 
 /**
  * Validate environment variables
@@ -45,58 +44,44 @@ function validateEnvironment() {
   if (!DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is required');
   }
-  console.log('✅ Environment variables validated');
 }
 
 /**
- * Read first 80 deal IDs from the import-id-list file
+ * Read failed deal IDs from file
  */
-function readTestDealIds() {
-  const filePath = path.join(__dirname, '../specs/import-id-list');
-  const content = fs.readFileSync(filePath, 'utf8');
-  
-  // Parse deal IDs (one per line, remove empty lines)
-  const allDealIds = content
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line && !isNaN(parseInt(line)))
-    .map(line => parseInt(line));
-  
-  // Take only the first TEST_DEAL_COUNT deals
-  const testDealIds = allDealIds.slice(0, TEST_DEAL_COUNT);
-  
-  console.log(`📋 Loaded ${testDealIds.length} test deal IDs from ${filePath}`);
-  console.log(`📊 Total deals available: ${allDealIds.length}`);
-  console.log(`🧪 Test deals: ${testDealIds.slice(0, 5).join(', ')}${testDealIds.length > 5 ? '...' : ''}`);
-  
-  return testDealIds;
-}
-
-/**
- * Call Pipedrive API directly
- */
-async function callPipedriveAPI(endpoint, method = 'GET') {
-  const separator = endpoint.includes('?') ? '&' : '?';
-  const url = `${PIPEDRIVE_BASE_URL}${endpoint}${separator}api_token=${PIPEDRIVE_API_TOKEN}`;
-  
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: AbortSignal.timeout(30000), // 30 second timeout
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Pipedrive API error: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    throw new Error(`Failed to call Pipedrive API: ${error.message}`);
+function readFailedDealIds(filePath) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Failed deals file not found: ${filePath}`);
   }
+  
+  const content = fs.readFileSync(filePath, 'utf8');
+  const dealIds = content.trim().split('\n').filter(line => line.trim());
+  
+  console.log(`📄 Reading ${dealIds.length} failed deal IDs from: ${filePath}`);
+  return dealIds;
+}
+
+/**
+ * Call Pipedrive API with error handling
+ */
+async function callPipedriveAPI(endpoint) {
+  const url = `${PIPEDRIVE_BASE_URL}${endpoint}?api_token=${PIPEDRIVE_API_TOKEN}`;
+  
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Pipedrive API authentication failed. Check your API token.');
+    } else if (response.status === 404) {
+      throw new Error('Deal not found in Pipedrive');
+    } else if (response.status === 429) {
+      throw new Error('Pipedrive API rate limit exceeded');
+    } else {
+      throw new Error(`Pipedrive API error: ${response.status} ${response.statusText}`);
+    }
+  }
+  
+  return await response.json();
 }
 
 /**
@@ -112,7 +97,7 @@ async function fetchDealFlow(dealId) {
  */
 async function processDeal(dealId) {
   try {
-    console.log(`🔄 Fetching deal flow data for deal ${dealId}...`);
+    console.log(`🔄 Retrying deal ${dealId}...`);
     
     // Fetch flow data from Pipedrive
     const flowData = await fetchDealFlow(dealId);
@@ -158,15 +143,15 @@ async function processDeal(dealId) {
       };
     });
 
-    // Store flow data in database using actual database function
+    // Store flow data in database
     console.log(`💾 Inserting ${processedFlowData.length} flow records for deal ${dealId}...`);
     const flowInsertResult = await insertDealFlowData(processedFlowData);
     console.log(`✅ Inserted ${flowInsertResult.length} flow records for deal ${dealId}`);
     
-    // Store deal metadata (FIXED: use dealId parameter instead of firstEvent.deal_id)
+    // Store deal metadata
     const firstEvent = flowData[0];
     const dealMetadata = {
-      id: dealId, // FIXED: Use dealId parameter instead of firstEvent.deal_id
+      id: dealId,
       title: `Deal ${dealId}`,
       pipeline_id: 1,
       stage_id: 1,
@@ -180,7 +165,7 @@ async function processDeal(dealId) {
     return { success: true, events: processedFlowData.length };
     
   } catch (error) {
-    console.log(`❌ Error processing deal ${dealId}: ${error.message}`);
+    console.log(`❌ Error retrying deal ${dealId}: ${error.message}`);
     return { success: false, reason: error.message };
   }
 }
@@ -196,12 +181,12 @@ async function processDealsInBatches(dealIds) {
     batches.push(dealIds.slice(i, i + RATE_LIMIT_BATCH_SIZE));
   }
   
-  console.log(`🔄 Processing ${dealIds.length} test deals in ${batches.length} batches of ${RATE_LIMIT_BATCH_SIZE}`);
+  console.log(`🔄 Processing ${dealIds.length} failed deals in ${batches.length} batches of ${RATE_LIMIT_BATCH_SIZE}`);
   
   // Process each batch
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
     const batch = batches[batchIndex];
-    console.log(`📦 Processing test batch ${batchIndex + 1}/${batches.length} (${batch.length} deals)`);
+    console.log(`📦 Processing retry batch ${batchIndex + 1}/${batches.length} (${batch.length} deals)`);
     
     // Process all deals in the current batch concurrently
     const batchPromises = batch.map(dealId => processDeal(dealId));
@@ -210,21 +195,13 @@ async function processDealsInBatches(dealIds) {
     // Process results
     batchResults.forEach((result, index) => {
       const dealId = batch[index];
-      processedDeals++;
       
       if (result.success) {
         successfulDeals++;
-        console.log(`✅ Deal ${dealId}: ${result.events} events processed`);
+        console.log(`✅ Retry successful for deal ${dealId}: ${result.events} events processed`);
       } else {
         failedDeals.push({ dealId, reason: result.reason });
-        console.log(`❌ Deal ${dealId}: ${result.reason}`);
-      }
-      
-      // Heartbeat indicator
-      if (processedDeals % HEARTBEAT_INTERVAL === 0) {
-        const elapsed = Date.now() - startTime;
-        const rate = processedDeals / (elapsed / 1000);
-        console.log(`💓 Heartbeat: ${processedDeals}/${totalDeals} test deals processed (${rate.toFixed(1)} deals/sec)`);
+        console.log(`❌ Retry failed for deal ${dealId}: ${result.reason}`);
       }
     });
     
@@ -237,62 +214,77 @@ async function processDealsInBatches(dealIds) {
 }
 
 /**
+ * Export still-failed deals to a new file
+ */
+function exportStillFailedDeals() {
+  if (failedDeals.length === 0) return;
+  
+  const stillFailedFile = 'still-failed-deals.txt';
+  const stillFailedContent = failedDeals.map(f => f.dealId).join('\n');
+  
+  fs.writeFileSync(stillFailedFile, stillFailedContent);
+  console.log(`📄 Still-failed deals exported to: ${stillFailedFile}`);
+}
+
+/**
  * Main execution function
  */
 async function main() {
   try {
-    console.log('🧪 Starting 80-deal test import...');
-    console.log('📋 This test will validate the import process before running the full import');
+    // Check command line arguments
+    const failedDealsFile = process.argv[2];
+    if (!failedDealsFile) {
+      console.log('❌ Usage: node scripts/retry-failed-deals.js <failed-deals-file>');
+      console.log('   Example: node scripts/retry-failed-deals.js failed-deals-import.txt');
+      process.exit(1);
+    }
+    
+    console.log('🔄 Starting retry of failed deals...');
     startTime = Date.now();
     
     // Validate environment
     validateEnvironment();
     
-    // Read test deal IDs
-    const dealIds = readTestDealIds();
+    // Read failed deal IDs
+    const dealIds = readFailedDealIds(failedDealsFile);
     totalDeals = dealIds.length;
     
     if (totalDeals === 0) {
-      console.log('❌ No test deal IDs found in file');
+      console.log('❌ No failed deal IDs found in file');
       process.exit(1);
     }
     
-    // Process test deals
+    // Process failed deals
     await processDealsInBatches(dealIds);
+    
+    // Export still-failed deals
+    exportStillFailedDeals();
     
     // Final summary
     const elapsed = Date.now() - startTime;
     const totalFailed = failedDeals.length;
     const successRate = ((successfulDeals / totalDeals) * 100).toFixed(1);
     
-    console.log('\n📊 TEST IMPORT SUMMARY');
-    console.log('======================');
-    console.log(`Test deals: ${totalDeals}`);
-    console.log(`Successful: ${successfulDeals}`);
-    console.log(`Failed: ${totalFailed}`);
-    console.log(`Success rate: ${successRate}%`);
-    console.log(`Test time: ${(elapsed / 1000).toFixed(1)} seconds`);
-    console.log(`Average rate: ${(totalDeals / (elapsed / 1000)).toFixed(1)} deals/second`);
+    console.log('\n📊 RETRY SUMMARY');
+    console.log('================');
+    console.log(`Failed deals retried: ${totalDeals}`);
+    console.log(`Retry successful: ${successfulDeals}`);
+    console.log(`Still failed: ${totalFailed}`);
+    console.log(`Retry success rate: ${successRate}%`);
+    console.log(`Retry time: ${(elapsed / 1000).toFixed(1)} seconds`);
     
     if (totalFailed > 0) {
-      console.log('\n❌ Failed test deals:');
+      console.log('\n❌ Still failed deals:');
       failedDeals.forEach(f => {
         console.log(`  Deal ${f.dealId}: ${f.reason}`);
       });
-      console.log('\n⚠️  TEST FAILED: Some deals failed to import');
-      console.log('   Please investigate the issues before proceeding with full import');
-      process.exit(1);
+      console.log(`\n📄 Still-failed deals exported to: still-failed-deals.txt`);
     }
     
-    console.log('\n✅ TEST PASSED: All 80 deals imported successfully!');
-    console.log('\n📊 Test data has been successfully imported into the database.');
-    console.log('   Flow data: pipedrive_deal_flow_data table');
-    console.log('   Metadata: pipedrive_metric_data table');
-    console.log('\n🚀 Ready to proceed with full import of remaining deals');
-    console.log('   Run: node scripts/import-deal-flow-data.js');
+    console.log('\n✅ Retry process completed!');
     
   } catch (error) {
-    console.error('💥 Fatal error during test import:', error);
+    console.error('💥 Fatal error during retry:', error);
     process.exit(1);
   }
 }
@@ -302,4 +294,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { main, processDeal, readTestDealIds };
+module.exports = { main, processDeal, readFailedDealIds };

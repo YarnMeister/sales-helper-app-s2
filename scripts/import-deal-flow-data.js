@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Import database functions
-const { insertDealFlowData, insertDealMetadata } = require('../lib/db');
+const { insertDealFlowData, insertDealMetadata } = require('./db-helper');
 
 // Configuration
 const RATE_LIMIT_BATCH_SIZE = 40; // Pipedrive limit: 40 requests per 2 seconds
@@ -30,13 +30,12 @@ const PIPEDRIVE_BASE_URL = process.env.PIPEDRIVE_BASE_URL || 'https://api.pipedr
 // Database configuration
 const DATABASE_URL = process.env.DATABASE_URL;
 
-// Progress tracking
+// Global variables
+let startTime;
 let totalDeals = 0;
-let processedDeals = 0;
 let successfulDeals = 0;
 let failedDeals = [];
 let retryDeals = [];
-let startTime = null;
 
 /**
  * Validate environment variables
@@ -281,6 +280,20 @@ async function retryFailedDeals() {
 }
 
 /**
+ * Export failed deals to a file for manual retry
+ */
+function exportFailedDeals() {
+  if (failedDeals.length === 0) return;
+  
+  const failedDealsFile = 'failed-deals-import.txt';
+  const failedDealsContent = failedDeals.map(f => f.dealId).join('\n');
+  
+  fs.writeFileSync(failedDealsFile, failedDealsContent);
+  console.log(`📄 Failed deals exported to: ${failedDealsFile}`);
+  console.log(`   Run: node scripts/retry-failed-deals.js ${failedDealsFile}`);
+}
+
+/**
  * Main execution function
  */
 async function main() {
@@ -310,6 +323,9 @@ async function main() {
       await retryFailedDeals();
     }
     
+    // Export failed deals for manual retry
+    exportFailedDeals();
+    
     // Final summary
     const elapsed = Date.now() - startTime;
     const totalFailed = failedDeals.length;
@@ -328,6 +344,8 @@ async function main() {
       failedDeals.forEach(f => {
         console.log(`  Deal ${f.dealId}: ${f.reason}`);
       });
+      console.log(`\n📄 Failed deals exported to: failed-deals-import.txt`);
+      console.log(`   To retry failed deals: node scripts/retry-failed-deals.js failed-deals-import.txt`);
     }
     
     console.log('\n✅ Import completed!');
