@@ -358,6 +358,128 @@ reorderFlowMetrics(reorderData: ReorderData[]): Promise<void>
 ### Graphs for metrics
 - Using  https://recharts.org/en-US/api for draing bar charts and other visuals in the Metrics/Report pages
 
+## Zapier Integration (New Feature)
+
+### **Overview**
+The Sales Helper App now includes automated Zapier integration for processing completed deals. When a deal is moved to the "done" column in Pipedrive, Zapier automatically triggers a webhook that fetches the deal's flow data and stores it in the database for analysis.
+
+### **How It Works**
+
+#### **1. Zapier Setup**
+1. **Trigger**: Configure Zapier to detect when deals are moved to the "done" column in Pipedrive
+2. **Webhook Action**: Send a POST request to the Sales Helper App webhook endpoint
+3. **Payload**: Include the deal ID in the request body
+4. **Security**: Use the configured secret for authentication
+
+#### **2. Webhook Processing**
+1. **Validation**: Verify the webhook secret and validate the deal ID
+2. **Flow Data Fetch**: Call Pipedrive API to get the deal's complete flow history
+3. **Database Storage**: Store the flow data in the `pipedrive_deal_flow_data` table
+4. **Response**: Return success/failure status to Zapier
+
+#### **3. Data Availability**
+- **Raw Data Tab**: Flow data appears automatically in the Raw Data tab
+- **Flow Metrics**: Data is immediately available for flow efficiency calculations
+- **Real-time Processing**: No manual intervention required
+
+### **Zapier Configuration**
+
+#### **Required Setup**
+```json
+{
+  "URL": "https://your-app.vercel.app/api/pipedrive-webhook",
+  "Method": "POST",
+  "Headers": {
+    "Content-Type": "application/json",
+    "X-Zapier-Secret": "your_long_random_secret_string"
+  },
+  "Body": {
+    "deal_id": "{{deal.id}}"
+  }
+}
+```
+
+#### **Environment Variables**
+Add to your `.env.local` and Vercel production environment:
+```bash
+ZAPIER_WEBHOOK_SECRET=your_long_random_secret_string
+```
+
+### **API Endpoint**
+
+#### **POST /api/pipedrive-webhook**
+- **Purpose**: Process Zapier webhook requests for deal flow data
+- **Authentication**: Requires `X-Zapier-Secret` header
+- **Input**: JSON with `deal_id` (number or string)
+- **Output**: JSON response with processing status
+
+#### **Success Response**
+```json
+{
+  "status": "ok",
+  "message": "Deal 12345 processed successfully - flow data fetched and stored",
+  "phase": 2,
+  "correlationId": "unique-id",
+  "flowEventsCount": 5
+}
+```
+
+#### **Error Response**
+```json
+{
+  "status": "partial_success",
+  "message": "Deal 12345 received but flow processing failed",
+  "phase": 1,
+  "correlationId": "unique-id",
+  "error": "Pipedrive API error"
+}
+```
+
+### **Error Handling**
+- **Graceful Degradation**: Webhook always returns 200 OK to prevent Zapier retries
+- **Partial Success**: If flow processing fails, deal ID is still logged
+- **Detailed Logging**: All operations are logged with correlation IDs
+- **Error Recovery**: Failed operations can be retried manually via the Raw Data page
+
+### **Testing the Integration**
+
+#### **Local Testing**
+```bash
+# Test with valid deal ID
+curl -X POST http://localhost:3000/api/pipedrive-webhook \
+  -H "Content-Type: application/json" \
+  -H "X-Zapier-Secret: your_long_random_secret_string" \
+  -d '{"deal_id": 12345}'
+
+# Test with string deal ID (Zapier format)
+curl -X POST http://localhost:3000/api/pipedrive-webhook \
+  -H "Content-Type: application/json" \
+  -H "X-Zapier-Secret: your_long_random_secret_string" \
+  -d '{"deal_id": "12345"}'
+```
+
+#### **Production Testing**
+```bash
+# Test production endpoint
+curl -X POST https://your-app.vercel.app/api/pipedrive-webhook \
+  -H "Content-Type: application/json" \
+  -H "X-Zapier-Secret: your_long_random_secret_string" \
+  -d '{"deal_id": 12345}'
+```
+
+### **Benefits**
+- ✅ **Automated Processing**: No manual intervention required
+- ✅ **Real-time Data**: Flow data captured immediately when deals complete
+- ✅ **Consistent Storage**: Same data format as manual "Fetch" button
+- ✅ **Error Resilient**: Graceful handling of API failures
+- ✅ **Secure**: Secret-based authentication prevents unauthorized access
+- ✅ **Scalable**: Handles multiple concurrent webhook requests
+
+### **Monitoring**
+- **Logs**: All webhook operations are logged with correlation IDs
+- **Raw Data Tab**: Verify data appears automatically
+- **Flow Metrics**: Check that new deals appear in efficiency calculations
+- **Error Tracking**: Monitor for failed flow processing attempts
 
 ## Development
 
