@@ -16,7 +16,10 @@ export async function PATCH(
       sort_order: body.sort_order,
       is_active: body.is_active,
       start_stage_id: body.start_stage_id ? Number(body.start_stage_id) : undefined,
-      end_stage_id: body.end_stage_id ? Number(body.end_stage_id) : undefined
+      end_stage_id: body.end_stage_id ? Number(body.end_stage_id) : undefined,
+      avg_min_days: body.avg_min_days !== undefined ? Number(body.avg_min_days) : undefined,
+      avg_max_days: body.avg_max_days !== undefined ? Number(body.avg_max_days) : undefined,
+      metric_comment: body.metric_comment
     });
     
     if (!updatedConfig) {

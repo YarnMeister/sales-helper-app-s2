@@ -28,16 +28,16 @@ export async function GET(request: NextRequest) {
           const deals = await getDealsForCanonicalStage(metric.canonical_stage, period);
           
           if (!deals || deals.length === 0) {
-            return {
-              id: metric.metric_key,
-              title: metric.display_title,
-              canonicalStage: metric.canonical_stage,
-              mainMetric: '0',
-              best: '0',
-              worst: '0',
-              totalDeals: 0,
-              trend: 'stable' as const
-            };
+                      return {
+            id: metric.metric_key,
+            title: metric.display_title,
+            canonicalStage: metric.canonical_stage,
+            mainMetric: '0',
+            totalDeals: 0,
+            avg_min_days: metric.avg_min_days,
+            avg_max_days: metric.avg_max_days,
+            metric_comment: metric.metric_comment,
+          };
           }
 
           // Calculate metrics using the same logic as the detail page
@@ -50,18 +50,15 @@ export async function GET(request: NextRequest) {
           const best = Math.min(...durationsInDays);
           const worst = Math.max(...durationsInDays);
 
-          // Determine trend (for now, default to stable)
-          const trend = 'stable' as const;
-
           return {
             id: metric.metric_key,
             title: metric.display_title,
             canonicalStage: metric.canonical_stage,
             mainMetric: Math.round(average).toString(),
-            best: Math.round(best).toString(),
-            worst: Math.round(worst).toString(),
             totalDeals: deals.length,
-            trend
+            avg_min_days: metric.avg_min_days,
+            avg_max_days: metric.avg_max_days,
+            metric_comment: metric.metric_comment,
           };
         } catch (error) {
           logError('Error calculating metrics for canonical stage', {
@@ -74,10 +71,10 @@ export async function GET(request: NextRequest) {
             title: metric.display_title,
             canonicalStage: metric.canonical_stage,
             mainMetric: 'N/A',
-            best: 'N/A',
-            worst: 'N/A',
             totalDeals: 0,
-            trend: 'stable' as const
+            avg_min_days: metric.avg_min_days,
+            avg_max_days: metric.avg_max_days,
+            metric_comment: metric.metric_comment,
           };
         }
       })

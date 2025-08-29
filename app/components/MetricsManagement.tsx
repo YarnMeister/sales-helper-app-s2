@@ -32,6 +32,9 @@ interface FlowMetricConfig {
   is_active: boolean;
   start_stage_id?: number;
   end_stage_id?: number;
+  avg_min_days?: number;
+  avg_max_days?: number;
+  metric_comment?: string;
   created_at: string;
   updated_at: string;
 }
@@ -50,6 +53,9 @@ export const MetricsManagement: React.FC = () => {
     canonical_stage: '',
     start_stage_id: '',
     end_stage_id: '',
+    avg_min_days: '',
+    avg_max_days: '',
+    metric_comment: '',
     sort_order: 0,
     is_active: true
   });
@@ -93,6 +99,9 @@ export const MetricsManagement: React.FC = () => {
       canonical_stage: metric.canonical_stage,
       start_stage_id: metric.start_stage_id || undefined,
       end_stage_id: metric.end_stage_id || undefined,
+      avg_min_days: metric.avg_min_days || undefined,
+      avg_max_days: metric.avg_max_days || undefined,
+      metric_comment: metric.metric_comment || undefined,
       sort_order: metric.sort_order,
       is_active: metric.is_active
     });
@@ -161,6 +170,9 @@ export const MetricsManagement: React.FC = () => {
       canonical_stage: '',
       start_stage_id: '',
       end_stage_id: '',
+      avg_min_days: '',
+      avg_max_days: '',
+      metric_comment: '',
       sort_order: 0,
       is_active: true
     });
@@ -207,6 +219,9 @@ export const MetricsManagement: React.FC = () => {
           canonical_stage: '',
           start_stage_id: '',
           end_stage_id: '',
+          avg_min_days: '',
+          avg_max_days: '',
+          metric_comment: '',
           sort_order: 0,
           is_active: true
         });
@@ -393,6 +408,52 @@ export const MetricsManagement: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Avg Min (days)
+                    </label>
+                    <input
+                      type="number"
+                      value={addForm.avg_min_days || ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          setAddForm({ ...addForm, avg_min_days: value });
+                        }
+                      }}
+                      placeholder="Enter minimum threshold (e.g., 1)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Avg Max (days)
+                    </label>
+                    <input
+                      type="number"
+                      value={addForm.avg_max_days || ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          setAddForm({ ...addForm, avg_max_days: value });
+                        }
+                      }}
+                      placeholder="Enter maximum threshold (e.g., 30)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Comment
+                    </label>
+                    <textarea
+                      value={addForm.metric_comment || ''}
+                      onChange={(e) => setAddForm({ ...addForm, metric_comment: e.target.value })}
+                      placeholder="Enter narrative or interpretation about this metric"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 mt-3">
                   <input
@@ -443,6 +504,8 @@ export const MetricsManagement: React.FC = () => {
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Canonical Stage</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Start Stage ID</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">End Stage ID</th>
+                      <th className="text-left py-2 px-2 font-medium text-gray-700">Avg Min</th>
+                      <th className="text-left py-2 px-2 font-medium text-gray-700">Avg Max</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Sort</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Status</th>
                       <th className="text-left py-2 px-2 font-medium text-gray-700">Actions</th>
@@ -521,6 +584,42 @@ export const MetricsManagement: React.FC = () => {
                             />
                           ) : (
                             metric.end_stage_id || '-'
+                          )}
+                        </td>
+                        <td className="py-2 px-2 text-gray-700">
+                          {editingId === metric.id ? (
+                            <input
+                              type="number"
+                              value={editForm.avg_min_days || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                  setEditForm({ ...editForm, avg_min_days: value ? Number(value) : undefined });
+                                }
+                              }}
+                              placeholder="Min days"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                            />
+                          ) : (
+                            metric.avg_min_days || '-'
+                          )}
+                        </td>
+                        <td className="py-2 px-2 text-gray-700">
+                          {editingId === metric.id ? (
+                            <input
+                              type="number"
+                              value={editForm.avg_max_days || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                  setEditForm({ ...editForm, avg_max_days: value ? Number(value) : undefined });
+                                }
+                              }}
+                              placeholder="Max days"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                            />
+                          ) : (
+                            metric.avg_max_days || '-'
                           )}
                         </td>
                         <td className="py-2 px-2 text-gray-700">

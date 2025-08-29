@@ -24,55 +24,64 @@ interface FlowMetricData {
   id: string;
   title: string;
   mainMetric: string;
-  best: string;
-  worst: string;
-  trend: 'up' | 'down' | 'stable';
-  totalDeals: number; // Added for deal count
+  totalDeals: number;
+  avg_min_days?: number;
+  avg_max_days?: number;
+  metric_comment?: string;
 }
 
-// Trend icon component
-const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
-  const getTrendColor = () => {
-    switch (trend) {
-      case 'up':
-        return 'text-green-600';
-      case 'down':
-        return 'text-red-600';
-      case 'stable':
-        return 'text-gray-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
-
-  const getTrendIcon = () => {
-    switch (trend) {
-      case 'up':
-        return '↗';
-      case 'down':
-        return '↘';
-      case 'stable':
-        return '→';
-      default:
-        return '→';
-    }
-  };
-
-  return (
-    <span className={`text-sm font-medium ${getTrendColor()}`}>
-      {getTrendIcon()}
-    </span>
-  );
+// Color coding function for metrics
+const getMetricColor = (average: number, avgMin?: number, avgMax?: number) => {
+  if (avgMin !== undefined && avgMax !== undefined) {
+    if (average <= avgMin) return 'text-green-600';
+    if (average >= avgMax) return 'text-red-600';
+    return 'text-amber-600';
+  }
+  return 'text-gray-600';
 };
 
 // KPI Card component
 const KPICard = ({ data, selectedPeriod }: { data: FlowMetricData; selectedPeriod: string }) => {
   const router = useRouter();
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  const [comment, setComment] = useState(data.metric_comment || '');
+  const [isSavingComment, setIsSavingComment] = useState(false);
   
   const handleMoreInfo = () => {
     // Navigate to the detail page with the selected period
     router.push(`/flow-metrics-report/${data.id}?period=${selectedPeriod}`);
   };
+
+  const handleSaveComment = async () => {
+    try {
+      setIsSavingComment(true);
+      const response = await fetch(`/api/admin/flow-metrics-config/${data.id}/comment`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment }),
+      });
+
+      if (response.ok) {
+        setIsEditingComment(false);
+      } else {
+        console.error('Failed to save comment');
+      }
+    } catch (error) {
+      console.error('Error saving comment:', error);
+    } finally {
+      setIsSavingComment(false);
+    }
+  };
+
+  const handleCancelComment = () => {
+    setComment(data.metric_comment || '');
+    setIsEditingComment(false);
+  };
+
+  // Extract numeric value from mainMetric (e.g., "5.2 days" -> 5.2)
+  const numericValue = parseFloat(data.mainMetric.replace(' days', ''));
 
   return (
     <Card className="h-full">
@@ -82,8 +91,8 @@ const KPICard = ({ data, selectedPeriod }: { data: FlowMetricData; selectedPerio
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Main Metric */}
-        <div className="text-3xl font-bold text-gray-900">
+        {/* Main Metric with Color Coding */}
+        <div className={`text-3xl font-bold ${getMetricColor(numericValue, data.avg_min_days, data.avg_max_days)}`}>
           {data.mainMetric}
         </div>
         
@@ -94,20 +103,63 @@ const KPICard = ({ data, selectedPeriod }: { data: FlowMetricData; selectedPerio
           </div>
         )}
         
-        {/* Best/Worst Metrics */}
-        <div className="flex justify-between text-sm">
-          <span className="text-green-600 font-medium">
-            Best: {data.best}
-          </span>
-          <span className="text-red-600 font-medium">
-            Worst: {data.worst}
-          </span>
-        </div>
-        
-        {/* Trend */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Trend</span>
-          <TrendIcon trend={data.trend} />
+        {/* Comment Section */}
+        <div className="mt-4">
+          {isEditingComment ? (
+            <div className="space-y-2">
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Enter narrative or interpretation..."
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleSaveComment}
+                  disabled={isSavingComment}
+                  className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isSavingComment ? 'Saving...' : 'Save'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancelComment}
+                  disabled={isSavingComment}
+                  className="text-xs px-2 py-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {data.metric_comment ? (
+                <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-md">
+                  {data.metric_comment}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditingComment(true)}
+                    className="ml-2 text-xs text-blue-600 hover:text-blue-700"
+                  >
+                    Edit
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsEditingComment(true)}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  + Add comment
+                </Button>
+              )}
+            </div>
+          )}
         </div>
         
         {/* More Info Button */}
@@ -154,10 +206,10 @@ export default function FlowMetricsReportPage() {
             id: metric.id,
             title: metric.title,
             mainMetric: `${metric.mainMetric} days`,
-            best: `${metric.best} days`,
-            worst: `${metric.worst} days`,
-            trend: metric.trend,
-            totalDeals: metric.totalDeals, // Add totalDeals to the data
+            totalDeals: metric.totalDeals,
+            avg_min_days: metric.avg_min_days,
+            avg_max_days: metric.avg_max_days,
+            metric_comment: metric.metric_comment,
           }));
           
           setMetricsData(activeMetrics);
