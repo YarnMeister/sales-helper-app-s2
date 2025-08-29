@@ -4,11 +4,12 @@ This is a **temporary script** to import deal flow data from Pipedrive for the F
 
 ## Overview
 
-The script imports flow data for 578 deals from the `specs/deal-id.md` file, fetching stage transition history from Pipedrive's `/deals/{id}/flow` endpoint.
+The script imports flow data for 746 deals from the `specs/import-id-list` file, fetching stage transition history from Pipedrive's `/deals/{id}/flow` endpoint.
 
 ## Files
 
 - `scripts/import-deal-flow-data.js` - Main import script (requires environment variables)
+- `scripts/test-import-80-deals.js` - Test script for 80 deals validation
 - `scripts/test-import-script.js` - Test version (no environment variables needed)
 - `scripts/README-import-deal-flow.md` - This documentation
 
@@ -48,29 +49,40 @@ The script respects Pipedrive's rate limits:
 node scripts/test-import-script.js
 ```
 
-### Run the Actual Import
+### Test Run with 80 Deals (Validation)
 
 ```bash
 # Set environment variables
 export PIPEDRIVE_API_TOKEN="your_token_here"
 export DATABASE_URL="your_database_url_here"
 
-# Run the import
+# Run the 80-deal test
+node scripts/test-import-80-deals.js
+```
+
+### Run the Full Import
+
+```bash
+# Set environment variables
+export PIPEDRIVE_API_TOKEN="your_token_here"
+export DATABASE_URL="your_database_url_here"
+
+# Run the full import
 node scripts/import-deal-flow-data.js
 ```
 
 ## Expected Performance
 
-- **Total deals**: 578
-- **Batches**: 15 (40 deals per batch)
-- **Estimated time**: 30-45 minutes
+- **Test run**: 80 deals in 2 batches (40 each)
+- **Full import**: 746 deals in 19 batches (40 deals per batch)
+- **Estimated time**: 8-10 minutes for test, 45-60 minutes for full import
 - **Rate**: ~20 deals/second (with rate limiting)
 
 ## Output
 
 The script provides:
 - **Real-time progress**: Batch processing updates
-- **Heartbeat indicator**: Every 100 deals
+- **Heartbeat indicator**: Every 100 deals (20 for test run)
 - **Final summary**: Success/failure counts and timing
 - **Failed deals list**: Details of any failures
 
@@ -78,25 +90,25 @@ The script provides:
 
 ```
 🚀 Starting deal flow data import...
-📋 Loaded 578 deal IDs from specs/deal-id.md
+📋 Loaded 746 deal IDs from specs/import-id-list
 ✅ Environment variables validated
-🔄 Processing 578 deals in 15 batches of 40
-📦 Processing batch 1/15 (40 deals)
+🔄 Processing 746 deals in 19 batches of 40
+📦 Processing batch 1/19 (40 deals)
 ✅ Deal 23: 5 events processed
 ✅ Deal 29: 3 events processed
 ❌ Deal 31: No flow data found
 ...
-💓 Heartbeat: 100/578 deals processed (19.8 deals/sec)
+💓 Heartbeat: 100/746 deals processed (19.8 deals/sec)
 ⏳ Rate limiting: waiting 2000ms before next batch...
 
 📊 IMPORT SUMMARY
 ==================
-Total deals: 578
-Successful: 545
-Failed: 33
-Success rate: 94.3%
+Total deals: 746
+Successful: 712
+Failed: 34
+Success rate: 95.4%
 Total time: 1847.2 seconds
-Average rate: 0.3 deals/second
+Average rate: 0.4 deals/second
 ```
 
 ## Database Schema
@@ -131,11 +143,10 @@ After successful import:
    - The script should handle this automatically
    - If persistent, increase `RATE_LIMIT_DELAY_MS`
 
-5. **"null value in column 'id' of relation 'pipedrive_metric_data' violates not-null constraint"**
-   - **KNOWN ISSUE**: The metadata insertion has a bug where `firstEvent.deal_id` is undefined
-   - **IMPACT**: Metadata insertion fails, but flow data insertion succeeds
-   - **WORKAROUND**: Use the `dealId` parameter instead of `firstEvent.deal_id`
-   - **FIX NEEDED**: Change line in `processDeal()` function from `id: firstEvent.deal_id` to `id: dealId`
+5. **Database insertion errors**
+   - Check database connectivity
+   - Verify table schema matches expectations
+   - Check for duplicate constraint violations
 
 ### Monitoring
 
@@ -150,19 +161,22 @@ After successful import:
 - Safe to run multiple times (will skip existing records)
 - No impact on production data or user workflows
 
-## Known Issues & Fixes
+## Recent Fixes
 
-### Metadata Insertion Bug
-**Issue**: The script fails to insert deal metadata due to `firstEvent.deal_id` being undefined.
+### Metadata Insertion Bug (FIXED)
+**Issue**: The script was failing to insert deal metadata due to `firstEvent.deal_id` being undefined.
 
-**Fix Required**: In `scripts/import-deal-flow-data.js`, line ~185, change:
+**Fix Applied**: Changed the metadata insertion to use the `dealId` parameter instead of `firstEvent.deal_id`.
+
+**Before (BROKEN)**:
 ```javascript
-// CURRENT (BROKEN):
 const dealMetadata = {
-  id: firstEvent.deal_id,  // This is undefined!
+  id: firstEvent.deal_id,  // This was undefined!
 };
+```
 
-// FIXED:
+**After (FIXED)**:
+```javascript
 const dealMetadata = {
   id: dealId,  // Use the dealId parameter we already have
   title: `Deal ${dealId}`,
@@ -172,4 +186,28 @@ const dealMetadata = {
 };
 ```
 
-**Impact**: Metadata insertion fails, but flow data insertion succeeds. The import will work for flow data but won't populate the deal metadata table.
+### Database Insertion (IMPLEMENTED)
+**Issue**: The script was only logging data instead of actually inserting into the database.
+
+**Fix Applied**: Implemented actual database insertion using the existing `lib/db.ts` functions:
+- `insertDealFlowData()` for flow data
+- `insertDealMetadata()` for deal metadata
+
+### File Path Update
+**Issue**: Script was looking for `deal-id.md` which was renamed to `import-id-list`.
+
+**Fix Applied**: Updated file path to use `specs/import-id-list`.
+
+## Test Strategy
+
+### 80-Deal Test Run
+1. **Purpose**: Validate the import process with a subset before full import
+2. **Configuration**: First 80 deals from `import-id-list` (2 batches of 40)
+3. **Success Criteria**: 100% success rate with zero errors
+4. **Next Steps**: Only proceed with full import if test run passes
+
+### Full Import
+1. **Purpose**: Import all 746 deals from `import-id-list`
+2. **Configuration**: All deals in batches of 40
+3. **Success Criteria**: High success rate (>95%) with detailed error reporting
+4. **Monitoring**: Real-time progress tracking and comprehensive logging
