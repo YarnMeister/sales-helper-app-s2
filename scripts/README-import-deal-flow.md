@@ -4,11 +4,13 @@ This is a **temporary script** to import deal flow data from Pipedrive for the F
 
 ## Overview
 
-The script imports flow data for 578 deals from the `specs/deal-id.md` file, fetching stage transition history from Pipedrive's `/deals/{id}/flow` endpoint.
+The script imports flow data for 746 deals from the `specs/import-id-list` file, fetching stage transition history from Pipedrive's `/deals/{id}/flow` endpoint.
 
 ## Files
 
 - `scripts/import-deal-flow-data.js` - Main import script (requires environment variables)
+- `scripts/test-import-80-deals.js` - Test script for 80 deals validation
+- `scripts/retry-failed-deals.js` - Retry script for failed deals
 - `scripts/test-import-script.js` - Test version (no environment variables needed)
 - `scripts/README-import-deal-flow.md` - This documentation
 
@@ -20,126 +22,110 @@ The script imports flow data for 578 deals from the `specs/deal-id.md` file, fet
    export DATABASE_URL="your_neon_database_url"
    ```
 
-2. **Pipedrive API Token** with permissions to:
-   - Read deal flow data (`GET /deals/{id}/flow`)
-   - Access to all deals in the list
-
-## Rate Limiting
-
-The script respects Pipedrive's rate limits:
-- **40 requests per 2 seconds** per API token
-- **10,000 POST/PUT requests per day** per token
-- Batches requests in groups of 40
-- Waits 2 seconds between batches
-
-## Error Handling
-
-- **Skip failed deals** and continue processing
-- **Retry failed deals once** at the end
-- **Give up after 2nd attempt**
-- Logs all failures for review
+2. **Database Tables**: Ensure the following tables exist:
+   - `pipedrive_deal_flow_data` - Stores flow data
+   - `pipedrive_metric_data` - Stores deal metadata
 
 ## Usage
 
-### Test the Script (Recommended First Step)
-
+### 1. Test Run (Recommended First Step)
 ```bash
-# Test with first 10 deals (no environment variables needed)
-node scripts/test-import-script.js
+node scripts/test-import-80-deals.js
 ```
+This imports the first 80 deals to validate the process before running the full import.
 
-### Run the Actual Import
-
+### 2. Full Import
 ```bash
-# Set environment variables
-export PIPEDRIVE_API_TOKEN="your_token_here"
-export DATABASE_URL="your_database_url_here"
-
-# Run the import
 node scripts/import-deal-flow-data.js
 ```
+This imports all 746 deals from the `specs/import-id-list` file.
 
-## Expected Performance
-
-- **Total deals**: 578
-- **Batches**: 15 (40 deals per batch)
-- **Estimated time**: 30-45 minutes
-- **Rate**: ~20 deals/second (with rate limiting)
-
-## Output
-
-The script provides:
-- **Real-time progress**: Batch processing updates
-- **Heartbeat indicator**: Every 100 deals
-- **Final summary**: Success/failure counts and timing
-- **Failed deals list**: Details of any failures
-
-## Example Output
-
-```
-🚀 Starting deal flow data import...
-📋 Loaded 578 deal IDs from specs/deal-id.md
-✅ Environment variables validated
-🔄 Processing 578 deals in 15 batches of 40
-📦 Processing batch 1/15 (40 deals)
-✅ Deal 23: 5 events processed
-✅ Deal 29: 3 events processed
-❌ Deal 31: No flow data found
-...
-💓 Heartbeat: 100/578 deals processed (19.8 deals/sec)
-⏳ Rate limiting: waiting 2000ms before next batch...
-
-📊 IMPORT SUMMARY
-==================
-Total deals: 578
-Successful: 545
-Failed: 33
-Success rate: 94.3%
-Total time: 1847.2 seconds
-Average rate: 0.3 deals/second
+### 3. Retry Failed Deals
+If some deals fail during import, you can retry them:
+```bash
+node scripts/retry-failed-deals.js failed-deals-import.txt
 ```
 
-## Database Schema
+## Error Handling & Retry Strategy
 
-The script inserts data into:
-- `pipedrive_deal_flow_data` - Stage transition events
-- `pipedrive_metric_data` - Deal metadata
+### Automatic Retry
+- Failed deals are automatically retried once during the main import
+- Detailed error logging shows specific reasons for failures
 
-## Cleanup
+### Manual Retry
+- Failed deals are exported to `failed-deals-import.txt`
+- Use the retry script to attempt failed deals again
+- Still-failed deals are exported to `still-failed-deals.txt`
 
-After successful import:
-1. Verify data in the Flow Metrics Report
-2. Delete the temporary branch: `git checkout main && git branch -D temp/import-deal-flow-data`
-3. Remove the script files
+### Common Error Types
+- **401 Unauthorized**: Check your Pipedrive API token
+- **404 Not Found**: Deal may have been deleted from Pipedrive
+- **429 Rate Limited**: Script automatically handles rate limiting
+- **No flow data**: Deal has no stage transitions to import
+
+## Rate Limiting
+
+The script respects Pipedrive's API limits:
+- **40 requests per 2 seconds** (Pipedrive limit)
+- **Automatic batching** with delays between batches
+- **Concurrent processing** within each batch for efficiency
+
+## Expected Results
+
+### Test Run (80 deals)
+- **Expected success rate**: 100%
+- **Execution time**: ~12-15 seconds
+- **Data validation**: All flow records and metadata inserted
+
+### Full Import (746 deals)
+- **Expected success rate**: >95%
+- **Execution time**: ~2-3 minutes
+- **Error handling**: Failed deals logged and exported for retry
 
 ## Troubleshooting
 
-### Common Issues
+### API Authentication Issues
+```bash
+# Test your API token
+curl "https://api.pipedrive.com/v1/deals/23/flow?api_token=YOUR_TOKEN"
+```
 
-1. **"PIPEDRIVE_API_TOKEN environment variable is required"**
-   - Set the environment variable before running the script
+### Database Connection Issues
+```bash
+# Test database connection
+node -e "require('dotenv').config(); const { sql } = require('./lib/db'); sql\`SELECT 1\`.then(() => console.log('DB OK')).catch(console.error)"
+```
 
-2. **"DATABASE_URL environment variable is required"**
-   - Set the database connection string
+### Retry Process
+1. Check the failed deals file: `failed-deals-import.txt`
+2. Investigate error reasons in the console output
+3. Run retry script: `node scripts/retry-failed-deals.js failed-deals-import.txt`
+4. Check still-failed deals: `still-failed-deals.txt`
 
-3. **High failure rate**
-   - Check Pipedrive API token permissions
-   - Verify deals exist in Pipedrive
-   - Check network connectivity
+## Data Structure
 
-4. **Rate limit errors**
-   - The script should handle this automatically
-   - If persistent, increase `RATE_LIMIT_DELAY_MS`
+### Flow Data (`pipedrive_deal_flow_data`)
+- `pipedrive_event_id`: Unique Pipedrive event ID
+- `deal_id`: Deal identifier
+- `stage_id`: Stage identifier
+- `stage_name`: Human-readable stage name
+- `entered_at`: When deal entered this stage
+- `left_at`: When deal left this stage (null if current)
+- `duration_seconds`: Time spent in stage
 
-### Monitoring
+### Metadata (`pipedrive_metric_data`)
+- `id`: Deal identifier
+- `title`: Deal title
+- `pipeline_id`: Pipeline identifier
+- `stage_id`: Current stage
+- `status`: Deal status
 
-- Watch the heartbeat indicators to ensure the script is running
-- Monitor the success rate in the final summary
-- Check failed deals list for patterns
+## Cleanup
 
-## Safety Notes
-
-- This is a **read-only operation** for Pipedrive (no data modification)
-- The script includes duplicate prevention via `pipedrive_event_id`
-- Safe to run multiple times (will skip existing records)
-- No impact on production data or user workflows
+After successful import, you can remove these temporary files:
+- `scripts/import-deal-flow-data.js`
+- `scripts/test-import-80-deals.js`
+- `scripts/retry-failed-deals.js`
+- `scripts/README-import-deal-flow.md`
+- `failed-deals-import.txt` (if any)
+- `still-failed-deals.txt` (if any)

@@ -480,6 +480,7 @@ export const getDealsForCanonicalStage = async (canonicalStage: string, period?:
     let cutoffDateFilter = sql``;
     if (period) {
       const days = period === '7d' ? 7 : period === '14d' ? 14 : period === '1m' ? 30 : period === '3m' ? 90 : 0;
+
       if (days > 0) {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - days);
