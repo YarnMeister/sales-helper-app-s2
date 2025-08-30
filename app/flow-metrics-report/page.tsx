@@ -233,7 +233,7 @@ export default function FlowMetricsReportPage() {
   // Load active metrics from database
   useEffect(() => {
     fetchMetrics();
-  }, [selectedPeriod, fetchMetrics]);
+  }, [fetchMetrics]);
 
   // Sync state with URL changes
   useEffect(() => {
