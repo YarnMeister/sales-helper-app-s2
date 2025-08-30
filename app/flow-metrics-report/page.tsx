@@ -104,12 +104,10 @@ const KPICard = ({ data, selectedPeriod, onRefresh }: { data: FlowMetricData; se
           {data.mainMetric}
         </div>
         
-        {/* Deal Count */}
-        {data.totalDeals > 0 && (
-          <div className="text-xs text-gray-500">
-            Based on {data.totalDeals} deals
-          </div>
-        )}
+        {/* Deal Count - Always show for consistent alignment */}
+        <div className="text-xs text-gray-500">
+          Based on {data.totalDeals} deals
+        </div>
         
         {/* More Info Button - Positioned consistently */}
         <Button
