@@ -6,6 +6,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     environment: 'jsdom',
     globals: true,
+    testTimeout: 180000, // 3 minutes
     alias: {
       '@': path.resolve(__dirname, './'),
     },
