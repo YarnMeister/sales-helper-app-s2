@@ -5,10 +5,47 @@ import { useRouter, usePathname } from 'next/navigation';
 import AddLineItemsPage from '../add-line-items/page';
 import { LineItem } from '../types/product';
 
-// Mock Next.js router
+// Mock Next.js router with proper structure
+const mockRouter = {
+  push: vi.fn(),
+  replace: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  refresh: vi.fn(),
+  prefetch: vi.fn(),
+  pathname: '/',
+  query: {},
+  asPath: '/',
+  events: {
+    on: vi.fn(),
+    off: vi.fn(),
+    emit: vi.fn(),
+  },
+  isFallback: false,
+  isLocaleDomain: false,
+  isReady: true,
+  defaultLocale: 'en',
+  domainLocales: [],
+  isPreview: false,
+};
+
 vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(),
-  usePathname: vi.fn(() => '/add-line-items')
+  useRouter: () => mockRouter,
+  usePathname: () => '/add-line-items',
+  useSearchParams: () => ({
+    get: vi.fn(),
+    has: vi.fn(),
+    forEach: vi.fn(),
+    entries: vi.fn(() => []),
+    keys: vi.fn(() => []),
+    values: vi.fn(() => []),
+    toString: vi.fn(() => ''),
+  }),
+  useParams: () => ({}),
+  useSelectedLayoutSegment: () => null,
+  useSelectedLayoutSegments: () => [],
+  redirect: vi.fn(),
+  notFound: vi.fn(),
 }));
 
 // Mock global fetch
@@ -57,14 +94,14 @@ Object.defineProperty(window, 'sessionStorage', {
   value: mockSessionStorage
 });
 
-const mockRouter = {
-  push: vi.fn(),
-  back: vi.fn()
-};
-
 describe('AddLineItemsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Reset router mock functions
+    mockRouter.push.mockClear();
+    mockRouter.replace.mockClear();
+    mockRouter.back.mockClear();
     
     // Mock sessionStorage to return different values for different keys
     mockSessionStorage.getItem.mockImplementation((key: string) => {
@@ -99,12 +136,6 @@ describe('AddLineItemsPage', () => {
         clear: mockSessionStorage.clear
       },
       writable: true
-    });
-
-    // Mock Next.js router
-    (useRouter as any).mockReturnValue({
-      push: mockRouter.push,
-      back: mockRouter.back
     });
 
     // No default fetch mock needed since ProductAccordion now uses BFF helpers
