@@ -104,15 +104,53 @@ global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL, options?: R
           line_items: []
         }
       ]
+    },
+    '/api/flow/metrics': {
+      success: true,
+      data: [
+        {
+          id: 'lead-conversion',
+          title: 'Lead Conversion Time',
+          mainMetric: '5',
+          totalDeals: 25,
+          avg_min_days: 3.1,
+          avg_max_days: 7.8,
+          metric_comment: 'Good performance'
+        },
+        {
+          id: 'quote-conversion',
+          title: 'Quote Conversion Time',
+          mainMetric: '8',
+          totalDeals: 18,
+          avg_min_days: 5.2,
+          avg_max_days: 12.1,
+          metric_comment: 'Needs improvement'
+        }
+      ]
+    },
+    '/api/pipedrive/deal-flow-data': {
+      success: true,
+      data: [
+        {
+          id: 'deal-1',
+          deal_id: 12345,
+          stage_id: 'stage-1',
+          stage_name: 'Qualification',
+          entry_date: '2024-01-01',
+          exit_date: '2024-01-05',
+          days_in_stage: 4
+        }
+      ]
     }
   };
 
-  // Find matching response
-  const response = mockResponses[url] || mockResponses[url.split('?')[0]];
+  // Find matching response by removing query parameters
+  const baseUrl = url.split('?')[0];
+  const response = mockResponses[baseUrl];
   
   if (response) {
     return Promise.resolve({
-      ok: response.ok,
+      ok: response.ok !== undefined ? response.ok : true,
       json: async () => response,
       status: 200,
       statusText: 'OK'

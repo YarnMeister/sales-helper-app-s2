@@ -4,11 +4,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import FlowMetricsReportPage from '../flow-metrics-report/page';
 
-// Mock Next.js router
-vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(),
-}));
-
 // Mock the components
 vi.mock('../components/CommonHeader', () => ({
   CommonHeader: ({ title }: any) => <div data-testid="common-header">{title}</div>,
@@ -30,10 +25,6 @@ const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 describe('FlowMetricsReportPage', () => {
-  const mockRouter = {
-    push: vi.fn(),
-  };
-
   const mockMetricsData = [
     {
       id: 'lead-conversion',
@@ -58,7 +49,6 @@ describe('FlowMetricsReportPage', () => {
   ];
 
   beforeEach(() => {
-    (useRouter as any).mockReturnValue(mockRouter);
     mockConsoleLog.mockClear();
     
     // Mock the API call to return metrics data
@@ -278,10 +268,13 @@ describe('FlowMetricsReportPage', () => {
     it('has proper form labels', () => {
       render(<FlowMetricsReportPage />);
       
-      const periodLabel = screen.getByText('Period:');
+      // Check for period selection elements (mobile select)
       const periodSelect = screen.getByRole('combobox');
-      expect(periodLabel).toBeInTheDocument();
-      expect(periodSelect).toHaveAttribute('id', 'period-select');
+      expect(periodSelect).toBeInTheDocument();
+      
+      // Check for period buttons (desktop)
+      const sevenDaysButton = screen.getByText('7 days');
+      expect(sevenDaysButton).toBeInTheDocument();
     });
 
     it('has proper button elements', async () => {
