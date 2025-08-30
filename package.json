@@ -25,6 +25,8 @@
     "db:migrate-dev": "./scripts/migrate-env.sh dev",
     "db:migrate-preview": "./scripts/migrate-env.sh preview/pr-123",
     "db:migrate-prod": "./scripts/migrate-env.sh main",
+    "db:test-connection": "node scripts/test-db-connection.js",
+    "db:migrate-test": "node scripts/migrate-test-db.js",
     "workflow:update": "./scripts/update-workflow-state.sh",
     "test:clean-build": "./scripts/test-clean-build.sh"
   },
