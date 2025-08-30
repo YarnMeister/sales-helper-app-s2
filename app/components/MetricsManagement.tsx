@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { useToast } from '../hooks/use-toast';
@@ -61,36 +61,36 @@ export const MetricsManagement: React.FC = () => {
   });
 
   // Load metrics from database
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/admin/flow-metrics-config');
-        const result = await response.json();
-        
-        if (result.success) {
-          setMetrics(result.data || []);
-        } else {
-          toast({
-            title: "Error",
-            description: result.error || "Failed to fetch metrics",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching metrics:', error);
+  const fetchMetrics = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/admin/flow-metrics-config');
+      const result = await response.json();
+      
+      if (result.success) {
+        setMetrics(result.data || []);
+      } else {
         toast({
           title: "Error",
-          description: "Failed to fetch metrics",
+          description: result.error || "Failed to fetch metrics",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch metrics",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
+  useEffect(() => {
     fetchMetrics();
-  }, [toast]); // Include toast in dependency array
+  }, [fetchMetrics]);
 
   const handleEdit = (metric: FlowMetricConfig) => {
     setEditingId(metric.id);

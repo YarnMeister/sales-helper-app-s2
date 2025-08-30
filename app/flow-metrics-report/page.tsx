@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CommonHeader } from '../components/CommonHeader';
 import { CommonFooter } from '../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -199,7 +199,7 @@ export default function FlowMetricsReportPage() {
 
 
   // Function to fetch metrics data
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     try {
       setIsLoadingMetrics(true);
       
@@ -230,7 +230,7 @@ export default function FlowMetricsReportPage() {
     } finally {
       setIsLoadingMetrics(false);
     }
-  };
+  }, [selectedPeriod]);
 
   // Load active metrics from database
   useEffect(() => {
