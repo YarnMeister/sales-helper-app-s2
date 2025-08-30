@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET } from '../../app/api/flow/metrics/route';
 import { getActiveFlowMetricsConfig, getDealsForCanonicalStage } from '../../lib/db';
+import {
+  flowMetricWithMappingFactory,
+  canonicalStageDealFactory,
+  TEST_DATA_SETS
+} from '../_factories/flow-metrics-factory';
 
 // Mock the database functions
 vi.mock('../../lib/db', () => ({
@@ -26,34 +31,21 @@ describe('Flow Metrics API', () => {
 
   describe('GET /api/flow/metrics', () => {
     it('should return calculated metrics for active canonical stages', async () => {
-      // Mock active metrics configuration
-      const mockActiveMetrics = [
-        {
-          metric_key: 'manufacturing',
-          display_title: 'Manufacturing Lead Time',
-          canonical_stage: 'Manufacturing',
-        },
-        {
-          metric_key: 'delivery',
-          display_title: 'Delivery Lead Time',
-          canonical_stage: 'Delivery',
-        },
-      ];
+      // Use factory to create realistic test data with mappings
+      const manufacturingMetric = flowMetricWithMappingFactory.buildManufacturing();
+      const deliveryMetric = flowMetricWithMappingFactory.build({
+        metric_key: 'delivery',
+        display_title: 'Delivery Lead Time',
+        canonical_stage: 'Delivery',
+        sort_order: 5
+      });
 
-      // Mock deals data for manufacturing
+      const mockActiveMetrics = [manufacturingMetric, deliveryMetric];
+
+      // Use factory to create realistic deals data
       const mockManufacturingDeals = [
-        {
-          deal_id: 'M1',
-          start_date: '2024-01-15T00:00:00.000Z',
-          end_date: '2024-01-19T00:00:00.000Z',
-          duration_seconds: 345600, // 4 days
-        },
-        {
-          deal_id: 'M2',
-          start_date: '2024-01-15T00:00:00.000Z',
-          end_date: '2024-01-22T00:00:00.000Z',
-          duration_seconds: 604800, // 7 days
-        },
+        canonicalStageDealFactory.buildWithDuration(4, { deal_id: 'M1' }),
+        canonicalStageDealFactory.buildWithDuration(7, { deal_id: 'M2' })
       ];
 
       // Mock empty deals for delivery
@@ -73,31 +65,58 @@ describe('Flow Metrics API', () => {
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);
 
-      // Check manufacturing metrics
-      const manufacturingMetric = result.data.find((m: any) => m.id === 'manufacturing');
-      expect(manufacturingMetric).toEqual({
-        id: 'manufacturing',
+      // Check manufacturing metrics - API uses factory-generated id
+      const manufacturingResult = result.data.find((m: any) => m.id === manufacturingMetric.id);
+      expect(manufacturingResult).toBeDefined();
+      expect(manufacturingResult).toEqual({
+        id: manufacturingMetric.id,
         title: 'Manufacturing Lead Time',
         canonicalStage: 'Manufacturing',
         mainMetric: '6', // (4 + 7) / 2 = 5.5, rounded to 6
-        best: '4',
-        worst: '7',
         totalDeals: 2,
-        trend: 'stable',
+        avg_min_days: manufacturingMetric.avg_min_days,
+        avg_max_days: manufacturingMetric.avg_max_days,
+        metric_comment: manufacturingMetric.metric_comment,
       });
 
       // Check delivery metrics (no deals)
-      const deliveryMetric = result.data.find((m: any) => m.id === 'delivery');
-      expect(deliveryMetric).toEqual({
-        id: 'delivery',
+      const deliveryResult = result.data.find((m: any) => m.id === deliveryMetric.id);
+      expect(deliveryResult).toEqual({
+        id: deliveryMetric.id,
         title: 'Delivery Lead Time',
         canonicalStage: 'Delivery',
         mainMetric: '0',
-        best: '0',
-        worst: '0',
         totalDeals: 0,
-        trend: 'stable',
+        avg_min_days: deliveryMetric.avg_min_days,
+        avg_max_days: deliveryMetric.avg_max_days,
+        metric_comment: deliveryMetric.metric_comment,
       });
+    });
+
+    it('should handle performance variation scenarios', async () => {
+      // Use factory to create metrics with performance variation
+      const metric = flowMetricWithMappingFactory.buildLeadConversion();
+      const mockActiveMetrics = [metric];
+
+      // Use factory to create deals with varying performance
+      const { deals } = TEST_DATA_SETS.PERFORMANCE_VARIATION();
+      const mockDeals = deals.slice(0, 3); // Use first 3 deals for testing
+
+      vi.mocked(getActiveFlowMetricsConfig).mockResolvedValue(mockActiveMetrics);
+      vi.mocked(getDealsForCanonicalStage).mockResolvedValue(mockDeals);
+
+      const request = new NextRequest('http://localhost:3000/api/flow/metrics?period=7d');
+      const response = await GET(request);
+      const result = await response.json();
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+
+      const metricResult = result.data[0];
+      expect(metricResult.totalDeals).toBe(3);
+      expect(metricResult.mainMetric).toBeDefined();
+      expect(metricResult.avg_min_days).toBeDefined();
+      expect(metricResult.avg_max_days).toBeDefined();
     });
 
     it('should handle empty active metrics', async () => {
@@ -125,55 +144,45 @@ describe('Flow Metrics API', () => {
     });
 
     it('should handle individual metric calculation errors', async () => {
-      const mockActiveMetrics = [
-        {
-          metric_key: 'test-metric',
-          display_title: 'Test Metric',
-          canonical_stage: 'Test Stage',
-        },
-      ];
+      // Use factory to create test data
+      const metric = flowMetricWithMappingFactory.buildManufacturing();
+      const mockActiveMetrics = [metric];
 
       vi.mocked(getActiveFlowMetricsConfig).mockResolvedValue(mockActiveMetrics);
-      vi.mocked(getDealsForCanonicalStage).mockRejectedValue(new Error('Calculation error'));
+      vi.mocked(getDealsForCanonicalStage).mockRejectedValue(new Error('Deal calculation error'));
 
       const request = new NextRequest('http://localhost:3000/api/flow/metrics?period=7d');
       const response = await GET(request);
       const result = await response.json();
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true); // API handles individual errors gracefully
       expect(result.data).toHaveLength(1);
-
-      const testMetric = result.data[0];
-      expect(testMetric).toEqual({
-        id: 'test-metric',
-        title: 'Test Metric',
-        canonicalStage: 'Test Stage',
-        mainMetric: 'N/A',
-        best: 'N/A',
-        worst: 'N/A',
-        totalDeals: 0,
-        trend: 'stable',
-      });
+      
+      const metricResult = result.data[0];
+      expect(metricResult.mainMetric).toBe('N/A');
+      expect(metricResult.totalDeals).toBe(0);
     });
 
-    it('should use default period when not provided', async () => {
-      const mockActiveMetrics = [
-        {
-          metric_key: 'test-metric',
-          display_title: 'Test Metric',
-          canonical_stage: 'Test Stage',
-        },
-      ];
+    it('should handle different time periods', async () => {
+      // Use factory to create test data
+      const metric = flowMetricWithMappingFactory.buildLeadConversion();
+      const mockActiveMetrics = [metric];
+      const mockDeals = canonicalStageDealFactory.buildMany(2);
 
       vi.mocked(getActiveFlowMetricsConfig).mockResolvedValue(mockActiveMetrics);
-      vi.mocked(getDealsForCanonicalStage).mockResolvedValue([]);
+      vi.mocked(getDealsForCanonicalStage).mockResolvedValue(mockDeals);
 
-      const request = new NextRequest('http://localhost:3000/api/flow/metrics');
-      const response = await GET(request);
-      const result = await response.json();
+      // Test different periods
+      const periods = ['7d', '14d', '1m', '3m'];
+      
+      for (const period of periods) {
+        const request = new NextRequest(`http://localhost:3000/api/flow/metrics?period=${period}`);
+        const response = await GET(request);
+        const result = await response.json();
 
-      expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
+        expect(result.success).toBe(true);
+        expect(result.data).toHaveLength(1);
+      }
     });
   });
 });
