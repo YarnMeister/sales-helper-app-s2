@@ -27,7 +27,7 @@ export const mockUseToast = () => ({
 
 // Test data for Manufacturing Lead Time (cornerstone test)
 export const MANUFACTURING_LEAD_TIME_METRIC = {
-  id: '1',
+  id: 'manufacturing-lead-time',
   metric_key: 'manufacturing-lead-time',
   display_title: 'Manufacturing Lead Time',
   canonical_stage: 'MANUFACTURING',

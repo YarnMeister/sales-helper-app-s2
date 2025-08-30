@@ -328,10 +328,11 @@ export const MetricsManagement: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-3">Add New Metric</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="metric-key" className="block text-sm font-medium text-gray-700 mb-1">
                       Metric Key *
                     </label>
                     <input
+                      id="metric-key"
                       type="text"
                       value={addForm.metric_key}
                       onChange={(e) => setAddForm({ ...addForm, metric_key: e.target.value })}
@@ -340,10 +341,11 @@ export const MetricsManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="display-title" className="block text-sm font-medium text-gray-700 mb-1">
                       Display Title *
                     </label>
                     <input
+                      id="display-title"
                       type="text"
                       value={addForm.display_title}
                       onChange={(e) => setAddForm({ ...addForm, display_title: e.target.value })}
@@ -352,10 +354,11 @@ export const MetricsManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="canonical-stage" className="block text-sm font-medium text-gray-700 mb-1">
                       Canonical Stage *
                     </label>
                     <input
+                      id="canonical-stage"
                       type="text"
                       value={addForm.canonical_stage}
                       onChange={(e) => setAddForm({ ...addForm, canonical_stage: e.target.value })}
@@ -364,10 +367,11 @@ export const MetricsManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="sort-order" className="block text-sm font-medium text-gray-700 mb-1">
                       Sort Order
                     </label>
                     <input
+                      id="sort-order"
                       type="number"
                       value={addForm.sort_order}
                       onChange={(e) => setAddForm({ ...addForm, sort_order: parseInt(e.target.value) || 0 })}
@@ -375,10 +379,11 @@ export const MetricsManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="start-stage-id" className="block text-sm font-medium text-gray-700 mb-1">
                       Start Stage ID
                     </label>
                     <input
+                      id="start-stage-id"
                       type="number"
                       value={addForm.start_stage_id || ''}
                       onChange={(e) => {
@@ -392,10 +397,11 @@ export const MetricsManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="end-stage-id" className="block text-sm font-medium text-gray-700 mb-1">
                       End Stage ID
                     </label>
                     <input
+                      id="end-stage-id"
                       type="number"
                       value={addForm.end_stage_id || ''}
                       onChange={(e) => {
@@ -409,10 +415,11 @@ export const MetricsManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="avg-min-days" className="block text-sm font-medium text-gray-700 mb-1">
                       Avg Min (days)
                     </label>
                     <input
+                      id="avg-min-days"
                       type="number"
                       value={addForm.avg_min_days || ''}
                       onChange={(e) => {
@@ -426,10 +433,11 @@ export const MetricsManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="avg-max-days" className="block text-sm font-medium text-gray-700 mb-1">
                       Avg Max (days)
                     </label>
                     <input
+                      id="avg-max-days"
                       type="number"
                       value={addForm.avg_max_days || ''}
                       onChange={(e) => {
@@ -443,10 +451,11 @@ export const MetricsManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="metric-comment" className="block text-sm font-medium text-gray-700 mb-1">
                       Comment
                     </label>
                     <textarea
+                      id="metric-comment"
                       value={addForm.metric_comment || ''}
                       onChange={(e) => setAddForm({ ...addForm, metric_comment: e.target.value })}
                       placeholder="Enter narrative or interpretation about this metric"
@@ -512,7 +521,7 @@ export const MetricsManagement: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {metrics.map((metric) => (
+                    {metrics.filter(metric => metric && metric.id).map((metric) => (
                       <tr key={metric.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-2 px-2 text-gray-900 font-mono text-xs">
                           {editingId === metric.id ? (
