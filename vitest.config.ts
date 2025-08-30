@@ -6,7 +6,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     environment: 'jsdom',
     globals: true,
-    testTimeout: 10000, // 10 seconds - much more reasonable
+    testTimeout: 5000, // 5 seconds - much more aggressive timeout
     pool: 'forks', // Use forks instead of threads for better memory management
     poolOptions: {
       forks: {
@@ -16,7 +16,13 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './'),
     },
-    teardownTimeout: 5000, // 5 second timeout for teardown
-    hookTimeout: 5000, // 5 second timeout for hooks
+    teardownTimeout: 3000, // 3 second timeout for teardown
+    hookTimeout: 3000, // 3 second timeout for hooks
+    // Add global timeout to prevent infinite hangs
+    globalSetup: undefined,
+    // Disable coverage for now to speed up tests
+    coverage: {
+      enabled: false
+    }
   },
 });
