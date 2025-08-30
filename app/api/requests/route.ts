@@ -12,6 +12,9 @@ import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 import { logInfo, logError, generateCorrelationId } from '@/lib/log';
 import { RequestStatus, SalespersonSelection } from '@/lib/types/database';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId();
   

@@ -3,6 +3,9 @@ import { withTiming } from '@/lib/db-utils';
 import { getMockSubmissions } from '@/lib/queries/mock-submissions';
 import { errorToResponse } from '@/lib/errors';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     return await withTiming('GET /api/mock-submissions', async () => {

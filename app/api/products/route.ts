@@ -5,6 +5,9 @@ import { transformRawProductsToCategorized } from '@/lib/bff';
 import { errorToResponse, ExternalError } from '@/lib/errors';
 import { logInfo, logWarn, logError, withPerformanceLogging, generateCorrelationId } from '@/lib/log';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId();
   const { searchParams } = new URL(request.url);
