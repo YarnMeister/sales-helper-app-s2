@@ -35,11 +35,15 @@ describe('Flow Metrics Period Selection Tests', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Create a new URLSearchParams instance for each test with proper get method
-    const newSearchParams = new URLSearchParams();
-    newSearchParams.set('period', '7d');
+    // Create a stable mock for searchParams that works for all components
+    const mockSearchParams = {
+      get: vi.fn((key: string) => {
+        if (key === 'period') return '7d';
+        return null;
+      })
+    };
     (useRouter as any).mockReturnValue(mockRouter);
-    (useSearchParams as any).mockReturnValue(newSearchParams);
+    (useSearchParams as any).mockReturnValue(mockSearchParams);
     
     // Mock ResizeObserver for Recharts
     global.ResizeObserver = vi.fn().mockImplementation(() => ({
