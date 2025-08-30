@@ -111,6 +111,16 @@ const KPICard = ({ data, selectedPeriod, onRefresh }: { data: FlowMetricData; se
           </div>
         )}
         
+        {/* More Info Button - Positioned consistently */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleMoreInfo}
+          className="w-full mt-2 border-green-700 text-green-700 hover:bg-green-50"
+        >
+          More info
+        </Button>
+        
         {/* Comment Section */}
         <div className="mt-4">
           {isEditingComment ? (
@@ -169,16 +179,6 @@ const KPICard = ({ data, selectedPeriod, onRefresh }: { data: FlowMetricData; se
             </div>
           )}
         </div>
-        
-        {/* More Info Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleMoreInfo}
-          className="w-full mt-2 border-green-700 text-green-700 hover:bg-green-50"
-        >
-          More info
-        </Button>
       </CardContent>
     </Card>
   );
