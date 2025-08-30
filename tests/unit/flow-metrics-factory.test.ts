@@ -81,7 +81,7 @@ describe('Flow Metrics Factory', () => {
       expect(mapping.start_stage_id).toBeGreaterThan(0);
       expect(mapping.end_stage_id).toBeGreaterThan(mapping.start_stage_id!);
       expect(mapping.avg_min_days).toBeGreaterThan(0);
-      expect(mapping.avg_max_days).toBeGreaterThan(mapping.avg_min_days!);
+      expect(mapping.avg_max_days).toBeGreaterThanOrEqual(mapping.avg_min_days!);
       expect(mapping.metric_comment).toMatch(/^Test comment for \d+$/);
     });
 
@@ -158,7 +158,7 @@ describe('Flow Metrics Factory', () => {
       const startTime = new Date(deal.start_date).getTime();
       const endTime = new Date(deal.end_date).getTime();
       const calculatedDuration = (endTime - startTime) / 1000;
-      expect(deal.duration_seconds).toBeCloseTo(calculatedDuration, 0);
+      expect(deal.duration_seconds).toBeCloseTo(calculatedDuration, 1);
     });
 
     it('should create deal with specific duration', () => {

@@ -86,7 +86,7 @@ export const MetricsManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []); // toast is stable from useToast hook
+  }, [toast]); // Include toast in dependency array
 
   useEffect(() => {
     fetchMetrics();
