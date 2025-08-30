@@ -1,4 +1,4 @@
-import { vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { vi, beforeAll, afterAll, afterEach } from 'vitest';
 import '@testing-library/jest-dom';
 import { setupTestDatabase, teardownTestDatabase } from './_setup/setup-test-db';
 import { testDataManager } from './_utils/test-helpers';
@@ -52,68 +52,61 @@ vi.mock('@neondatabase/serverless', () => ({
   }
 }));
 
+// Mock ResizeObserver for Recharts and other chart libraries
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock IntersectionObserver
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Global test setup
-beforeAll(() => {
-  // Mock ResizeObserver for Recharts and other chart libraries
-  global.ResizeObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
-
-  // Mock IntersectionObserver
-  global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
-
-  // Mock matchMedia
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: vi.fn().mockImplementation(query => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(), // deprecated
-      removeListener: vi.fn(), // deprecated
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  });
-
-  // Mock console methods to reduce noise in tests
-  const originalConsoleWarn = console.warn;
-  const originalConsoleError = console.error;
-  
-  console.warn = vi.fn((...args) => {
-    // Only show warnings for non-mock related issues
-    const message = args[0];
-    if (typeof message === 'string' && !message.includes('Mock fetch:') && !message.includes('act(')) {
-      originalConsoleWarn(...args);
-    }
-  });
-  
-  console.error = vi.fn((...args) => {
-    // Only show errors for non-React testing issues
-    const message = args[0];
-    if (typeof message === 'string' && !message.includes('Warning: An update to') && !message.includes('act(')) {
-      originalConsoleError(...args);
-    }
-  });
+beforeAll(async () => {
+  try {
+    // Set up test database tables
+    await setupTestDatabase();
+    console.log('Test database setup completed');
+  } catch (error) {
+    console.warn('Test database setup failed, continuing with mocks:', error);
+  }
 });
 
 // Global test teardown
-afterAll(() => {
-  vi.clearAllMocks();
+afterAll(async () => {
+  try {
+    // Clean up test data
+    await testDataManager.nuclearCleanup();
+    
+    // Tear down test database
+    await teardownTestDatabase();
+    console.log('Test database teardown completed');
+  } catch (error) {
+    console.warn('Test database teardown failed:', error);
+  }
 });
 
-// Reset mocks between tests
-beforeEach(() => {
-  vi.clearAllMocks();
-});
-
-afterEach(() => {
-  vi.resetAllMocks();
+// Clean up after each test
+afterEach(async () => {
+  await testDataManager.cleanup();
 });
