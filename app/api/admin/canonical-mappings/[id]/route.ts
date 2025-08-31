@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const { id } = params;
     const body = await request.json();
-    const { canonical_stage, start_stage_id, end_stage_id, start_stage, end_stage } = body;
+    const { canonical_stage, start_stage_id, end_stage_id, start_stage, end_stage, avg_min_days, avg_max_days, metric_comment } = body;
     
     if (!canonical_stage) {
       return NextResponse.json(
@@ -33,7 +33,10 @@ export async function PATCH(
       start_stage_id,
       end_stage_id,
       start_stage,
-      end_stage
+      end_stage,
+      avg_min_days,
+      avg_max_days,
+      metric_comment
     });
     
     const result = await sql`
@@ -44,6 +47,9 @@ export async function PATCH(
         end_stage_id = ${end_stage_id || null},
         start_stage = ${start_stage || ''},
         end_stage = ${end_stage || ''},
+        avg_min_days = ${avg_min_days || null},
+        avg_max_days = ${avg_max_days || null},
+        metric_comment = ${metric_comment || null},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

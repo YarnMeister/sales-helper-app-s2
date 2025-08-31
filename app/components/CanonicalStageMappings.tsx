@@ -14,6 +14,10 @@ interface CanonicalStageMapping {
   end_stage_id?: number | null;
   created_at: string;
   updated_at: string;
+  avg_min_days?: number | null;
+  avg_max_days?: number | null;
+  metric_comment?: string | null;
+  metric_config_id?: string | null;
 }
 
 interface StageInfo {
@@ -106,7 +110,10 @@ export const CanonicalStageMappings: React.FC = () => {
       start_stage_id: mapping.start_stage_id,
       end_stage_id: mapping.end_stage_id,
       start_stage: mapping.start_stage,
-      end_stage: mapping.end_stage
+      end_stage: mapping.end_stage,
+      avg_min_days: mapping.avg_min_days,
+      avg_max_days: mapping.avg_max_days,
+      metric_comment: mapping.metric_comment
     });
 
     // Resolve stage names for display only if we don't already have them
@@ -153,7 +160,10 @@ export const CanonicalStageMappings: React.FC = () => {
           start_stage_id: editForm.start_stage_id,
           end_stage_id: editForm.end_stage_id,
           start_stage: editForm.start_stage,
-          end_stage: editForm.end_stage
+          end_stage: editForm.end_stage,
+          avg_min_days: editForm.avg_min_days,
+          avg_max_days: editForm.avg_max_days,
+          metric_comment: editForm.metric_comment
         }),
       });
 
@@ -279,6 +289,9 @@ export const CanonicalStageMappings: React.FC = () => {
                   <th className="text-left py-2 px-2 font-medium text-gray-700">Start Stage Name</th>
                   <th className="text-left py-2 px-2 font-medium text-gray-700">End Stage ID</th>
                   <th className="text-left py-2 px-2 font-medium text-gray-700">End Stage Name</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700">Avg Min Days</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700">Avg Max Days</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700">Comment</th>
                   <th className="text-left py-2 px-2 font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
@@ -351,6 +364,48 @@ export const CanonicalStageMappings: React.FC = () => {
                         mapping.end_stage_id && stageInfo[mapping.end_stage_id] 
                           ? stageInfo[mapping.end_stage_id].name 
                           : mapping.end_stage || '-'
+                      )}
+                    </td>
+
+                    <td className="py-2 px-2 text-gray-700">
+                      {editingId === mapping.id ? (
+                        <input
+                          type="number"
+                          value={editForm.avg_min_days || ''}
+                          onChange={(e) => setEditForm({ ...editForm, avg_min_days: e.target.value ? parseInt(e.target.value) : null })}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                          placeholder="Min days"
+                        />
+                      ) : (
+                        mapping.avg_min_days || '-'
+                      )}
+                    </td>
+                    <td className="py-2 px-2 text-gray-700">
+                      {editingId === mapping.id ? (
+                        <input
+                          type="number"
+                          value={editForm.avg_max_days || ''}
+                          onChange={(e) => setEditForm({ ...editForm, avg_max_days: e.target.value ? parseInt(e.target.value) : null })}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                          placeholder="Max days"
+                        />
+                      ) : (
+                        mapping.avg_max_days || '-'
+                      )}
+                    </td>
+                    <td className="py-2 px-2 text-gray-700">
+                      {editingId === mapping.id ? (
+                        <input
+                          type="text"
+                          value={editForm.metric_comment || ''}
+                          onChange={(e) => setEditForm({ ...editForm, metric_comment: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                          placeholder="Comment"
+                        />
+                      ) : (
+                        <span className="max-w-xs truncate" title={mapping.metric_comment || ''}>
+                          {mapping.metric_comment || '-'}
+                        </span>
                       )}
                     </td>
                     <td className="py-2 px-2 text-gray-600">
