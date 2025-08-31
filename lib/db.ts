@@ -499,20 +499,23 @@ export const getFlowMetricsConfig = async () => {
 export const getActiveFlowMetricsConfig = async (): Promise<any[]> => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching active flow metrics configuration');
-    const result = await sql`
-      SELECT 
-        fmc.*,
-        csm.start_stage_id,
-        csm.end_stage_id,
-        csm.avg_min_days,
-        csm.avg_max_days,
-        csm.metric_comment
-      FROM flow_metrics_config fmc
-      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
-      WHERE fmc.is_active = true
-      ORDER BY fmc.sort_order, fmc.display_title
-    `;
-    return result as any[];
+    
+    // Use the same function as admin API and filter for active metrics
+    const allMetrics = await getFlowMetricsConfig();
+    const activeMetrics = allMetrics.filter((metric: any) => metric.is_active === true);
+    
+    logInfo('Active flow metrics configuration result', { 
+      totalCount: allMetrics.length,
+      activeCount: activeMetrics.length,
+      metrics: activeMetrics.map((m: any) => ({ 
+        id: m.id, 
+        title: m.display_title, 
+        canonical_stage: m.canonical_stage,
+        has_mapping: !!m.start_stage_id 
+      }))
+    });
+    
+    return activeMetrics;
   }, 'getActiveFlowMetricsConfig');
 };
 
