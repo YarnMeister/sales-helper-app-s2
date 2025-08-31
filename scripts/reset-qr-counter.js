@@ -15,23 +15,13 @@ async function resetQRCounter() {
     const sql = neon(process.env.DATABASE_URL);
     const isDevelopment = process.env.NODE_ENV === 'development';
     
-    // Get the latest request ID from the appropriate table
-    let result;
-    if (isDevelopment) {
-      result = await sql`
-        SELECT request_id 
-        FROM mock_requests 
-        ORDER BY CAST(SUBSTRING(request_id FROM 4) AS INTEGER) DESC 
-        LIMIT 1
-      `;
-    } else {
-      result = await sql`
-        SELECT request_id 
-        FROM requests 
-        ORDER BY CAST(SUBSTRING(request_id FROM 4) AS INTEGER) DESC 
-        LIMIT 1
-      `;
-    }
+    // Get the latest request ID from the requests table
+    const result = await sql`
+      SELECT request_id 
+      FROM requests 
+      ORDER BY CAST(SUBSTRING(request_id FROM 4) AS INTEGER) DESC 
+      LIMIT 1
+    `;
     
     if (result.length === 0) {
       console.log('✅ No existing requests found. Counter can start at 2.');

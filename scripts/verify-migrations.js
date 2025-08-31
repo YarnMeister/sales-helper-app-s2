@@ -50,7 +50,7 @@ async function verifyMigrations() {
       'mock_requests', 
       'site_visits',
       'mock_site_visits',
-      'mock_pipedrive_submissions'
+      'pipedrive_submissions'
     ];
 
     console.log('\n🔍 Checking table existence:');

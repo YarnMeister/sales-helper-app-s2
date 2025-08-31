@@ -2,32 +2,30 @@ import { sql } from './db';
 import { logInfo, logError, withPerformanceLogging } from './log';
 
 /**
- * Get the appropriate table name based on environment
- * Development uses mock tables, production uses real tables
+ * Get the appropriate table name - now always uses production table names
+ * No more environment-based table selection since we have true database separation
  */
 export const getTableName = (baseTableName: string): string => {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const tableName = isDevelopment ? `mock_${baseTableName}` : baseTableName;
-  
+  // Always use production table names since we have separate databases
   logInfo('Table name selected', { 
     environment: process.env.NODE_ENV,
     baseTableName,
-    selectedTableName: tableName,
-    isMock: isDevelopment
+    selectedTableName: baseTableName,
+    isMock: false
   });
   
-  return tableName;
+  return baseTableName;
 };
 
 /**
- * Get requests table name (requests or mock_requests)
+ * Get requests table name (always 'requests')
  */
 export const getRequestsTableName = (): string => {
   return getTableName('requests');
 };
 
 /**
- * Get site visits table name (site_visits or mock_site_visits)
+ * Get site visits table name (always 'site_visits')
  */
 export const getSiteVisitsTableName = (): string => {
   return getTableName('site_visits');
@@ -44,11 +42,25 @@ export async function withTiming<T>(label: string, fn: () => Promise<T>) {
   return withPerformanceLogging(label, 'database', fn);
 }
 
-// Generate next sequential request ID using database function
+// Generate next sequential request ID using client-side localStorage (offline-first)
 export const generateRequestId = async (): Promise<string> => {
   return withTiming('generateRequestId', async () => {
-    const result = await sql`SELECT generate_request_id()`;
-    const newId = result[0].generate_request_id;
+    // Environment-specific localStorage keys
+    const getQRCounterKey = (): string => {
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      return isDevelopment ? 'qr_counter_dev' : 'qr_counter_prod';
+    };
+
+    // Generates sequential IDs: QR-002, QR-003, QR-004, etc.
+    const generateQRId = (): string => {
+      const counterKey = getQRCounterKey();
+      const currentCounter = localStorage.getItem(counterKey);
+      const nextCounter = currentCounter ? parseInt(currentCounter, 10) + 1 : 2;
+      localStorage.setItem(counterKey, nextCounter.toString());
+      return `QR-${nextCounter.toString().padStart(3, '0')}`;
+    };
+
+    const newId = generateQRId();
     logInfo(`Generated new request ID: ${newId}`, { requestId: newId });
     return newId;
   });

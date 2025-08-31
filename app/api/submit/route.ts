@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         throw new ValidationError('Request must have at least one line item before submission');
       }
       
-      const submitMode = process.env.PIPEDRIVE_SUBMIT_MODE || 'real';
+      const submitMode = process.env.PIPEDRIVE_SUBMIT_MODE || 'mock';
       
       if (submitMode === 'mock') {
         // Mock submission
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
         });
         
       } else {
-        // Real Pipedrive submission
+        // Real Pipedrive submission - no mock submission record needed
         logInfo('Processing real Pipedrive submission', { 
           correlationId,
           requestId: requestData.request_id

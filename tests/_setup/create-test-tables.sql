@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS test_kv_cache (
     expires_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE IF NOT EXISTS test_mock_pipedrive_submissions (
+CREATE TABLE IF NOT EXISTS test_pipedrive_submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     request_id TEXT NOT NULL,
     simulated_deal_id INTEGER NOT NULL,
@@ -36,7 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_test_requests_status ON test_requests(status);
 CREATE INDEX IF NOT EXISTS idx_test_requests_salesperson ON test_requests(salesperson_first_name);
 CREATE INDEX IF NOT EXISTS idx_test_requests_created_at ON test_requests(created_at);
 CREATE INDEX IF NOT EXISTS idx_test_kv_cache_expires_at ON test_kv_cache(expires_at);
-CREATE INDEX IF NOT EXISTS idx_test_mock_submissions_request_id ON test_mock_pipedrive_submissions(request_id);
+CREATE INDEX IF NOT EXISTS idx_test_pipedrive_submissions_request_id ON test_pipedrive_submissions(request_id);
 
 -- Function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_test_updated_at_column()

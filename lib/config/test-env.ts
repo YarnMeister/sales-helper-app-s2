@@ -27,7 +27,7 @@ export const getDatabaseConfig = () => {
     tables: {
       requests: `${tablePrefix}requests`,
       kvCache: `${tablePrefix}kv_cache`,
-      mockSubmissions: `${tablePrefix}mock_pipedrive_submissions`
+      pipedriveSubmissions: `${tablePrefix}pipedrive_submissions`
     }
   };
 };

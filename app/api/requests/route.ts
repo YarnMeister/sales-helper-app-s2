@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { generateRequestId, withTiming } from '@/lib/db-utils';
+import { withTiming } from '@/lib/db-utils';
 import { 
   createRequest, 
   updateRequest, 
@@ -127,14 +127,12 @@ export async function POST(request: NextRequest) {
         
       } else {
         // Create new request
-        // Use client-provided request_id if available, otherwise fall back to database generation
+        // Client should always provide request_id (generated client-side)
         let requestId = parsed.request_id;
         if (!requestId) {
-          requestId = await generateRequestId();
-          logInfo('Using database-generated request ID', { correlationId, request_id: requestId });
-        } else {
-          logInfo('Using client-provided request ID', { correlationId, request_id: requestId });
+          throw new ValidationError('request_id is required - should be generated client-side');
         }
+        logInfo('Using client-provided request ID', { correlationId, request_id: requestId });
         
         const result = await createRequest({
           request_id: requestId,

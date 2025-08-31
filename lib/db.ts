@@ -1,39 +1,10 @@
-import { neon } from '@neondatabase/serverless';
 import { logInfo, logError } from './log';
 import { AppError } from './errors';
 import { getRequestsTableName } from './db-utils';
+import { getDatabaseConnection, withDbErrorHandling } from './database/core/connection';
 
-// Get Neon connection
-const sql = neon(process.env.DATABASE_URL!);
-
-// Simple query wrapper with error handling
-export const withDbErrorHandling = async <T>(
-  operation: () => Promise<T>,
-  context: string
-): Promise<T> => {
-  try {
-    const startTime = Date.now();
-    const result = await operation();
-    const duration = Date.now() - startTime;
-    
-    logInfo(`Database operation completed: ${context}`, { 
-      duration,
-      context 
-    });
-    
-    return result;
-  } catch (error) {
-    logError(`Database error in ${context}`, { 
-      error: error instanceof Error ? error.message : String(error),
-      context 
-    });
-    
-    throw new AppError(`Database operation failed: ${context} - ${error instanceof Error ? error.message : String(error)}`, { 
-      originalError: error,
-      context 
-    });
-  }
-};
+// Get database connection from core infrastructure
+const sql = getDatabaseConnection();
 
 // CRUD operations for requests
 export const createRequest = async (data: {
@@ -400,13 +371,13 @@ export const getDealFlowData = async (dealId?: number) => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching deal flow data', { dealId });
     
-    let query = sql`SELECT * FROM pipedrive_deal_flow_data`;
-    
+    let result;
     if (dealId) {
-      query = sql`SELECT * FROM pipedrive_deal_flow_data WHERE deal_id = ${dealId}`;
+      result = await sql`SELECT * FROM pipedrive_deal_flow_data WHERE deal_id = ${dealId} ORDER BY entered_at::timestamp DESC`;
+    } else {
+      result = await sql`SELECT * FROM pipedrive_deal_flow_data ORDER BY entered_at::timestamp DESC`;
     }
     
-    const result = await sql`${query} ORDER BY entered_at DESC`;
     return result;
   }, 'getDealFlowData');
 };

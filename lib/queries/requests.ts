@@ -25,28 +25,14 @@ export const getRequests = async (params: {
 
 // Get request by ID
 export const getRequestById = async (id: string) => {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
-  if (isDevelopment) {
-    const result = await sql`SELECT * FROM mock_requests WHERE id = ${id}`;
-    return result[0] || null;
-  } else {
-    const result = await sql`SELECT * FROM requests WHERE id = ${id}`;
-    return result[0] || null;
-  }
+  const result = await sql`SELECT * FROM requests WHERE id = ${id}`;
+  return result[0] || null;
 };
 
 // Get request by request_id
 export const getRequestByRequestId = async (requestId: string) => {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
-  if (isDevelopment) {
-    const result = await sql`SELECT * FROM mock_requests WHERE request_id = ${requestId}`;
-    return result[0] || null;
-  } else {
-    const result = await sql`SELECT * FROM requests WHERE request_id = ${requestId}`;
-    return result[0] || null;
-  }
+  const result = await sql`SELECT * FROM requests WHERE request_id = ${requestId}`;
+  return result[0] || null;
 };
 
 // Create new request
@@ -59,57 +45,29 @@ export const createRequest = async (data: {
   lineItems?: any[];
   comment?: string;
 }) => {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
-  if (isDevelopment) {
-    const result = await sql`
-      INSERT INTO mock_requests (
-        request_id,
-        salesperson_selection,
-        mine_group,
-        mine_name,
-        contact,
-        line_items,
-        comment,
-        status
-      ) VALUES (
-        ${data.requestId},
-        ${data.salespersonSelection},
-        ${data.mineGroup},
-        ${data.mineName},
-        ${data.contact ? JSON.stringify(data.contact) : null},
-        ${JSON.stringify(data.lineItems || [])},
-        ${data.comment},
-        ${'draft'}
-      )
-      RETURNING *
-    `;
-    return result[0];
-  } else {
-    const result = await sql`
-      INSERT INTO requests (
-        request_id,
-        salesperson_selection,
-        mine_group,
-        mine_name,
-        contact,
-        line_items,
-        comment,
-        status
-      ) VALUES (
-        ${data.requestId},
-        ${data.salespersonSelection},
-        ${data.mineGroup},
-        ${data.mineName},
-        ${data.contact ? JSON.stringify(data.contact) : null},
-        ${JSON.stringify(data.lineItems || [])},
-        ${data.comment},
-        ${'draft'}
-      )
-      RETURNING *
-    `;
-    return result[0];
-  }
+  const result = await sql`
+    INSERT INTO requests (
+      request_id,
+      salesperson_selection,
+      mine_group,
+      mine_name,
+      contact,
+      line_items,
+      comment,
+      status
+    ) VALUES (
+      ${data.requestId},
+      ${data.salespersonSelection},
+      ${data.mineGroup},
+      ${data.mineName},
+      ${data.contact ? JSON.stringify(data.contact) : null},
+      ${JSON.stringify(data.lineItems || [])},
+      ${data.comment},
+      ${'draft'}
+    )
+    RETURNING *
+  `;
+  return result[0];
 };
 
 // DEPRECATED: These functions have been replaced by the single updateRequest function in lib/db.ts
@@ -117,36 +75,17 @@ export const createRequest = async (data: {
 
 // Update request status and pipedrive deal ID
 export const updateRequestSubmission = async (id: string, dealId: number) => {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
-  if (isDevelopment) {
-    const result = await sql`
-      UPDATE mock_requests 
-      SET status = ${'submitted'}, pipedrive_deal_id = ${dealId}, updated_at = ${new Date().toISOString()}
-      WHERE id = ${id} 
-      RETURNING *
-    `;
-    return result[0];
-  } else {
-    const result = await sql`
-      UPDATE requests 
-      SET status = ${'submitted'}, pipedrive_deal_id = ${dealId}, updated_at = ${new Date().toISOString()}
-      WHERE id = ${id} 
-      RETURNING *
-    `;
-    return result[0];
-  }
+  const result = await sql`
+    UPDATE requests 
+    SET status = ${'submitted'}, pipedrive_deal_id = ${dealId}, updated_at = ${new Date().toISOString()}
+    WHERE id = ${id} 
+    RETURNING *
+  `;
+  return result[0];
 };
 
 // Delete request
 export const deleteRequest = async (id: string) => {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
-  if (isDevelopment) {
-    const result = await sql`DELETE FROM mock_requests WHERE id = ${id} RETURNING id`;
-    return result[0];
-  } else {
-    const result = await sql`DELETE FROM requests WHERE id = ${id} RETURNING id`;
-    return result[0];
-  }
+  const result = await sql`DELETE FROM requests WHERE id = ${id} RETURNING id`;
+  return result[0];
 };

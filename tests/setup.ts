@@ -218,7 +218,7 @@ vi.mock('../../lib/config/test-env', () => ({
     tables: {
       requests: 'test_requests',
       kvCache: 'test_kv_cache', 
-      mockSubmissions: 'test_mock_pipedrive_submissions'
+      pipedriveSubmissions: 'test_pipedrive_submissions'
     }
   }),
   getRedisConfig: () => ({

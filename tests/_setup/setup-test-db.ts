@@ -66,9 +66,9 @@ export const setupTestDatabaseManual = async () => {
       );
     `);
     
-    // Create test_mock_pipedrive_submissions table
+    // Create test_pipedrive_submissions table
     await db(`
-      CREATE TABLE IF NOT EXISTS test_mock_pipedrive_submissions (
+      CREATE TABLE IF NOT EXISTS test_pipedrive_submissions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         request_id TEXT NOT NULL,
         simulated_deal_id INTEGER NOT NULL,
@@ -83,7 +83,7 @@ export const setupTestDatabaseManual = async () => {
     await db(`CREATE INDEX IF NOT EXISTS idx_test_requests_salesperson ON test_requests(salesperson_first_name);`);
     await db(`CREATE INDEX IF NOT EXISTS idx_test_requests_created_at ON test_requests(created_at);`);
     await db(`CREATE INDEX IF NOT EXISTS idx_test_kv_cache_expires_at ON test_kv_cache(expires_at);`);
-    await db(`CREATE INDEX IF NOT EXISTS idx_test_mock_submissions_request_id ON test_mock_pipedrive_submissions(request_id);`);
+    await db(`CREATE INDEX IF NOT EXISTS idx_test_pipedrive_submissions_request_id ON test_pipedrive_submissions(request_id);`);
     
     console.log('Test database tables created successfully');
     
@@ -98,7 +98,7 @@ export const teardownTestDatabase = async () => {
   
   try {
     // Drop test tables
-    await db(`DROP TABLE IF EXISTS test_mock_pipedrive_submissions CASCADE;`);
+    await db(`DROP TABLE IF EXISTS test_pipedrive_submissions CASCADE;`);
     await db(`DROP TABLE IF EXISTS test_kv_cache CASCADE;`);
     await db(`DROP TABLE IF EXISTS test_requests CASCADE;`);
     await db(`DROP FUNCTION IF EXISTS update_test_updated_at_column() CASCADE;`);

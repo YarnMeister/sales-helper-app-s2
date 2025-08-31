@@ -209,10 +209,8 @@ describe('Migration Verification System', () => {
     it('should verify all expected tables exist', async () => {
       const expectedTables = [
         'requests',
-        'mock_requests', 
         'site_visits',
-        'mock_site_visits',
-        'mock_pipedrive_submissions'
+        'pipedrive_submissions'
       ];
 
       // Mock that all tables exist
@@ -239,17 +237,13 @@ describe('Migration Verification System', () => {
     it('should report missing tables specifically', async () => {
       // Mock that some tables are missing
       mockSql.unsafe.mockResolvedValueOnce([{ exists: true }]); // requests
-      mockSql.unsafe.mockResolvedValueOnce([{ exists: false }]); // mock_requests - missing!
-      mockSql.unsafe.mockResolvedValueOnce([{ exists: true }]); // site_visits
-      mockSql.unsafe.mockResolvedValueOnce([{ exists: false }]); // mock_site_visits - missing!
-      mockSql.unsafe.mockResolvedValueOnce([{ exists: true }]); // mock_pipedrive_submissions
+      mockSql.unsafe.mockResolvedValueOnce([{ exists: false }]); // site_visits - missing!
+      mockSql.unsafe.mockResolvedValueOnce([{ exists: true }]); // pipedrive_submissions
 
       const expectedTables = [
         'requests',
-        'mock_requests', 
         'site_visits',
-        'mock_site_visits',
-        'mock_pipedrive_submissions'
+        'pipedrive_submissions'
       ];
 
       const missingTables = [];
@@ -269,7 +263,7 @@ describe('Migration Verification System', () => {
         }
       }
 
-      expect(missingTables).toEqual(['mock_requests', 'mock_site_visits']);
+      expect(missingTables).toEqual(['site_visits']);
     });
   });
 });
