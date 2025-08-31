@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 const { neon } = require('@neondatabase/serverless');
-const fs = require('fs');
-const path = require('path');
 const { config } = require('dotenv');
+const path = require('path');
 
 // Load environment variables
 config({ path: path.resolve(process.cwd(), '.env.local') });
@@ -20,73 +19,59 @@ async function postDeployMigrate() {
   const sql = neon(connectionString);
 
   try {
-    console.log('🔄 Running post-deployment migrations...\n');
+    console.log('🚀 Post-Deployment Migration Check...\n');
 
-    // Ensure migrations table exists
-    await sql`
-      CREATE TABLE IF NOT EXISTS schema_migrations (
-        version INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        executed_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )
+    // Check if schema_migrations table exists and has the latest migrations
+    const migrations = await sql`
+      SELECT version, name FROM schema_migrations 
+      ORDER BY version DESC
     `;
 
-    // Get executed migrations
-    const executed = await sql`SELECT version FROM schema_migrations ORDER BY version`;
-    const executedVersions = new Set(executed.map(row => row.version));
+    const latestMigration = migrations.length > 0 ? migrations[0].version : -1;
+    const expectedMigrations = [0, 1]; // Our Drizzle migrations
+    const latestExpected = Math.max(...expectedMigrations);
 
-    // Read migration files
-    const migrationsDir = path.join(__dirname, '..', 'migrations');
-    const files = fs.readdirSync(migrationsDir)
-      .filter(file => file.endsWith('.sql'))
-      .sort();
-
-    let appliedCount = 0;
-
-    for (const file of files) {
-      const version = parseInt(file.split('_')[0]);
-      const name = file.replace(/^\d+_/, '').replace(/\.sql$/, '');
-
-      if (executedVersions.has(version)) {
-        console.log(`⏭️  Migration ${version} (${name}) already applied`);
-        continue;
-      }
-
-      console.log(`📝 Applying migration ${version}: ${name}`);
-
-      const migrationSql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
-      
-      try {
-        await sql`BEGIN`;
-        await sql.unsafe(migrationSql);
-        await sql`INSERT INTO schema_migrations (version, name) VALUES (${version}, ${name})`;
-        await sql`COMMIT`;
-        
-        console.log(`✅ Migration ${version} applied successfully`);
-        appliedCount++;
-        
-      } catch (error) {
-        await sql`ROLLBACK`;
-        console.error(`❌ Migration ${version} failed:`, error.message);
-        throw error;
-      }
+    if (latestMigration >= latestExpected) {
+      console.log('✅ Production database is up to date - no migrations needed');
+      return { success: true, message: 'Database is up to date' };
     }
 
-    if (appliedCount === 0) {
-      console.log('✨ Database is up to date');
-    } else {
-      console.log(`\n🎉 Applied ${appliedCount} migrations successfully`);
-    }
+    console.log(`📝 Production database needs migrations (current: ${latestMigration}, expected: ${latestExpected})`);
+    console.log('🔄 Running post-deployment Drizzle migrations...');
+
+    // Import and run Drizzle migration
+    const { drizzle } = require('drizzle-orm/neon-http');
+    const { migrate } = require('drizzle-orm/neon-http/migrator');
+    
+    const db = drizzle(sql);
+    await migrate(db, { migrationsFolder: './drizzle' });
+    
+    console.log('✅ Post-deployment migrations completed successfully');
+    return { success: true, message: 'Migrations completed successfully' };
 
   } catch (error) {
     console.error('❌ Post-deployment migration failed:', error.message);
-    process.exit(1);
+    console.error('Full error:', error);
+    return { success: false, error: error.message };
   }
 }
 
-// Only run if called directly
+// If run directly (not imported)
 if (require.main === module) {
-  postDeployMigrate();
+  postDeployMigrate()
+    .then(result => {
+      if (result.success) {
+        console.log('✅ Migration completed successfully');
+        process.exit(0);
+      } else {
+        console.error('❌ Migration failed:', result.error);
+        process.exit(1);
+      }
+    })
+    .catch(error => {
+      console.error('❌ Unexpected error:', error);
+      process.exit(1);
+    });
 }
 
 module.exports = { postDeployMigrate };
