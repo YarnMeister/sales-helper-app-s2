@@ -104,7 +104,7 @@ describe('Plus Button Logic Tests', () => {
         ok: false,
         status: 500,
         json: async () => ({
-          message: 'duplicate key value violates unique constraint "mock_requests_request_id_key"'
+          message: 'duplicate key value violates unique constraint "requests_request_id_key"'
         })
       };
       

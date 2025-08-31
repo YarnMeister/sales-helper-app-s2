@@ -40,17 +40,17 @@ describe('Migration Verification System', () => {
   });
 
   describe('Table Existence Verification', () => {
-    it('should detect when mock tables are missing', async () => {
+    it('should detect when core tables are missing', async () => {
       // Mock that tables don't exist
-      mockSql.unsafe.mockResolvedValueOnce([{ exists: false }]); // mock_requests
-      mockSql.unsafe.mockResolvedValueOnce([{ exists: false }]); // mock_site_visits
+      mockSql.unsafe.mockResolvedValueOnce([{ exists: false }]); // requests
+      mockSql.unsafe.mockResolvedValueOnce([{ exists: false }]); // site_visits
 
       // This would be the verification query
       const verificationQuery = `
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_schema = 'public' 
-          AND table_name = 'mock_requests'
+          AND table_name = 'requests'
         )
       `;
 
@@ -60,16 +60,16 @@ describe('Migration Verification System', () => {
       expect(mockSql.unsafe).toHaveBeenCalledWith(verificationQuery);
     });
 
-    it('should detect when mock tables exist', async () => {
+    it('should detect when core tables exist', async () => {
       // Mock that tables exist
-      mockSql.unsafe.mockResolvedValueOnce([{ exists: true }]); // mock_requests
-      mockSql.unsafe.mockResolvedValueOnce([{ exists: true }]); // mock_site_visits
+      mockSql.unsafe.mockResolvedValueOnce([{ exists: true }]); // requests
+      mockSql.unsafe.mockResolvedValueOnce([{ exists: true }]); // site_visits
 
       const verificationQuery = `
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_schema = 'public' 
-          AND table_name = 'mock_requests'
+          AND table_name = 'requests'
         )
       `;
 
@@ -86,12 +86,12 @@ describe('Migration Verification System', () => {
       mockSql.unsafe.mockResolvedValueOnce([{ exists: false }]); // Table check - doesn't exist!
 
       // This simulates the migration verification process
-      const migrationSql = 'CREATE TABLE mock_requests (...);';
+      const migrationSql = 'CREATE TABLE requests (...);';
       const verificationQuery = `
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_schema = 'public' 
-          AND table_name = 'mock_requests'
+          AND table_name = 'requests'
         )
       `;
 
