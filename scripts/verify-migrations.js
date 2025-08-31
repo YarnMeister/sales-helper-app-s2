@@ -44,13 +44,15 @@ async function verifyMigrations() {
       console.log(`  - ${migration.version}: ${migration.name}`);
     });
 
-    // Check for expected tables based on migrations
+    // Check for expected tables based on migrations (no more mock tables)
     const expectedTables = [
       'requests',
-      'mock_requests', 
       'site_visits',
-      'mock_site_visits',
-      'pipedrive_submissions'
+      'pipedrive_submissions',
+      'flow_metrics_config',
+      'canonical_stage_mappings',
+      'pipedrive_deal_flow_data',
+      'pipedrive_metric_data'
     ];
 
     console.log('\n🔍 Checking table existence:');
@@ -72,69 +74,26 @@ async function verifyMigrations() {
       }
     }
 
-    // Check for specific issues with mock tables
-    const mockRequestsExists = await sql`
+    // Check for specific issues with flow metrics tables
+    const flowMetricsConfigExists = await sql`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
-        AND table_name = 'mock_requests'
+        AND table_name = 'flow_metrics_config'
       )
     `;
     
-    const mockSiteVisitsExists = await sql`
+    const canonicalStageMappingsExists = await sql`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
-        AND table_name = 'mock_site_visits'
+        AND table_name = 'canonical_stage_mappings'
       )
     `;
 
-    console.log('\n🎯 Mock Tables Status:');
-    console.log(`  ${mockRequestsExists[0].exists ? '✅' : '❌'} mock_requests`);
-    console.log(`  ${mockSiteVisitsExists[0].exists ? '✅' : '❌'} mock_site_visits`);
-
-    if (!mockRequestsExists[0].exists || !mockSiteVisitsExists[0].exists) {
-      console.log('\n🔧 Attempting to fix missing tables...');
-      
-      // Read and execute the migration manually
-      const migrationPath = path.join(__dirname, '..', 'migrations', '007_create_mock_tables.sql');
-      if (fs.existsSync(migrationPath)) {
-        const migrationSql = fs.readFileSync(migrationPath, 'utf8');
-        
-        try {
-          console.log('📝 Manually executing migration 007...');
-          await sql.unsafe(migrationSql);
-          console.log('✅ Manual migration execution successful');
-          
-          // Verify tables exist now
-          const mockRequestsExistsAfter = await sql`
-            SELECT EXISTS (
-              SELECT FROM information_schema.tables 
-              WHERE table_schema = 'public' 
-              AND table_name = 'mock_requests'
-            )
-          `;
-          
-          const mockSiteVisitsExistsAfter = await sql`
-            SELECT EXISTS (
-              SELECT FROM information_schema.tables 
-              WHERE table_schema = 'public' 
-              AND table_name = 'mock_site_visits'
-            )
-          `;
-          
-          console.log('\n🎯 Mock Tables Status (after fix):');
-          console.log(`  ${mockRequestsExistsAfter[0].exists ? '✅' : '❌'} mock_requests`);
-          console.log(`  ${mockSiteVisitsExistsAfter[0].exists ? '✅' : '❌'} mock_site_visits`);
-          
-        } catch (error) {
-          console.error('❌ Manual migration execution failed:', error.message);
-          console.error('Full error:', error);
-        }
-      } else {
-        console.error('❌ Migration file 007_create_mock_tables.sql not found');
-      }
-    }
+    console.log('\n🎯 Flow Metrics Tables Status:');
+    console.log(`  ${flowMetricsConfigExists[0].exists ? '✅' : '❌'} flow_metrics_config`);
+    console.log(`  ${canonicalStageMappingsExists[0].exists ? '✅' : '❌'} canonical_stage_mappings`);
 
     console.log('\n✨ Migration verification complete');
 

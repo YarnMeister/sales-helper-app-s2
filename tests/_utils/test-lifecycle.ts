@@ -81,10 +81,11 @@ export class TestDataManager {
           WHERE id = ANY(${this.trackedIds}::uuid[])
         `;
         
-        await this.db`
-          DELETE FROM ${this.db(getTableName('mockSubmissions'))}
-          WHERE request_id = ANY(${this.trackedIds})
-        `;
+        // Note: mockSubmissions table no longer exists after mock table cleanup
+        // await this.db`
+        //   DELETE FROM ${this.db(getTableName('mockSubmissions'))}
+        //   WHERE request_id = ANY(${this.trackedIds})
+        // `;
       }
 
       // Clean up Redis keys
@@ -108,7 +109,8 @@ export class TestDataManager {
       // Clean all test tables
       await this.db`DELETE FROM ${this.db(getTableName('requests'))} WHERE id IS NOT NULL`;
       await this.db`DELETE FROM ${this.db(getTableName('kvCache'))} WHERE key IS NOT NULL`;
-      await this.db`DELETE FROM ${this.db(getTableName('mockSubmissions'))} WHERE id IS NOT NULL`;
+      // Note: mockSubmissions table no longer exists after mock table cleanup
+      // await this.db`DELETE FROM ${this.db(getTableName('mockSubmissions'))} WHERE id IS NOT NULL`;
 
       // Clean all test Redis keys
       const config = getRedisConfig();

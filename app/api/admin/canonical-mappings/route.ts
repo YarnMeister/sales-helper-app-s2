@@ -10,7 +10,7 @@ export async function GET() {
     const mappings = await sql`
       SELECT * FROM canonical_stage_mappings 
       ORDER BY canonical_stage, created_at DESC
-    `;
+    ` as any[];
     
     logInfo('Successfully fetched canonical stage mappings', {
       count: mappings?.length || 0
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         ${end_stage || ''}
       )
       RETURNING *
-    `;
+    ` as any[];
     
     logInfo('Successfully created canonical stage mapping', {
       id: result[0]?.id,

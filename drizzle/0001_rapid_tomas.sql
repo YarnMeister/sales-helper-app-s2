@@ -1,0 +1,4 @@
+ALTER TABLE "requests" ADD CONSTRAINT "requests_salesperson_selection_check" CHECK ("requests"."salesperson_selection" = ANY (ARRAY['Luyanda', 'James', 'Stefan']));--> statement-breakpoint
+ALTER TABLE "site_visits" ADD CONSTRAINT "check_availability_valid" CHECK ("site_visits"."availability" = ANY (ARRAY['Later this morning', 'In the afternoon', 'Tomorrow']));--> statement-breakpoint
+ALTER TABLE "site_visits" ADD CONSTRAINT "check_purpose_valid" CHECK ("site_visits"."main_purpose" = ANY (ARRAY['Quote follow-up', 'Delivery', 'Site check', 'Installation support', 'General sales visit']));--> statement-breakpoint
+ALTER TABLE "site_visits" ADD CONSTRAINT "check_salesperson_valid" CHECK ("site_visits"."salesperson" = ANY (ARRAY['James', 'Luyanda', 'Stefan']));

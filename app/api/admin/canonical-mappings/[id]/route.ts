@@ -53,7 +53,7 @@ export async function PATCH(
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
-    `;
+    ` as any[];
     
     if (result.length === 0) {
       return NextResponse.json(
@@ -105,7 +105,7 @@ export async function DELETE(
       DELETE FROM canonical_stage_mappings 
       WHERE id = ${id}
       RETURNING *
-    `;
+    ` as any[];
     
     if (result.length === 0) {
       return NextResponse.json(

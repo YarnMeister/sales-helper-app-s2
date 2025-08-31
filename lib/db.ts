@@ -4,7 +4,7 @@ import { getRequestsTableName } from './db-utils';
 import { getDatabaseConnection, withDbErrorHandling } from './database/core/connection';
 
 // Get database connection from core infrastructure
-const sql = getDatabaseConnection();
+const sql = getDatabaseConnection() as any;
 
 // CRUD operations for requests
 export const createRequest = async (data: {
@@ -406,7 +406,7 @@ export const getDealsForCanonicalStage = async (canonicalStage: string, period?:
       ORDER BY s.start_date DESC
     `;
     
-    return result;
+    return result as any[];
   }, 'getDealsForCanonicalStage');
 };
 
@@ -496,7 +496,7 @@ export const getFlowMetricsConfig = async () => {
   }, 'getFlowMetricsConfig');
 };
 
-export const getActiveFlowMetricsConfig = async () => {
+export const getActiveFlowMetricsConfig = async (): Promise<any[]> => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching active flow metrics configuration');
     const result = await sql`
@@ -512,7 +512,7 @@ export const getActiveFlowMetricsConfig = async () => {
       WHERE fmc.is_active = true
       ORDER BY fmc.sort_order, fmc.display_title
     `;
-    return result;
+    return result as any[];
   }, 'getActiveFlowMetricsConfig');
 };
 
