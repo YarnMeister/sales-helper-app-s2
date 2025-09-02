@@ -1,35 +1,55 @@
-// Core database infrastructure exports
+/**
+ * Database Core Module Index
+ * 
+ * Main entry point for the database core module in the modular architecture.
+ * Exports all core components and utilities.
+ */
 
-// Connection management
+// Core repository interfaces and implementations
+export * from './base-repository';
+export * from './repository-factory';
+
+// Re-export shared types
+export * from '../../types/shared/repository';
+
+// Database utilities and helpers
+export * from '../db-utils';
+export * from '../database';
+export * from '../schema';
+
+// Configuration and environment
+export * from '../config/database-config';
+
+// Error handling
+export * from '../errors';
+
+// Logging
+export * from '../log';
+
+// Convenience exports for common operations
 export {
-  getDatabaseConnection,
-  withDbErrorHandling,
-  testDatabaseConnection,
-  getConnectionStatus
-} from './connection';
+  getRepository,
+  registerRepository,
+  initializeRepositoryFactory,
+  getRepositoryFactory,
+  resetRepositoryFactory
+} from './repository-factory';
 
-// Base repository pattern
-export { BaseRepository } from './repository';
-export type { BaseRepositoryInterface } from './repository';
+// Type exports for common use cases
+export type {
+  BaseRepository,
+  RepositoryFactory,
+  RepositoryConfig,
+  BaseRepositoryImpl
+} from './base-repository';
 
-// Core database types
-export * from './types';
-
-// Database utilities
-export {
-  getTableName,
-  getRequestsTableName,
-  getSiteVisitsTableName,
-  checkDbHealth,
-  generateRequestId,
-  validateContactJsonb,
-  buildWhereClause,
-  buildOrderByClause,
-  buildLimitOffsetClause,
-  executeQuery,
-  executeSingleQuery,
-  executeCountQuery,
-  validateDatabaseConfig,
-  getDatabaseConfig,
-  formatQueryForLogging
-} from './utils';
+export type {
+  BaseEntity,
+  PaginationResult,
+  EntityFilter,
+  SortOptions,
+  QueryOptions,
+  RepositoryResult,
+  RepositoryError,
+  RepositoryOptions
+} from '../../types/shared/repository';
