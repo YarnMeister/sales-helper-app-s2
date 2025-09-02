@@ -72,6 +72,8 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
    # Zapier Integration
    ZAPIER_WEBHOOK_SECRET=your_long_random_secret
    ```
+   
+   **Note**: The application now uses separate database instances for development and production instead of table prefixes. Set `DATABASE_URL` to point to your development database for local development.
 
 3. **Run database migrations:**
    ```bash
@@ -122,6 +124,14 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
 - **Query Builders**: Type-safe database operations
 - **Transaction Support**: ACID compliance
 - **Migration System**: Schema versioning
+- **Environment Isolation**: Separate database instances for development and production
+
+#### Architecture Approach
+- **Database Separation**: Development and production use separate Neon database instances
+- **Unified Schema**: Same table names across environments for consistency
+- **No Mock Tables**: Eliminated the `mock_*` table pattern in favor of database-level isolation
+- **Environment Variables**: `DATABASE_URL` determines which database instance to use
+- **Benefits**: Cleaner code, consistent table names, easier maintenance, better testing isolation
 
 #### Integration Layer
 - **Pipedrive API**: CRM integration
@@ -390,10 +400,10 @@ CREATE TABLE requests (
 );
 ```
 
-#### 2. `mock_requests` (Development)
-- Identical structure to `requests`
-- Environment isolation for development
-- Prevents test data contamination
+#### 2. `requests` (Development)
+- Identical structure to production `requests`
+- Environment isolation provided by separate database instance
+- Prevents test data contamination through database separation
 
 #### 3. `site_visits` (Production)
 ```sql
@@ -440,6 +450,21 @@ CREATE TABLE pipedrive_deal_flow_data (
 );
 ```
 
+#### 6. `pipedrive_submissions` (Mock Submissions)
+```sql
+CREATE TABLE pipedrive_submissions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  request_id TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  simulated_deal_id INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+- **Purpose**: Stores mock Pipedrive submissions for development and testing
+- **Environment**: Used when `PIPEDRIVE_SUBMIT_MODE=mock`
+- **Architecture**: Same table name across environments, isolated by separate database instances
+
 ### JSONB Schema Validation
 
 #### ContactJSON Structure
@@ -475,9 +500,10 @@ CREATE TABLE pipedrive_deal_flow_data (
 ### Database Interactions
 
 #### Environment-Aware Operations
-- **Development**: Uses `mock_*` tables
-- **Production**: Uses main tables
-- **Automatic Selection**: Based on `NODE_ENV`
+- **Development**: Uses same table names in development database instance
+- **Production**: Uses same table names in production database instance
+- **Automatic Selection**: Based on `DATABASE_URL` environment variable
+- **Architecture**: Database separation provides environment isolation, not table name differences
 
 #### Performance Optimizations
 - **Generated Columns**: Fast filtering on JSONB fields
@@ -800,8 +826,9 @@ The app uses different strategies for local development vs production to prevent
 
 #### Database Tables (Requests & Site Visits)
 - **Control**: `NODE_ENV` environment variable
-- **Development**: `NODE_ENV=development` → Uses `mock_requests` and `mock_site_visits` tables
-- **Production**: `NODE_ENV=production` → Uses `requests` and `site_visits` tables
+- **Development**: `NODE_ENV=development` → Uses `requests` and `site_visits` tables in development database
+- **Production**: `NODE_ENV=production` → Uses `requests` and `site_visits` tables in production database
+- **Architecture**: Separate database instances provide environment isolation instead of table prefixes
 
 #### Contacts & Line Items
 - **Read-only reference tables** - No environment-based switching
@@ -969,6 +996,22 @@ The application is planned to evolve into a modular architecture with clear sepa
 - **Performance**: Optimized bundle sizes and lazy loading
 - **Security**: Isolated authentication and authorization
 - **Testing**: Comprehensive test coverage per module
+
+#### Current Implementation Status (Phase 1 - Core Infrastructure)
+The application has successfully completed Phase 1 of the modularization plan:
+
+- **✅ Core Database Infrastructure**: Base repository pattern, repository factory, and shared types implemented
+- **✅ Shared Type System**: Comprehensive type definitions for UI components, API structures, and common utilities
+- **✅ Environment Configuration**: Feature-specific environment schemas with validation
+- **✅ Database Architecture**: Eliminated mock table pattern in favor of separate database instances
+- **✅ Migration System**: Automated schema updates with proper versioning
+- **🔄 Next Phase**: Feature module extraction and API route restructuring
+
+**Key Architectural Changes**:
+- Replaced `mock_*` table pattern with database-level environment isolation
+- Implemented unified table names across environments for consistency
+- Added comprehensive type safety and validation systems
+- Established foundation for future modular development
 
 ### User Workflow Improvements
 
