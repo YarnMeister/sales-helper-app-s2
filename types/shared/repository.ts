@@ -287,16 +287,14 @@ export interface RepositoryError extends Error {
 }
 
 /**
- * Repository result wrapper
- * 
- * Wraps repository operation results with additional metadata and error handling
+ * Repository result wrapper for consistent error handling
  */
 export class RepositoryResult<T> {
   constructor(
-    public readonly success: boolean,
-    public readonly data?: T,
-    public readonly error?: RepositoryError,
-    public readonly metadata?: OperationMetadata
+    public success: boolean,
+    public data: T | undefined,
+    public error?: RepositoryError,
+    public metadata?: OperationMetadata
   ) {}
 
   /**
@@ -310,57 +308,93 @@ export class RepositoryResult<T> {
    * Create an error result
    */
   static error<T>(error: RepositoryError, metadata?: OperationMetadata): RepositoryResult<T> {
-    return new RepositoryResult(false, undefined, error, metadata);
+    return new RepositoryResult(false, undefined as T, error, metadata);
   }
 
   /**
    * Check if the result is successful
    */
-  isSuccess(): boolean {
+  isSuccess(): this is RepositoryResult<T> & { success: true; data: T } {
     return this.success;
   }
 
   /**
-   * Check if the result has an error
+   * Check if the result is an error
    */
-  hasError(): boolean {
-    return !this.success && !!this.error;
+  isError(): this is RepositoryResult<T> & { success: false; error: RepositoryError } {
+    return !this.success;
   }
 
   /**
-   * Get the data or throw an error if unsuccessful
+   * Get the data if successful, throw error if not
    */
   getData(): T {
-    if (!this.success || !this.data) {
-      throw this.error || new Error('No data available');
+    if (this.success) {
+      return this.data!;
     }
-    return this.data;
+    throw new Error(this.error?.message || 'Repository operation failed');
   }
 
   /**
-   * Get the error if the result is unsuccessful
+   * Get the error if failed, throw error if successful
    */
-  getError(): RepositoryError | undefined {
-    return this.error;
+  getError(): RepositoryError {
+    if (!this.success) {
+      return this.error!;
+    }
+    throw new Error('Repository operation was successful, no error available');
   }
 
   /**
-   * Map the data if successful, otherwise return error result
+   * Map the result to a new type
    */
   map<U>(mapper: (data: T) => U): RepositoryResult<U> {
-    if (!this.success) {
-      return RepositoryResult.error<U>(this.error!, this.metadata);
+    if (this.success) {
+      return RepositoryResult.success(mapper(this.data!), this.metadata);
     }
-    return RepositoryResult.success(mapper(this.data!), this.metadata);
+    return RepositoryResult.error(this.error!, this.metadata);
   }
 
   /**
    * Chain another operation if successful
    */
-  chain<U>(operation: (data: T) => Promise<RepositoryResult<U>>): Promise<RepositoryResult<U>> {
-    if (!this.success) {
-      return Promise.resolve(RepositoryResult.error<U>(this.error!, this.metadata));
+  chain<U>(chainer: (data: T) => RepositoryResult<U>): RepositoryResult<U> {
+    if (this.success) {
+      return chainer(this.data!);
     }
-    return operation(this.data!);
+    return RepositoryResult.error(this.error!, this.metadata);
+  }
+
+  /**
+   * Handle both success and error cases
+   */
+  match<U>(
+    onSuccess: (data: T) => U,
+    onError: (error: RepositoryError) => U
+  ): U {
+    if (this.success) {
+      return onSuccess(this.data!);
+    }
+    return onError(this.error!);
+  }
+
+  /**
+   * Execute a side effect if successful
+   */
+  tap(action: (data: T) => void): RepositoryResult<T> {
+    if (this.success) {
+      action(this.data!);
+    }
+    return this;
+  }
+
+  /**
+   * Execute a side effect if error
+   */
+  tapError(action: (error: RepositoryError) => void): RepositoryResult<T> {
+    if (!this.success) {
+      action(this.error!);
+    }
+    return this;
   }
 }

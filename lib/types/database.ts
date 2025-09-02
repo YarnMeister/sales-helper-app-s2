@@ -85,7 +85,7 @@ export interface MockPipedriveSubmission {
 export const TABLES = {
   REQUESTS: 'requests',
   KV_CACHE: 'kv_cache',
-  MOCK_PIPEDRIVE_SUBMISSIONS: 'mock_pipedrive_submissions',
+  PIPEDRIVE_SUBMISSIONS: 'pipedrive_submissions',
 } as const;
 
 // Validation schemas using Zod

@@ -790,7 +790,7 @@ The app uses different strategies for local development vs production to prevent
 
 #### Pipedrive Submissions
 - **Control**: `PIPEDRIVE_SUBMIT_MODE` environment variable
-- **Development**: `PIPEDRIVE_SUBMIT_MODE=mock` → Saves to `mock_pipedrive_submissions` table
+- **Development**: `PIPEDRIVE_SUBMIT_MODE=mock` → Saves to `pipedrive_submissions` table
 - **Production**: `PIPEDRIVE_SUBMIT_MODE=live` → Submits to actual Pipedrive API
 
 #### Slack Notifications

@@ -10,21 +10,7 @@ export * from './base-repository';
 export * from './repository-factory';
 
 // Re-export shared types
-export * from '../../types/shared/repository';
-
-// Database utilities and helpers
-export * from '../db-utils';
-export * from '../database';
-export * from '../schema';
-
-// Configuration and environment
-export * from '../config/database-config';
-
-// Error handling
-export * from '../errors';
-
-// Logging
-export * from '../log';
+export * from '../../../types/shared/repository';
 
 // Convenience exports for common operations
 export {
@@ -52,4 +38,4 @@ export type {
   RepositoryResult,
   RepositoryError,
   RepositoryOptions
-} from '../../types/shared/repository';
+} from '../../../types/shared/repository';
