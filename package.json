@@ -16,8 +16,7 @@
     "db:studio": "drizzle-kit studio",
     "db:verify": "node -e \"import('./lib/database/migrations.js').then(m => m.verifyMigration())\"",
     "db:check-schema": "node scripts/migrate-drizzle-schema.js",
-    "db:test-migration": "node scripts/run-test-migration.js",
-    "db:cleanup-test": "node scripts/cleanup-test-table.js",
+
     "db:check-table": "node scripts/check-table-structure.js",
     "env:check": "node scripts/env-check.js",
     "neon:list": "./scripts/neon-utils.sh list",
