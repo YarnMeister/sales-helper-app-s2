@@ -5,21 +5,23 @@
  * This is the foundation for the modular architecture pattern.
  */
 
+import { RepositoryResult, RepositoryError } from '../../../types/shared/repository';
+
 export interface BaseRepository<T, CreateDTO = Omit<T, 'id'>, UpdateDTO = Partial<T>> {
   /**
    * Create a new entity
    */
-  create(data: CreateDTO): Promise<T>;
+  create(data: CreateDTO): Promise<RepositoryResult<T>>;
 
   /**
    * Find an entity by its ID
    */
-  findById(id: string | number): Promise<T | null>;
+  findById(id: string | number): Promise<RepositoryResult<T | null>>;
 
   /**
    * Find all entities with optional filtering
    */
-  findAll(filters?: Record<string, any>): Promise<T[]>;
+  findAll(filters?: Record<string, any>): Promise<RepositoryResult<T[]>>;
 
   /**
    * Find entities with pagination
@@ -28,27 +30,27 @@ export interface BaseRepository<T, CreateDTO = Omit<T, 'id'>, UpdateDTO = Partia
     page: number,
     limit: number,
     filters?: Record<string, any>
-  ): Promise<{ data: T[]; total: number; page: number; limit: number }>;
+  ): Promise<RepositoryResult<{ data: T[]; total: number; page: number; limit: number }>>;
 
   /**
    * Update an entity by ID
    */
-  update(id: string | number, data: UpdateDTO): Promise<T | null>;
+  update(id: string | number, data: UpdateDTO): Promise<RepositoryResult<T | null>>;
 
   /**
    * Delete an entity by ID
    */
-  delete(id: string | number): Promise<boolean>;
+  delete(id: string | number): Promise<RepositoryResult<boolean>>;
 
   /**
    * Check if an entity exists
    */
-  exists(id: string | number): Promise<boolean>;
+  exists(id: string | number): Promise<RepositoryResult<boolean>>;
 
   /**
    * Count entities with optional filtering
    */
-  count(filters?: Record<string, any>): Promise<number>;
+  count(filters?: Record<string, any>): Promise<RepositoryResult<number>>;
 }
 
 /**
@@ -66,7 +68,7 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
   /**
    * Create a new entity
    */
-  async create(data: CreateDTO): Promise<T> {
+  async create(data: CreateDTO): Promise<RepositoryResult<T>> {
     // Default implementation - should be overridden by concrete repositories
     throw new Error('create method must be implemented by concrete repository');
   }
@@ -74,7 +76,7 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
   /**
    * Find an entity by its ID
    */
-  async findById(id: string | number): Promise<T | null> {
+  async findById(id: string | number): Promise<RepositoryResult<T | null>> {
     // Default implementation - should be overridden by concrete repositories
     throw new Error('findById method must be implemented by concrete repository');
   }
@@ -82,7 +84,7 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
   /**
    * Find all entities with optional filtering
    */
-  async findAll(filters?: Record<string, any>): Promise<T[]> {
+  async findAll(filters?: Record<string, any>): Promise<RepositoryResult<T[]>> {
     // Default implementation - should be overridden by concrete repositories
     throw new Error('findAll method must be implemented by concrete repository');
   }
@@ -94,7 +96,7 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
     page: number,
     limit: number,
     filters?: Record<string, any>
-  ): Promise<{ data: T[]; total: number; page: number; limit: number }> {
+  ): Promise<RepositoryResult<{ data: T[]; total: number; page: number; limit: number }>> {
     // Default implementation - should be overridden by concrete repositories
     throw new Error('findWithPagination method must be implemented by concrete repository');
   }
@@ -102,7 +104,7 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
   /**
    * Update an entity by ID
    */
-  async update(id: string | number, data: UpdateDTO): Promise<T | null> {
+  async update(id: string | number, data: UpdateDTO): Promise<RepositoryResult<T | null>> {
     // Default implementation - should be overridden by concrete repositories
     throw new Error('update method must be implemented by concrete repository');
   }
@@ -110,7 +112,7 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
   /**
    * Delete an entity by ID
    */
-  async delete(id: string | number): Promise<boolean> {
+  async delete(id: string | number): Promise<RepositoryResult<boolean>> {
     // Default implementation - should be overridden by concrete repositories
     throw new Error('delete method must be implemented by concrete repository');
   }
@@ -118,7 +120,7 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
   /**
    * Check if an entity exists
    */
-  async exists(id: string | number): Promise<boolean> {
+  async exists(id: string | number): Promise<RepositoryResult<boolean>> {
     // Default implementation - should be overridden by concrete repositories
     throw new Error('exists method must be implemented by concrete repository');
   }
@@ -126,7 +128,7 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
   /**
    * Count entities with optional filtering
    */
-  async count(filters?: Record<string, any>): Promise<number> {
+  async count(filters?: Record<string, any>): Promise<RepositoryResult<number>> {
     // Default implementation - should be overridden by concrete repositories
     throw new Error('count method must be implemented by concrete repository');
   }
@@ -173,6 +175,15 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
       sql: `LIMIT $1 OFFSET $2`,
       params: [limit, offset]
     };
+  }
+
+  /**
+   * Helper method to create RepositoryError from string message
+   */
+  protected createError(message: string, type: RepositoryError['type'] = 'unknown_error'): RepositoryError {
+    const error = new Error(message) as RepositoryError;
+    error.type = type;
+    return error;
   }
 }
 

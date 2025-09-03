@@ -13,16 +13,19 @@ import {
   type FlowMetric,
   type NewFlowMetric
 } from '../schema';
-import { BaseRepository } from '../core/base-repository';
+import { BaseRepository, BaseRepositoryImpl } from '../core/base-repository';
 import { RepositoryResult } from '../../../types/shared/repository';
 
-export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> {
+export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig> implements BaseRepository<FlowMetricsConfig> {
+  protected tableName = 'flow_metrics_config';
+  protected db = db;
+
   async create(data: NewFlowMetricsConfig): Promise<RepositoryResult<FlowMetricsConfig>> {
     try {
       const [result] = await db.insert(flowMetricsConfig).values(data).returning();
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to create flow metric config', error);
+      return RepositoryResult.error(this.createError('Failed to create flow metric config'), error);
     }
   }
 
@@ -31,7 +34,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       const [result] = await db.select().from(flowMetricsConfig).where(eq(flowMetricsConfig.id, id));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find flow metric config by ID', error);
+      return RepositoryResult.error(this.createError('Failed to find flow metric config by ID'), error);
     }
   }
 
@@ -40,7 +43,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       const [result] = await db.select().from(flowMetricsConfig).where(eq(flowMetricsConfig.metricKey, metricKey));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find flow metric config by metric key', error);
+      return RepositoryResult.error(this.createError('Failed to find flow metric config by metric key'), error);
     }
   }
 
@@ -49,7 +52,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       const result = await db.select().from(flowMetricsConfig).orderBy(asc(flowMetricsConfig.sortOrder));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find all flow metric configs', error);
+      return RepositoryResult.error(this.createError('Failed to find all flow metric configs'), error);
     }
   }
 
@@ -60,7 +63,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
         .orderBy(asc(flowMetricsConfig.sortOrder));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find active flow metric configs', error);
+      return RepositoryResult.error(this.createError('Failed to find active flow metric configs'), error);
     }
   }
 
@@ -72,7 +75,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
         .returning();
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to update flow metric config', error);
+      return RepositoryResult.error(this.createError('Failed to update flow metric config'), error);
     }
   }
 
@@ -81,7 +84,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       const result = await db.delete(flowMetricsConfig).where(eq(flowMetricsConfig.id, id));
       return RepositoryResult.success(result.rowCount > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to delete flow metric config', error);
+      return RepositoryResult.error(this.createError('Failed to delete flow metric config'), error);
     }
   }
 
@@ -96,7 +99,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       const total = totalResult.length;
       return RepositoryResult.success({ data, total, page, limit });
     } catch (error) {
-      return RepositoryResult.error('Failed to find flow metric configs with pagination', error);
+      return RepositoryResult.error(this.createError('Failed to find flow metric configs with pagination'), error);
     }
   }
 
@@ -105,7 +108,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       const result = await db.select({ id: flowMetricsConfig.id }).from(flowMetricsConfig).where(eq(flowMetricsConfig.id, id)).limit(1);
       return RepositoryResult.success(result.length > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to check if flow metric config exists', error);
+      return RepositoryResult.error(this.createError('Failed to check if flow metric config exists'), error);
     }
   }
 
@@ -114,7 +117,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       const result = await db.select({ count: flowMetricsConfig.id }).from(flowMetricsConfig);
       return RepositoryResult.success(result.length);
     } catch (error) {
-      return RepositoryResult.error('Failed to count flow metric configs', error);
+      return RepositoryResult.error(this.createError('Failed to count flow metric configs'), error);
     }
   }
 
@@ -124,7 +127,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       const [result] = await db.insert(flowMetrics).values(data).returning();
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to create flow metric', error);
+      return RepositoryResult.error(this.createError('Failed to create flow metric'), error);
     }
   }
 
@@ -138,7 +141,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
         .orderBy(desc(flowMetrics.startDate));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to get flow metrics by date range', error);
+      return RepositoryResult.error(this.createError('Failed to get flow metrics by date range'), error);
     }
   }
 
@@ -161,7 +164,7 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       ));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to get metric data by key', error);
+      return RepositoryResult.error(this.createError('Failed to get metric data by key'), error);
     }
   }
 
@@ -180,18 +183,21 @@ export class FlowMetricsRepository implements BaseRepository<FlowMetricsConfig> 
       .orderBy(desc(pipedriveDealFlowData.timestamp));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to get deals for canonical stage', error);
+      return RepositoryResult.error(this.createError('Failed to get deals for canonical stage'), error);
     }
   }
 }
 
-export class CanonicalStageMappingsRepository implements BaseRepository<CanonicalStageMapping> {
+export class CanonicalStageMappingsRepository extends BaseRepositoryImpl<CanonicalStageMapping> implements BaseRepository<CanonicalStageMapping> {
+  protected tableName = 'canonical_stage_mappings';
+  protected db = db;
+
   async create(data: NewCanonicalStageMapping): Promise<RepositoryResult<CanonicalStageMapping>> {
     try {
       const [result] = await db.insert(canonicalStageMappings).values(data).returning();
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to create canonical stage mapping', error);
+      return RepositoryResult.error(this.createError('Failed to create canonical stage mapping'), error);
     }
   }
 
@@ -200,7 +206,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
       const [result] = await db.select().from(canonicalStageMappings).where(eq(canonicalStageMappings.id, id));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find canonical stage mapping by ID', error);
+      return RepositoryResult.error(this.createError('Failed to find canonical stage mapping by ID'), error);
     }
   }
 
@@ -210,7 +216,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
         .where(eq(canonicalStageMappings.canonicalStage, canonicalStage));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find canonical stage mappings by stage', error);
+      return RepositoryResult.error(this.createError('Failed to find canonical stage mappings by stage'), error);
     }
   }
 
@@ -219,7 +225,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
       const result = await db.select().from(canonicalStageMappings);
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find all canonical stage mappings', error);
+      return RepositoryResult.error(this.createError('Failed to find all canonical stage mappings'), error);
     }
   }
 
@@ -231,7 +237,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
         .returning();
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to update canonical stage mapping', error);
+      return RepositoryResult.error(this.createError('Failed to update canonical stage mapping'), error);
     }
   }
 
@@ -240,7 +246,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
       const result = await db.delete(canonicalStageMappings).where(eq(canonicalStageMappings.id, id));
       return RepositoryResult.success(result.rowCount > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to delete canonical stage mapping', error);
+      return RepositoryResult.error(this.createError('Failed to delete canonical stage mapping'), error);
     }
   }
 
@@ -272,7 +278,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
       
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to get mappings with config', error);
+      return RepositoryResult.error(this.createError('Failed to get mappings with config'), error);
     }
   }
 
@@ -287,7 +293,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
       const total = totalResult.length;
       return RepositoryResult.success({ data, total, page, limit });
     } catch (error) {
-      return RepositoryResult.error('Failed to find canonical stage mappings with pagination', error);
+      return RepositoryResult.error(this.createError('Failed to find canonical stage mappings with pagination'), error);
     }
   }
 
@@ -296,7 +302,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
       const result = await db.select({ id: canonicalStageMappings.id }).from(canonicalStageMappings).where(eq(canonicalStageMappings.id, id)).limit(1);
       return RepositoryResult.success(result.length > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to check if canonical stage mapping exists', error);
+      return RepositoryResult.error(this.createError('Failed to check if canonical stage mapping exists'), error);
     }
   }
 
@@ -305,7 +311,7 @@ export class CanonicalStageMappingsRepository implements BaseRepository<Canonica
       const result = await db.select({ count: canonicalStageMappings.id }).from(canonicalStageMappings);
       return RepositoryResult.success(result.length);
     } catch (error) {
-      return RepositoryResult.error('Failed to count canonical stage mappings', error);
+      return RepositoryResult.error(this.createError('Failed to count canonical stage mappings'), error);
     }
   }
 }

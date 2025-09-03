@@ -14,16 +14,19 @@ import {
   type PipedriveSubmission,
   type NewPipedriveSubmission
 } from '../schema';
-import { BaseRepository } from '../core/base-repository';
+import { BaseRepository, BaseRepositoryImpl } from '../core/base-repository';
 import { RepositoryResult } from '../../../types/shared/repository';
 
-export class SalesRequestsRepository implements BaseRepository<Request> {
+export class SalesRequestsRepository extends BaseRepositoryImpl<Request> implements BaseRepository<Request> {
+  protected tableName = 'requests';
+  protected db = db;
+
   async create(data: NewRequest): Promise<RepositoryResult<Request>> {
     try {
       const [result] = await db.insert(requests).values(data).returning();
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to create request', error);
+      return RepositoryResult.error(this.createError('Failed to create request'), error);
     }
   }
 
@@ -32,7 +35,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
       const [result] = await db.select().from(requests).where(eq(requests.id, id));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find request by ID', error);
+      return RepositoryResult.error(this.createError('Failed to find request by ID'), error);
     }
   }
 
@@ -41,7 +44,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
       const [result] = await db.select().from(requests).where(eq(requests.requestId, requestId));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find request by request ID', error);
+      return RepositoryResult.error(this.createError('Failed to find request by request ID'), error);
     }
   }
 
@@ -50,7 +53,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
       const result = await db.select().from(requests).orderBy(desc(requests.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find all requests', error);
+      return RepositoryResult.error(this.createError('Failed to find all requests'), error);
     }
   }
 
@@ -61,7 +64,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
         .orderBy(desc(requests.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find requests by status', error);
+      return RepositoryResult.error(this.createError('Failed to find requests by status'), error);
     }
   }
 
@@ -72,7 +75,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
         .orderBy(desc(requests.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find requests by salesperson', error);
+      return RepositoryResult.error(this.createError('Failed to find requests by salesperson'), error);
     }
   }
 
@@ -83,7 +86,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
         .orderBy(desc(requests.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find requests by mine group', error);
+      return RepositoryResult.error(this.createError('Failed to find requests by mine group'), error);
     }
   }
 
@@ -97,7 +100,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
         .orderBy(desc(requests.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find requests by date range', error);
+      return RepositoryResult.error(this.createError('Failed to find requests by date range'), error);
     }
   }
 
@@ -109,7 +112,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
         .returning();
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to update request', error);
+      return RepositoryResult.error(this.createError('Failed to update request'), error);
     }
   }
 
@@ -118,7 +121,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
       const result = await db.delete(requests).where(eq(requests.id, id));
       return RepositoryResult.success(result.rowCount > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to delete request', error);
+      return RepositoryResult.error(this.createError('Failed to delete request'), error);
     }
   }
 
@@ -166,7 +169,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
         return RepositoryResult.success(result);
       }
     } catch (error) {
-      return RepositoryResult.error('Failed to search requests', error);
+      return RepositoryResult.error(this.createError('Failed to search requests'), error);
     }
   }
 
@@ -181,7 +184,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
       const total = totalResult.length;
       return RepositoryResult.success({ data, total, page, limit });
     } catch (error) {
-      return RepositoryResult.error('Failed to find requests with pagination', error);
+      return RepositoryResult.error(this.createError('Failed to find requests with pagination'), error);
     }
   }
 
@@ -190,7 +193,7 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
       const result = await db.select({ id: requests.id }).from(requests).where(eq(requests.id, id)).limit(1);
       return RepositoryResult.success(result.length > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to check if request exists', error);
+      return RepositoryResult.error(this.createError('Failed to check if request exists'), error);
     }
   }
 
@@ -199,18 +202,21 @@ export class SalesRequestsRepository implements BaseRepository<Request> {
       const result = await db.select({ count: requests.id }).from(requests);
       return RepositoryResult.success(result.length);
     } catch (error) {
-      return RepositoryResult.error('Failed to count requests', error);
+      return RepositoryResult.error(this.createError('Failed to count requests'), error);
     }
   }
 }
 
-export class MockRequestsRepository implements BaseRepository<MockRequest> {
+export class MockRequestsRepository extends BaseRepositoryImpl<MockRequest> implements BaseRepository<MockRequest> {
+  protected tableName = 'mock_requests';
+  protected db = db;
+
   async create(data: NewMockRequest): Promise<RepositoryResult<MockRequest>> {
     try {
       const [result] = await db.insert(mockRequests).values(data).returning();
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to create mock request', error);
+      return RepositoryResult.error(this.createError('Failed to create mock request'), error);
     }
   }
 
@@ -219,7 +225,7 @@ export class MockRequestsRepository implements BaseRepository<MockRequest> {
       const [result] = await db.select().from(mockRequests).where(eq(mockRequests.id, id));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find mock request by ID', error);
+      return RepositoryResult.error(this.createError('Failed to find mock request by ID'), error);
     }
   }
 
@@ -228,7 +234,7 @@ export class MockRequestsRepository implements BaseRepository<MockRequest> {
       const [result] = await db.select().from(mockRequests).where(eq(mockRequests.requestId, requestId));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find mock request by request ID', error);
+      return RepositoryResult.error(this.createError('Failed to find mock request by request ID'), error);
     }
   }
 
@@ -237,7 +243,7 @@ export class MockRequestsRepository implements BaseRepository<MockRequest> {
       const result = await db.select().from(mockRequests).orderBy(desc(mockRequests.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find all mock requests', error);
+      return RepositoryResult.error(this.createError('Failed to find all mock requests'), error);
     }
   }
 
@@ -249,7 +255,7 @@ export class MockRequestsRepository implements BaseRepository<MockRequest> {
         .returning();
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to update mock request', error);
+      return RepositoryResult.error(this.createError('Failed to update mock request'), error);
     }
   }
 
@@ -258,7 +264,7 @@ export class MockRequestsRepository implements BaseRepository<MockRequest> {
       const result = await db.delete(mockRequests).where(eq(mockRequests.id, id));
       return RepositoryResult.success(result.rowCount > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to delete mock request', error);
+      return RepositoryResult.error(this.createError('Failed to delete mock request'), error);
     }
   }
 
@@ -273,7 +279,7 @@ export class MockRequestsRepository implements BaseRepository<MockRequest> {
       const total = totalResult.length;
       return RepositoryResult.success({ data, total, page, limit });
     } catch (error) {
-      return RepositoryResult.error('Failed to find mock requests with pagination', error);
+      return RepositoryResult.error(this.createError('Failed to find mock requests with pagination'), error);
     }
   }
 
@@ -282,7 +288,7 @@ export class MockRequestsRepository implements BaseRepository<MockRequest> {
       const result = await db.select({ id: mockRequests.id }).from(mockRequests).where(eq(mockRequests.id, id)).limit(1);
       return RepositoryResult.success(result.length > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to check if mock request exists', error);
+      return RepositoryResult.error(this.createError('Failed to check if mock request exists'), error);
     }
   }
 
@@ -291,18 +297,21 @@ export class MockRequestsRepository implements BaseRepository<MockRequest> {
       const result = await db.select({ count: mockRequests.id }).from(mockRequests);
       return RepositoryResult.success(result.length);
     } catch (error) {
-      return RepositoryResult.error('Failed to count mock requests', error);
+      return RepositoryResult.error(this.createError('Failed to count mock requests'), error);
     }
   }
 }
 
-export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
+export class SiteVisitsRepository extends BaseRepositoryImpl<SiteVisit> implements BaseRepository<SiteVisit> {
+  protected tableName = 'site_visits';
+  protected db = db;
+
   async create(data: NewSiteVisit): Promise<RepositoryResult<SiteVisit>> {
     try {
       const [result] = await db.insert(siteVisits).values(data).returning();
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to create site visit', error);
+      return RepositoryResult.error(this.createError('Failed to create site visit'), error);
     }
   }
 
@@ -311,7 +320,7 @@ export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
       const [result] = await db.select().from(siteVisits).where(eq(siteVisits.id, id));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find site visit by ID', error);
+      return RepositoryResult.error(this.createError('Failed to find site visit by ID'), error);
     }
   }
 
@@ -322,7 +331,7 @@ export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
         .orderBy(desc(siteVisits.visitDate));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find site visits by request ID', error);
+      return RepositoryResult.error(this.createError('Failed to find site visits by request ID'), error);
     }
   }
 
@@ -331,7 +340,7 @@ export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
       const result = await db.select().from(siteVisits).orderBy(desc(siteVisits.visitDate));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find all site visits', error);
+      return RepositoryResult.error(this.createError('Failed to find all site visits'), error);
     }
   }
 
@@ -343,7 +352,7 @@ export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
         .returning();
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to update site visit', error);
+      return RepositoryResult.error(this.createError('Failed to update site visit'), error);
     }
   }
 
@@ -352,7 +361,7 @@ export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
       const result = await db.delete(siteVisits).where(eq(siteVisits.id, id));
       return RepositoryResult.success(result.rowCount > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to delete site visit', error);
+      return RepositoryResult.error(this.createError('Failed to delete site visit'), error);
     }
   }
 
@@ -367,7 +376,7 @@ export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
       const total = totalResult.length;
       return RepositoryResult.success({ data, total, page, limit });
     } catch (error) {
-      return RepositoryResult.error('Failed to find site visits with pagination', error);
+      return RepositoryResult.error(this.createError('Failed to find site visits with pagination'), error);
     }
   }
 
@@ -376,7 +385,7 @@ export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
       const result = await db.select({ id: siteVisits.id }).from(siteVisits).where(eq(siteVisits.id, id)).limit(1);
       return RepositoryResult.success(result.length > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to check if site visit exists', error);
+      return RepositoryResult.error(this.createError('Failed to check if site visit exists'), error);
     }
   }
 
@@ -385,18 +394,21 @@ export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
       const result = await db.select({ count: siteVisits.id }).from(siteVisits);
       return RepositoryResult.success(result.length);
     } catch (error) {
-      return RepositoryResult.error('Failed to count site visits', error);
+      return RepositoryResult.error(this.createError('Failed to count site visits'), error);
     }
   }
 }
 
-export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveSubmission> {
+export class PipedriveSubmissionsRepository extends BaseRepositoryImpl<PipedriveSubmission> implements BaseRepository<PipedriveSubmission> {
+  protected tableName = 'pipedrive_submissions';
+  protected db = db;
+
   async create(data: NewPipedriveSubmission): Promise<RepositoryResult<PipedriveSubmission>> {
     try {
       const [result] = await db.insert(pipedriveSubmissions).values(data).returning();
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to create Pipedrive submission', error);
+      return RepositoryResult.error(this.createError('Failed to create Pipedrive submission'), error);
     }
   }
 
@@ -405,7 +417,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
       const [result] = await db.select().from(pipedriveSubmissions).where(eq(pipedriveSubmissions.id, id));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find Pipedrive submission by ID', error);
+      return RepositoryResult.error(this.createError('Failed to find Pipedrive submission by ID'), error);
     }
   }
 
@@ -414,7 +426,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
       const [result] = await db.select().from(pipedriveSubmissions).where(eq(pipedriveSubmissions.requestId, requestId));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find Pipedrive submission by request ID', error);
+      return RepositoryResult.error(this.createError('Failed to find Pipedrive submission by request ID'), error);
     }
   }
 
@@ -423,7 +435,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
       const [result] = await db.select().from(pipedriveSubmissions).where(eq(pipedriveSubmissions.simulatedDealId, dealId));
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to find Pipedrive submission by deal ID', error);
+      return RepositoryResult.error(this.createError('Failed to find Pipedrive submission by deal ID'), error);
     }
   }
 
@@ -432,7 +444,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
       const result = await db.select().from(pipedriveSubmissions).orderBy(desc(pipedriveSubmissions.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error('Failed to find all Pipedrive submissions', error);
+      return RepositoryResult.error(this.createError('Failed to find all Pipedrive submissions'), error);
     }
   }
 
@@ -444,7 +456,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
         .returning();
       return RepositoryResult.success(result || null);
     } catch (error) {
-      return RepositoryResult.error('Failed to update Pipedrive submission', error);
+      return RepositoryResult.error(this.createError('Failed to update Pipedrive submission'), error);
     }
   }
 
@@ -453,7 +465,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
       const result = await db.delete(pipedriveSubmissions).where(eq(pipedriveSubmissions.id, id));
       return RepositoryResult.success(result.rowCount > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to delete Pipedrive submission', error);
+      return RepositoryResult.error(this.createError('Failed to delete Pipedrive submission'), error);
     }
   }
 
@@ -468,7 +480,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
       const total = totalResult.length;
       return RepositoryResult.success({ data, total, page, limit });
     } catch (error) {
-      return RepositoryResult.error('Failed to find Pipedrive submissions with pagination', error);
+      return RepositoryResult.error(this.createError('Failed to find Pipedrive submissions with pagination'), error);
     }
   }
 
@@ -477,7 +489,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
       const result = await db.select({ id: pipedriveSubmissions.id }).from(pipedriveSubmissions).where(eq(pipedriveSubmissions.id, id)).limit(1);
       return RepositoryResult.success(result.length > 0);
     } catch (error) {
-      return RepositoryResult.error('Failed to check if Pipedrive submission exists', error);
+      return RepositoryResult.error(this.createError('Failed to check if Pipedrive submission exists'), error);
     }
   }
 
@@ -486,7 +498,7 @@ export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveS
       const result = await db.select({ count: pipedriveSubmissions.id }).from(pipedriveSubmissions);
       return RepositoryResult.success(result.length);
     } catch (error) {
-      return RepositoryResult.error('Failed to count Pipedrive submissions', error);
+      return RepositoryResult.error(this.createError('Failed to count Pipedrive submissions'), error);
     }
   }
 }
