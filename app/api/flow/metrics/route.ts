@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getActiveFlowMetricsConfig, getDealsForCanonicalStage } from '../../../../lib/db';
+import { FlowMetricsRepository } from '../../../../lib/database';
 import { logInfo, logError } from '../../../../lib/log';
 
 // Force dynamic rendering for this route
@@ -13,9 +13,10 @@ export async function GET(request: NextRequest) {
     logInfo('GET /api/flow/metrics - Calculating flow metrics', { period });
 
     // Get all active metrics configuration
-    const activeMetrics = await getActiveFlowMetricsConfig();
+    const repository = new FlowMetricsRepository();
+    const activeMetricsResult = await repository.findActive();
     
-    if (!activeMetrics || activeMetrics.length === 0) {
+    if (!activeMetricsResult.success || !activeMetricsResult.data || activeMetricsResult.data.length === 0) {
       return NextResponse.json({
         success: true,
         data: [],
@@ -23,12 +24,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const activeMetrics = activeMetricsResult.data;
+
     // Calculate metrics for each canonical stage
     const calculatedMetrics = await Promise.all(
-      activeMetrics.map(async (metric) => {
+      activeMetrics.map(async (metric: any) => {
         try {
           // Get deals for this canonical stage with period filtering
-          const deals = await getDealsForCanonicalStage(metric.canonical_stage, period);
+          const dealsResult = await repository.getDealsForCanonicalStage(metric.canonicalStage, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), new Date());
+          const deals = dealsResult.success ? dealsResult.data : [];
           
           if (!deals || deals.length === 0) {
             return {

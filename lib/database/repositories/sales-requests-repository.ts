@@ -1,0 +1,492 @@
+import { eq, and, desc, asc, like, gte, lte } from 'drizzle-orm';
+import { db } from '../connection';
+import { 
+  requests, 
+  mockRequests, 
+  siteVisits,
+  pipedriveSubmissions,
+  type Request,
+  type NewRequest,
+  type MockRequest,
+  type NewMockRequest,
+  type SiteVisit,
+  type NewSiteVisit,
+  type PipedriveSubmission,
+  type NewPipedriveSubmission
+} from '../schema';
+import { BaseRepository } from '../core/base-repository';
+import { RepositoryResult } from '../../../types/shared/repository';
+
+export class SalesRequestsRepository implements BaseRepository<Request> {
+  async create(data: NewRequest): Promise<RepositoryResult<Request>> {
+    try {
+      const [result] = await db.insert(requests).values(data).returning();
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to create request', error);
+    }
+  }
+
+  async findById(id: string): Promise<RepositoryResult<Request | null>> {
+    try {
+      const [result] = await db.select().from(requests).where(eq(requests.id, id));
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find request by ID', error);
+    }
+  }
+
+  async findByRequestId(requestId: string): Promise<RepositoryResult<Request | null>> {
+    try {
+      const [result] = await db.select().from(requests).where(eq(requests.requestId, requestId));
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find request by request ID', error);
+    }
+  }
+
+  async findAll(): Promise<RepositoryResult<Request[]>> {
+    try {
+      const result = await db.select().from(requests).orderBy(desc(requests.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find all requests', error);
+    }
+  }
+
+  async findByStatus(status: string): Promise<RepositoryResult<Request[]>> {
+    try {
+      const result = await db.select().from(requests)
+        .where(eq(requests.status, status as any))
+        .orderBy(desc(requests.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find requests by status', error);
+    }
+  }
+
+  async findBySalesperson(salesperson: string): Promise<RepositoryResult<Request[]>> {
+    try {
+      const result = await db.select().from(requests)
+        .where(eq(requests.salespersonSelection, salesperson))
+        .orderBy(desc(requests.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find requests by salesperson', error);
+    }
+  }
+
+  async findByMineGroup(mineGroup: string): Promise<RepositoryResult<Request[]>> {
+    try {
+      const result = await db.select().from(requests)
+        .where(eq(requests.contactMineGroup, mineGroup))
+        .orderBy(desc(requests.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find requests by mine group', error);
+    }
+  }
+
+  async findByDateRange(startDate: Date, endDate: Date): Promise<RepositoryResult<Request[]>> {
+    try {
+      const result = await db.select().from(requests)
+        .where(and(
+          gte(requests.createdAt, startDate),
+          lte(requests.createdAt, endDate)
+        ))
+        .orderBy(desc(requests.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find requests by date range', error);
+    }
+  }
+
+  async update(id: string, data: Partial<NewRequest>): Promise<RepositoryResult<Request | null>> {
+    try {
+      const [result] = await db.update(requests)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(requests.id, id))
+        .returning();
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to update request', error);
+    }
+  }
+
+  async delete(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const result = await db.delete(requests).where(eq(requests.id, id));
+      return RepositoryResult.success(result.rowCount > 0);
+    } catch (error) {
+      return RepositoryResult.error('Failed to delete request', error);
+    }
+  }
+
+  // Search requests with filters
+  async search(filters: {
+    status?: string;
+    salesperson?: string;
+    mineGroup?: string;
+    mineName?: string;
+    startDate?: Date;
+    endDate?: Date;
+    searchTerm?: string;
+  }): Promise<RepositoryResult<Request[]>> {
+    try {
+      let query = db.select().from(requests);
+      const conditions = [];
+
+      if (filters.status) {
+        conditions.push(eq(requests.status, filters.status as any));
+      }
+      if (filters.salesperson) {
+        conditions.push(eq(requests.salespersonSelection, filters.salesperson));
+      }
+      if (filters.mineGroup) {
+        conditions.push(eq(requests.contactMineGroup, filters.mineGroup));
+      }
+      if (filters.mineName) {
+        conditions.push(eq(requests.contactMineName, filters.mineName));
+      }
+      if (filters.startDate) {
+        conditions.push(gte(requests.createdAt, filters.startDate));
+      }
+      if (filters.endDate) {
+        conditions.push(lte(requests.createdAt, filters.endDate));
+      }
+      if (filters.searchTerm) {
+        conditions.push(like(requests.comment, `%${filters.searchTerm}%`));
+      }
+
+      if (conditions.length > 0) {
+        const result = await query.where(and(...conditions)).orderBy(desc(requests.createdAt));
+        return RepositoryResult.success(result);
+      } else {
+        const result = await query.orderBy(desc(requests.createdAt));
+        return RepositoryResult.success(result);
+      }
+    } catch (error) {
+      return RepositoryResult.error('Failed to search requests', error);
+    }
+  }
+
+  async findWithPagination(page: number = 1, limit: number = 10): Promise<RepositoryResult<{ data: Request[], total: number, page: number, limit: number }>> {
+    try {
+      const offset = (page - 1) * limit;
+      const [data, totalResult] = await Promise.all([
+        db.select().from(requests).limit(limit).offset(offset).orderBy(desc(requests.createdAt)),
+        db.select({ count: requests.id }).from(requests)
+      ]);
+      
+      const total = totalResult.length;
+      return RepositoryResult.success({ data, total, page, limit });
+    } catch (error) {
+      return RepositoryResult.error('Failed to find requests with pagination', error);
+    }
+  }
+
+  async exists(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const result = await db.select({ id: requests.id }).from(requests).where(eq(requests.id, id)).limit(1);
+      return RepositoryResult.success(result.length > 0);
+    } catch (error) {
+      return RepositoryResult.error('Failed to check if request exists', error);
+    }
+  }
+
+  async count(): Promise<RepositoryResult<number>> {
+    try {
+      const result = await db.select({ count: requests.id }).from(requests);
+      return RepositoryResult.success(result.length);
+    } catch (error) {
+      return RepositoryResult.error('Failed to count requests', error);
+    }
+  }
+}
+
+export class MockRequestsRepository implements BaseRepository<MockRequest> {
+  async create(data: NewMockRequest): Promise<RepositoryResult<MockRequest>> {
+    try {
+      const [result] = await db.insert(mockRequests).values(data).returning();
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to create mock request', error);
+    }
+  }
+
+  async findById(id: string): Promise<RepositoryResult<MockRequest | null>> {
+    try {
+      const [result] = await db.select().from(mockRequests).where(eq(mockRequests.id, id));
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find mock request by ID', error);
+    }
+  }
+
+  async findByRequestId(requestId: string): Promise<RepositoryResult<MockRequest | null>> {
+    try {
+      const [result] = await db.select().from(mockRequests).where(eq(mockRequests.requestId, requestId));
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find mock request by request ID', error);
+    }
+  }
+
+  async findAll(): Promise<RepositoryResult<MockRequest[]>> {
+    try {
+      const result = await db.select().from(mockRequests).orderBy(desc(mockRequests.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find all mock requests', error);
+    }
+  }
+
+  async update(id: string, data: Partial<NewMockRequest>): Promise<RepositoryResult<MockRequest | null>> {
+    try {
+      const [result] = await db.update(mockRequests)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(mockRequests.id, id))
+        .returning();
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to update mock request', error);
+    }
+  }
+
+  async delete(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const result = await db.delete(mockRequests).where(eq(mockRequests.id, id));
+      return RepositoryResult.success(result.rowCount > 0);
+    } catch (error) {
+      return RepositoryResult.error('Failed to delete mock request', error);
+    }
+  }
+
+  async findWithPagination(page: number = 1, limit: number = 10): Promise<RepositoryResult<{ data: MockRequest[], total: number, page: number, limit: number }>> {
+    try {
+      const offset = (page - 1) * limit;
+      const [data, totalResult] = await Promise.all([
+        db.select().from(mockRequests).limit(limit).offset(offset).orderBy(desc(mockRequests.createdAt)),
+        db.select({ count: mockRequests.id }).from(mockRequests)
+      ]);
+      
+      const total = totalResult.length;
+      return RepositoryResult.success({ data, total, page, limit });
+    } catch (error) {
+      return RepositoryResult.error('Failed to find mock requests with pagination', error);
+    }
+  }
+
+  async exists(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const result = await db.select({ id: mockRequests.id }).from(mockRequests).where(eq(mockRequests.id, id)).limit(1);
+      return RepositoryResult.success(result.length > 0);
+    } catch (error) {
+      return RepositoryResult.error('Failed to check if mock request exists', error);
+    }
+  }
+
+  async count(): Promise<RepositoryResult<number>> {
+    try {
+      const result = await db.select({ count: mockRequests.id }).from(mockRequests);
+      return RepositoryResult.success(result.length);
+    } catch (error) {
+      return RepositoryResult.error('Failed to count mock requests', error);
+    }
+  }
+}
+
+export class SiteVisitsRepository implements BaseRepository<SiteVisit> {
+  async create(data: NewSiteVisit): Promise<RepositoryResult<SiteVisit>> {
+    try {
+      const [result] = await db.insert(siteVisits).values(data).returning();
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to create site visit', error);
+    }
+  }
+
+  async findById(id: string): Promise<RepositoryResult<SiteVisit | null>> {
+    try {
+      const [result] = await db.select().from(siteVisits).where(eq(siteVisits.id, id));
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find site visit by ID', error);
+    }
+  }
+
+  async findByRequestId(requestId: string): Promise<RepositoryResult<SiteVisit[]>> {
+    try {
+      const result = await db.select().from(siteVisits)
+        .where(eq(siteVisits.requestId, requestId))
+        .orderBy(desc(siteVisits.visitDate));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find site visits by request ID', error);
+    }
+  }
+
+  async findAll(): Promise<RepositoryResult<SiteVisit[]>> {
+    try {
+      const result = await db.select().from(siteVisits).orderBy(desc(siteVisits.visitDate));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find all site visits', error);
+    }
+  }
+
+  async update(id: string, data: Partial<NewSiteVisit>): Promise<RepositoryResult<SiteVisit | null>> {
+    try {
+      const [result] = await db.update(siteVisits)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(siteVisits.id, id))
+        .returning();
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to update site visit', error);
+    }
+  }
+
+  async delete(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const result = await db.delete(siteVisits).where(eq(siteVisits.id, id));
+      return RepositoryResult.success(result.rowCount > 0);
+    } catch (error) {
+      return RepositoryResult.error('Failed to delete site visit', error);
+    }
+  }
+
+  async findWithPagination(page: number = 1, limit: number = 10): Promise<RepositoryResult<{ data: SiteVisit[], total: number, page: number, limit: number }>> {
+    try {
+      const offset = (page - 1) * limit;
+      const [data, totalResult] = await Promise.all([
+        db.select().from(siteVisits).limit(limit).offset(offset).orderBy(desc(siteVisits.visitDate)),
+        db.select({ count: siteVisits.id }).from(siteVisits)
+      ]);
+      
+      const total = totalResult.length;
+      return RepositoryResult.success({ data, total, page, limit });
+    } catch (error) {
+      return RepositoryResult.error('Failed to find site visits with pagination', error);
+    }
+  }
+
+  async exists(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const result = await db.select({ id: siteVisits.id }).from(siteVisits).where(eq(siteVisits.id, id)).limit(1);
+      return RepositoryResult.success(result.length > 0);
+    } catch (error) {
+      return RepositoryResult.error('Failed to check if site visit exists', error);
+    }
+  }
+
+  async count(): Promise<RepositoryResult<number>> {
+    try {
+      const result = await db.select({ count: siteVisits.id }).from(siteVisits);
+      return RepositoryResult.success(result.length);
+    } catch (error) {
+      return RepositoryResult.error('Failed to count site visits', error);
+    }
+  }
+}
+
+export class PipedriveSubmissionsRepository implements BaseRepository<PipedriveSubmission> {
+  async create(data: NewPipedriveSubmission): Promise<RepositoryResult<PipedriveSubmission>> {
+    try {
+      const [result] = await db.insert(pipedriveSubmissions).values(data).returning();
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to create Pipedrive submission', error);
+    }
+  }
+
+  async findById(id: string): Promise<RepositoryResult<PipedriveSubmission | null>> {
+    try {
+      const [result] = await db.select().from(pipedriveSubmissions).where(eq(pipedriveSubmissions.id, id));
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find Pipedrive submission by ID', error);
+    }
+  }
+
+  async findByRequestId(requestId: string): Promise<RepositoryResult<PipedriveSubmission | null>> {
+    try {
+      const [result] = await db.select().from(pipedriveSubmissions).where(eq(pipedriveSubmissions.requestId, requestId));
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find Pipedrive submission by request ID', error);
+    }
+  }
+
+  async findByDealId(dealId: number): Promise<RepositoryResult<PipedriveSubmission | null>> {
+    try {
+      const [result] = await db.select().from(pipedriveSubmissions).where(eq(pipedriveSubmissions.simulatedDealId, dealId));
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find Pipedrive submission by deal ID', error);
+    }
+  }
+
+  async findAll(): Promise<RepositoryResult<PipedriveSubmission[]>> {
+    try {
+      const result = await db.select().from(pipedriveSubmissions).orderBy(desc(pipedriveSubmissions.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error('Failed to find all Pipedrive submissions', error);
+    }
+  }
+
+  async update(id: string, data: Partial<NewPipedriveSubmission>): Promise<RepositoryResult<PipedriveSubmission | null>> {
+    try {
+      const [result] = await db.update(pipedriveSubmissions)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(pipedriveSubmissions.id, id))
+        .returning();
+      return RepositoryResult.success(result || null);
+    } catch (error) {
+      return RepositoryResult.error('Failed to update Pipedrive submission', error);
+    }
+  }
+
+  async delete(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const result = await db.delete(pipedriveSubmissions).where(eq(pipedriveSubmissions.id, id));
+      return RepositoryResult.success(result.rowCount > 0);
+    } catch (error) {
+      return RepositoryResult.error('Failed to delete Pipedrive submission', error);
+    }
+  }
+
+  async findWithPagination(page: number = 1, limit: number = 10): Promise<RepositoryResult<{ data: PipedriveSubmission[], total: number, page: number, limit: number }>> {
+    try {
+      const offset = (page - 1) * limit;
+      const [data, totalResult] = await Promise.all([
+        db.select().from(pipedriveSubmissions).limit(limit).offset(offset).orderBy(desc(pipedriveSubmissions.createdAt)),
+        db.select({ count: pipedriveSubmissions.id }).from(pipedriveSubmissions)
+      ]);
+      
+      const total = totalResult.length;
+      return RepositoryResult.success({ data, total, page, limit });
+    } catch (error) {
+      return RepositoryResult.error('Failed to find Pipedrive submissions with pagination', error);
+    }
+  }
+
+  async exists(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const result = await db.select({ id: pipedriveSubmissions.id }).from(pipedriveSubmissions).where(eq(pipedriveSubmissions.id, id)).limit(1);
+      return RepositoryResult.success(result.length > 0);
+    } catch (error) {
+      return RepositoryResult.error('Failed to check if Pipedrive submission exists', error);
+    }
+  }
+
+  async count(): Promise<RepositoryResult<number>> {
+    try {
+      const result = await db.select({ count: pipedriveSubmissions.id }).from(pipedriveSubmissions);
+      return RepositoryResult.success(result.length);
+    } catch (error) {
+      return RepositoryResult.error('Failed to count Pipedrive submissions', error);
+    }
+  }
+}

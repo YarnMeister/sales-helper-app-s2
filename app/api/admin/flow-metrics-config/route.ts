@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFlowMetricsConfig, createFlowMetricConfig } from '../../../../lib/db';
+import { FlowMetricsRepository, CanonicalStageMappingsRepository } from '../../../../lib/database';
 import { logError, logInfo } from '../../../../lib/log';
 
 export async function GET() {
   try {
     logInfo('GET /api/admin/flow-metrics-config - Fetching flow metrics configuration');
     
-    const config = await getFlowMetricsConfig();
+    const repository = new CanonicalStageMappingsRepository();
+    const result = await repository.getMappingsWithConfig();
+    
+    if (!result.success) {
+      throw new Error(result.error);
+    }
     
     return NextResponse.json({
       success: true,
-      data: config
+      data: result.data
     });
   } catch (error) {
     logError('Error fetching flow metrics configuration', { error: error instanceof Error ? error.message : String(error) });
@@ -82,18 +87,44 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const newConfig = await createFlowMetricConfig({
-      metric_key,
-      display_title,
-      canonical_stage,
-      sort_order: body.sort_order,
-      is_active: body.is_active !== false,
-      start_stage_id: start_stage_id ? Number(start_stage_id) : undefined,
-      end_stage_id: end_stage_id ? Number(end_stage_id) : undefined,
-      avg_min_days: avg_min_days !== undefined ? Number(avg_min_days) : undefined,
-      avg_max_days: avg_max_days !== undefined ? Number(avg_max_days) : undefined,
-      metric_comment: metric_comment || undefined
+    const metricsRepository = new FlowMetricsRepository();
+    const mappingsRepository = new CanonicalStageMappingsRepository();
+    
+    // Create the metric config first
+    const metricResult = await metricsRepository.create({
+      metricKey: metric_key,
+      displayTitle: display_title,
+      canonicalStage: canonical_stage,
+      sortOrder: body.sort_order || 0,
+      isActive: body.is_active !== false,
     });
+    
+    if (!metricResult.success || !metricResult.data) {
+      throw new Error('Failed to create metric config');
+    }
+    
+    // Create the stage mapping if stage IDs are provided
+    if (start_stage_id && end_stage_id) {
+      const mappingResult = await mappingsRepository.create({
+        metricConfigId: metricResult.data.id,
+        canonicalStage: canonical_stage,
+        startStageId: Number(start_stage_id),
+        endStageId: Number(end_stage_id),
+        avgMinDays: avg_min_days !== undefined ? Number(avg_min_days) : undefined,
+        avgMaxDays: avg_max_days !== undefined ? Number(avg_max_days) : undefined,
+        metricComment: metric_comment || undefined,
+      });
+      
+      if (!mappingResult.success) {
+        throw new Error('Failed to create stage mapping');
+      }
+    }
+    
+    // Return the created config with mapping data
+    const newConfig = await metricsRepository.findById(metricResult.data.id);
+    if (!newConfig.success || !newConfig.data) {
+      throw new Error('Failed to retrieve created config');
+    }
     
     return NextResponse.json({
       success: true,
