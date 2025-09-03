@@ -10,13 +10,8 @@ export default defineConfig({
   out: './lib/database/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL!,
+    url: process.env.DATABASE_URL!,
   },
   verbose: true,
   strict: true,
-  // Generate migrations in a format compatible with our existing system
-  custom: {
-    migrationFormat: 'sql',
-    migrationName: 'drizzle',
-  },
 });

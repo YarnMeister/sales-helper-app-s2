@@ -180,9 +180,12 @@ export abstract class BaseRepositoryImpl<T, CreateDTO = Omit<T, 'id'>, UpdateDTO
   /**
    * Helper method to create RepositoryError from string message
    */
-  protected createError(message: string, type: RepositoryError['type'] = 'unknown_error'): RepositoryError {
+  protected createError(message: string, type: RepositoryError['type'] = 'unknown_error', originalError?: unknown): RepositoryError {
     const error = new Error(message) as RepositoryError;
     error.type = type;
+    if (originalError) {
+      error.details = originalError;
+    }
     return error;
   }
 }

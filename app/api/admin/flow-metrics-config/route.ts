@@ -10,17 +10,19 @@ export async function GET() {
     const result = await repository.getMappingsWithConfig();
     
     if (!result.success) {
-      throw new Error(result.error);
+      logError('Failed to get mappings with config', result.error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to get mappings with config' },
+        { status: 500 }
+      );
     }
     
-    return NextResponse.json({
-      success: true,
-      data: result.data
-    });
+    logInfo('Successfully retrieved mappings with config', { count: result.data.length });
+    return NextResponse.json({ success: true, data: result.data });
   } catch (error) {
-    logError('Error fetching flow metrics configuration', { error: error instanceof Error ? error.message : String(error) });
+    logError('Unexpected error in GET flow-metrics-config', { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch flow metrics configuration' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }
