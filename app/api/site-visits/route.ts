@@ -38,41 +38,22 @@ export async function POST(req: NextRequest) {
       });
       
       // Insert into database using Neon SQL template
-      const isDevelopment = process.env.NODE_ENV === 'development';
-      
-      const result = isDevelopment
-        ? await sql`
-          INSERT INTO mock_site_visits (
-            salesperson, 
-            planned_mines, 
-            main_purpose, 
-            availability, 
-            comments
-          ) VALUES (
-            ${validatedData.salesperson},
-            ${validatedData.planned_mines},
-            ${validatedData.main_purpose},
-            ${validatedData.availability},
-            ${validatedData.comments || null}
-          )
-          RETURNING id, date, created_at
-        `
-        : await sql`
-          INSERT INTO site_visits (
-            salesperson, 
-            planned_mines, 
-            main_purpose, 
-            availability, 
-            comments
-          ) VALUES (
-            ${validatedData.salesperson},
-            ${validatedData.planned_mines},
-            ${validatedData.main_purpose},
-            ${validatedData.availability},
-            ${validatedData.comments || null}
-          )
-          RETURNING id, date, created_at
-        `;
+      const result = await sql`
+        INSERT INTO site_visits (
+          salesperson, 
+          planned_mines, 
+          main_purpose, 
+          availability, 
+          comments
+        ) VALUES (
+          ${validatedData.salesperson},
+          ${validatedData.planned_mines},
+          ${validatedData.main_purpose},
+          ${validatedData.availability},
+          ${validatedData.comments || null}
+        )
+        RETURNING id, date, created_at
+      `;
       
       const savedVisit = result[0];
       

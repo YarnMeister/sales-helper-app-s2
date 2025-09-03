@@ -96,25 +96,18 @@ export const mockRequests = pgTable('mock_requests', {
 
 export const siteVisits = pgTable('site_visits', {
   id: uuid('id').primaryKey().defaultRandom(),
-  requestId: text('request_id').references(() => requests.requestId),
-  visitDate: timestamp('visit_date').notNull(),
-  salespersonFirstName: text('salesperson_first_name'),
-  salespersonSelection: text('salesperson_selection'),
-  mineGroup: text('mine_group'),
-  mineName: text('mine_name'),
-  contact: jsonb('contact'),
-  lineItems: jsonb('line_items').notNull().default('[]'),
-  comment: text('comment'),
-  submitMode: text('submit_mode').default('mock'),
-  pipedriveDealId: integer('pipedrive_deal_id'),
+  date: timestamp('date').notNull().defaultNow(),
+  salesperson: text('salesperson').notNull(),
+  plannedMines: text('planned_mines').array().notNull(),
+  mainPurpose: text('main_purpose').notNull(),
+  availability: text('availability').notNull(),
+  comments: text('comments'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  requestIdIdx: index('idx_site_visits_request_id').on(table.requestId),
-  visitDateIdx: index('idx_site_visits_visit_date').on(table.visitDate),
-  salespersonIdx: index('idx_site_visits_salesperson').on(table.salespersonSelection),
-  mineGroupIdx: index('idx_site_visits_mine_group').on(table.mineGroup),
-  mineNameIdx: index('idx_site_visits_mine_name').on(table.mineName),
+  dateIdx: index('idx_site_visits_date').on(table.date),
+  salespersonIdx: index('idx_site_visits_salesperson').on(table.salesperson),
+  createdAtIdx: index('idx_site_visits_created_at').on(table.createdAt),
 }));
 
 export const pipedriveSubmissions = pgTable('pipedrive_submissions', {
@@ -205,16 +198,16 @@ export const canonicalStageMappingsRelations = relations(canonicalStageMappings,
 }));
 
 export const requestsRelations = relations(requests, ({ many }) => ({
-  siteVisits: many(siteVisits),
   pipedriveSubmissions: many(pipedriveSubmissions),
 }));
 
-export const siteVisitsRelations = relations(siteVisits, ({ one }) => ({
-  request: one(requests, {
-    fields: [siteVisits.requestId],
-    references: [requests.requestId],
-  }),
-}));
+// Site visits are now independent check-ins, not related to requests
+// export const siteVisitsRelations = relations(siteVisits, ({ one }) => ({
+//   request: one(requests, {
+//     fields: [siteVisits.requestId],
+//     references: [requests.requestId],
+//   }),
+// }));
 
 export const pipedriveSubmissionsRelations = relations(pipedriveSubmissions, ({ one }) => ({
   request: one(requests, {

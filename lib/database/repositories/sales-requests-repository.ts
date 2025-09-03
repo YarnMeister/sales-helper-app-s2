@@ -324,20 +324,42 @@ export class SiteVisitsRepository extends BaseRepositoryImpl<SiteVisit> implemen
     }
   }
 
-  async findByRequestId(requestId: string): Promise<RepositoryResult<SiteVisit[]>> {
+  async findBySalesperson(salesperson: string): Promise<RepositoryResult<SiteVisit[]>> {
     try {
       const result = await db.select().from(siteVisits)
-        .where(eq(siteVisits.requestId, requestId))
-        .orderBy(desc(siteVisits.visitDate));
+        .where(eq(siteVisits.salesperson, salesperson))
+        .orderBy(desc(siteVisits.date));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to find site visits by request ID', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to find site visits by salesperson', 'unknown_error', error));
+    }
+  }
+
+  async findByDate(date: Date): Promise<RepositoryResult<SiteVisit[]>> {
+    try {
+      const result = await db.select().from(siteVisits)
+        .where(eq(siteVisits.date, date))
+        .orderBy(desc(siteVisits.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error(this.createError('Failed to find site visits by date', 'unknown_error', error));
+    }
+  }
+
+  async findBySalespersonAndDate(salesperson: string, date: Date): Promise<RepositoryResult<SiteVisit[]>> {
+    try {
+      const result = await db.select().from(siteVisits)
+        .where(and(eq(siteVisits.salesperson, salesperson), eq(siteVisits.date, date)))
+        .orderBy(desc(siteVisits.createdAt));
+      return RepositoryResult.success(result);
+    } catch (error) {
+      return RepositoryResult.error(this.createError('Failed to find site visits by salesperson and date', 'unknown_error', error));
     }
   }
 
   async findAll(): Promise<RepositoryResult<SiteVisit[]>> {
     try {
-      const result = await db.select().from(siteVisits).orderBy(desc(siteVisits.visitDate));
+      const result = await db.select().from(siteVisits).orderBy(desc(siteVisits.date));
       return RepositoryResult.success(result);
     } catch (error) {
       return RepositoryResult.error(this.createError('Failed to find all site visits', 'unknown_error', error));
@@ -369,7 +391,7 @@ export class SiteVisitsRepository extends BaseRepositoryImpl<SiteVisit> implemen
     try {
       const offset = (page - 1) * limit;
       const [data, totalResult] = await Promise.all([
-        db.select().from(siteVisits).limit(limit).offset(offset).orderBy(desc(siteVisits.visitDate)),
+        db.select().from(siteVisits).limit(limit).offset(offset).orderBy(desc(siteVisits.date)),
         db.select({ count: siteVisits.id }).from(siteVisits)
       ]);
       

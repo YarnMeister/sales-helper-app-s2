@@ -3,9 +3,13 @@ export * from './connection';
 export * from './migrations';
 export * from './schema';
 
-// Repository exports - explicit exports to help Next.js module resolution
-export { FlowMetricsRepository, CanonicalStageMappingsRepository } from './repositories/flow-metrics-repository';
-export { SalesRequestsRepository, MockRequestsRepository, SiteVisitsRepository, PipedriveSubmissionsRepository } from './repositories/sales-requests-repository';
+// Repository exports - using re-export pattern
+export { FlowMetricsRepository } from './repositories/flow-metrics-repository';
+export { CanonicalStageMappingsRepository } from './repositories/flow-metrics-repository';
+export { SalesRequestsRepository } from './repositories/sales-requests-repository';
+export { MockRequestsRepository } from './repositories/sales-requests-repository';
+export { SiteVisitsRepository } from './repositories/sales-requests-repository';
+export { PipedriveSubmissionsRepository } from './repositories/sales-requests-repository';
 
 // Core infrastructure exports
 export * from './core/base-repository';
