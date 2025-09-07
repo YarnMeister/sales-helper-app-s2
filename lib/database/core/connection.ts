@@ -8,7 +8,6 @@ let sql: ReturnType<typeof neon> | null = null;
 /**
  * Get the database connection instance
  * Creates a new connection if one doesn't exist
- * Uses DATABASE_URL which points to test database in development and production database in production
  */
 export const getDatabaseConnection = (): ReturnType<typeof neon> => {
   if (!sql) {
@@ -21,8 +20,7 @@ export const getDatabaseConnection = (): ReturnType<typeof neon> => {
     
     sql = neon(databaseUrl);
     logInfo('Database connection established', {
-      context: 'database-connection',
-      environment: process.env.NODE_ENV || 'development'
+      context: 'database-connection'
     });
   }
   
@@ -86,7 +84,6 @@ export const testDatabaseConnection = async (): Promise<boolean> => {
 export const getConnectionStatus = () => {
   return {
     connected: sql !== null,
-    hasDatabaseUrl: !!process.env.DATABASE_URL,
-    environment: process.env.NODE_ENV || 'development'
+    hasDatabaseUrl: !!process.env.DATABASE_URL
   };
 };

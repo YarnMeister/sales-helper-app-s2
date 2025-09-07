@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '../../../../../lib/db';
+import { CanonicalStageMappingsRepository } from '../../../../../lib/database/repositories/flow-metrics-repository';
 import { logInfo, logError } from '../../../../../lib/log';
 
 // PATCH - Update a canonical stage mapping
@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const { id } = params;
     const body = await request.json();
-    const { canonical_stage, start_stage_id, end_stage_id, start_stage, end_stage, avg_min_days, avg_max_days, metric_comment } = body;
+    const { canonical_stage, start_stage_id, end_stage_id, start_stage, end_stage } = body;
     
     if (!canonical_stage) {
       return NextResponse.json(
@@ -33,43 +33,48 @@ export async function PATCH(
       start_stage_id,
       end_stage_id,
       start_stage,
-      end_stage,
-      avg_min_days,
-      avg_max_days,
-      metric_comment
+      end_stage
     });
     
-    const result = await sql`
-      UPDATE canonical_stage_mappings 
-      SET 
-        canonical_stage = ${canonical_stage},
-        start_stage_id = ${start_stage_id || null},
-        end_stage_id = ${end_stage_id || null},
-        start_stage = ${start_stage || ''},
-        end_stage = ${end_stage || ''},
-        avg_min_days = ${avg_min_days || null},
-        avg_max_days = ${avg_max_days || null},
-        metric_comment = ${metric_comment || null},
-        updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *
-    ` as any[];
+    const repository = new CanonicalStageMappingsRepository();
+    const result = await repository.update(id, {
+      canonicalStage: canonical_stage,
+      startStageId: start_stage_id || null,
+      endStageId: end_stage_id || null,
+      startStage: start_stage || null,
+      endStage: end_stage || null
+    });
     
-    if (result.length === 0) {
+    if (!result.success) {
+      logError('Repository failed to update canonical stage mapping', {
+        error: result.error?.message,
+        errorType: result.error?.type
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to update canonical stage mapping',
+          message: result.error?.message || 'Repository error'
+        },
+        { status: result.error?.type === 'not_found' ? 404 : 500 }
+      );
+    }
+    
+    if (!result.data) {
       return NextResponse.json(
         { success: false, error: 'Canonical stage mapping not found' },
         { status: 404 }
       );
     }
     
-    logInfo('Successfully updated canonical stage mapping', {
+    logInfo('Successfully updated canonical stage mapping via repository', {
       id,
       canonical_stage
     });
     
     return NextResponse.json({
       success: true,
-      data: result[0],
+      data: result.data,
       message: 'Successfully updated canonical stage mapping'
     });
     
@@ -99,29 +104,68 @@ export async function DELETE(
   try {
     const { id } = params;
     
-    logInfo('Deleting canonical stage mapping', { id });
+    logInfo('Deleting canonical stage mapping via repository', { id });
     
-    const result = await sql`
-      DELETE FROM canonical_stage_mappings 
-      WHERE id = ${id}
-      RETURNING *
-    ` as any[];
+    const repository = new CanonicalStageMappingsRepository();
     
-    if (result.length === 0) {
+    // First get the mapping to return its data if deletion succeeds
+    const findResult = await repository.findById(id);
+    if (!findResult.success) {
+      logError('Repository failed to find canonical stage mapping for deletion', {
+        error: findResult.error?.message,
+        errorType: findResult.error?.type
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to find canonical stage mapping',
+          message: findResult.error?.message || 'Repository error'
+        },
+        { status: 500 }
+      );
+    }
+    
+    if (!findResult.data) {
       return NextResponse.json(
         { success: false, error: 'Canonical stage mapping not found' },
         { status: 404 }
       );
     }
     
-    logInfo('Successfully deleted canonical stage mapping', {
+    const mappingToDelete = findResult.data;
+    
+    // Now delete the mapping
+    const deleteResult = await repository.delete(id);
+    if (!deleteResult.success) {
+      logError('Repository failed to delete canonical stage mapping', {
+        error: deleteResult.error?.message,
+        errorType: deleteResult.error?.type
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to delete canonical stage mapping',
+          message: deleteResult.error?.message || 'Repository error'
+        },
+        { status: 500 }
+      );
+    }
+    
+    if (!deleteResult.data) {
+      return NextResponse.json(
+        { success: false, error: 'Canonical stage mapping not found' },
+        { status: 404 }
+      );
+    }
+    
+    logInfo('Successfully deleted canonical stage mapping via repository', {
       id,
-      canonical_stage: result[0]?.canonical_stage
+      canonical_stage: mappingToDelete.canonicalStage
     });
     
     return NextResponse.json({
       success: true,
-      data: result[0],
+      data: mappingToDelete,
       message: 'Successfully deleted canonical stage mapping'
     });
     

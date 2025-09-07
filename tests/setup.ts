@@ -57,16 +57,20 @@ const mockParams = {
 };
 
 // Mock Next.js navigation modules
-vi.mock('next/navigation', () => ({
-  useRouter: () => mockRouter,
-  useSearchParams: () => mockSearchParams,
-  useParams: () => mockParams,
-  usePathname: () => '/',
-  useSelectedLayoutSegment: () => null,
-  useSelectedLayoutSegments: () => [],
-  redirect: vi.fn(),
-  notFound: vi.fn(),
-}));
+vi.mock('next/navigation', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    useRouter: () => mockRouter,
+    useSearchParams: () => mockSearchParams,
+    useParams: () => mockParams,
+    usePathname: () => '/',
+    useSelectedLayoutSegment: () => null,
+    useSelectedLayoutSegments: () => [],
+    redirect: vi.fn(),
+    notFound: vi.fn(),
+  };
+});
 
 // Mock Next.js router (legacy)
 vi.mock('next/router', () => ({
@@ -180,35 +184,6 @@ vi.mock('../../lib/env', () => ({
   }
 }));
 
-// Mock Redis client
-vi.mock('@upstash/redis', () => ({
-  Redis: vi.fn().mockImplementation(() => ({
-    get: vi.fn(),
-    set: vi.fn(),
-    setex: vi.fn(),
-    del: vi.fn(),
-    ttl: vi.fn(),
-    scan: vi.fn().mockResolvedValue(['0', []]),
-    keys: vi.fn(),
-    pipeline: vi.fn(() => ({
-      get: vi.fn(),
-      ttl: vi.fn(),
-      exec: vi.fn().mockResolvedValue([null, -1])
-    }))
-  }))
-}));
-
-// Mock Neon database - use in-memory SQLite instead
-vi.mock('@neondatabase/serverless', () => ({
-  neon: vi.fn(() => {
-    // Return a mock database client that does nothing
-    return vi.fn().mockResolvedValue([]);
-  }),
-  neonConfig: {
-    fetchConnectionCache: true
-  }
-}));
-
 // Mock the database configuration to use test tables
 vi.mock('../../lib/config/test-env', () => ({
   getDatabaseConfig: () => ({
@@ -223,16 +198,16 @@ vi.mock('../../lib/config/test-env', () => ({
   }),
   getRedisConfig: () => ({
     redis: {
-      get: vi.fn(),
-      set: vi.fn(),
-      setex: vi.fn(),
-      del: vi.fn(),
-      ttl: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue('OK'),
+      setex: vi.fn().mockResolvedValue('OK'),
+      del: vi.fn().mockResolvedValue(1),
+      ttl: vi.fn().mockResolvedValue(-1),
       scan: vi.fn().mockResolvedValue(['0', []]),
-      keys: vi.fn(),
+      keys: vi.fn().mockResolvedValue([]),
       pipeline: vi.fn(() => ({
-        get: vi.fn(),
-        ttl: vi.fn(),
+        get: vi.fn().mockResolvedValue(null),
+        ttl: vi.fn().mockResolvedValue(-1),
         exec: vi.fn().mockResolvedValue([null, -1])
       }))
     },
@@ -241,6 +216,63 @@ vi.mock('../../lib/config/test-env', () => ({
   }),
   getTestDb: () => vi.fn().mockResolvedValue([]),
   getTableName: (table: string) => `test_${table}`
+}));
+
+// Mock the Redis client creation function
+vi.mock('../../lib/cache', async () => {
+  const mockRedisClient = {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    setex: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(-1),
+    scan: vi.fn().mockResolvedValue(['0', []]), // Fixed: Proper scan response format
+    keys: vi.fn().mockResolvedValue([]),
+    pipeline: vi.fn(() => ({
+      get: vi.fn().mockResolvedValue(null),
+      ttl: vi.fn().mockResolvedValue(-1),
+      exec: vi.fn().mockResolvedValue([null, -1])
+    }))
+  };
+  
+  return {
+    getRedisClient: vi.fn(() => mockRedisClient),
+    KVCache: vi.fn().mockImplementation(() => ({
+      redis: mockRedisClient,
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(undefined),
+      bust: vi.fn().mockResolvedValue(undefined),
+      bustPattern: vi.fn().mockResolvedValue(0),
+      getStats: vi.fn().mockResolvedValue({
+        memory_usage: 'Not available',
+        connected_clients: 0,
+        total_commands_processed: 0
+      })
+    })),
+    cache: {
+      redis: mockRedisClient,
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(undefined),
+      bust: vi.fn().mockResolvedValue(undefined),
+      bustPattern: vi.fn().mockResolvedValue(0),
+      getStats: vi.fn().mockResolvedValue({
+        memory_usage: 'Not available',
+        connected_clients: 0,
+        total_commands_processed: 0
+      })
+    }
+  };
+});
+
+// Mock Neon database - use in-memory SQLite instead
+vi.mock('@neondatabase/serverless', () => ({
+  neon: vi.fn(() => {
+    // Return a mock database client that does nothing
+    return vi.fn().mockResolvedValue([]);
+  }),
+  neonConfig: {
+    fetchConnectionCache: true
+  }
 }));
 
 // Mock ResizeObserver for Recharts and other chart libraries

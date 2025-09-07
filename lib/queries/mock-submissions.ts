@@ -17,6 +17,7 @@ export const createMockSubmission = async (data: {
   }
   
   try {
+    // Always use production table names since we have separate databases
     const result = await sql`
       INSERT INTO pipedrive_submissions (
         request_id, 

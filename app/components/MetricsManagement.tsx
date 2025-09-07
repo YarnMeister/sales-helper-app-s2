@@ -39,12 +39,12 @@ interface FlowMetricConfig {
   updated_at: string;
 }
 
+
 export const MetricsManagement: React.FC = () => {
   const { toast } = useToast();
   const [metrics, setMetrics] = useState<FlowMetricConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<FlowMetricConfig>>({});
+  // Edit functionality removed
   const [isSaving, setIsSaving] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -59,6 +59,7 @@ export const MetricsManagement: React.FC = () => {
     sort_order: 0,
     is_active: true
   });
+
 
   // Load metrics from database
   const fetchMetrics = useCallback(async () => {
@@ -92,77 +93,12 @@ export const MetricsManagement: React.FC = () => {
     fetchMetrics();
   }, [fetchMetrics]);
 
-  const handleEdit = (metric: FlowMetricConfig) => {
-    setEditingId(metric.id);
-    setEditForm({
-      display_title: metric.display_title,
-      canonical_stage: metric.canonical_stage,
-      start_stage_id: metric.start_stage_id || undefined,
-      end_stage_id: metric.end_stage_id || undefined,
-      avg_min_days: metric.avg_min_days || undefined,
-      avg_max_days: metric.avg_max_days || undefined,
-      metric_comment: metric.metric_comment || undefined,
-      sort_order: metric.sort_order,
-      is_active: metric.is_active
-    });
-  };
+  // Edit functionality removed - using view-only mode
 
-  const handleSave = async () => {
-    if (!editingId || !editForm.display_title || !editForm.canonical_stage) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      const response = await fetch(`/api/admin/flow-metrics-config/${editingId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editForm),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setMetrics(metrics.map(metric => 
-          metric.id === editingId 
-            ? result.data
-            : metric
-        ));
-        setEditingId(null);
-        setEditForm({});
-        toast({
-          title: "Success",
-          description: "Metric updated successfully",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to update metric",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Error updating metric:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update metric",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // Note: Edit functionality removed for canonical stage mappings
+  // Use delete + add workflow for now
 
   const handleCancel = () => {
-    setEditingId(null);
-    setEditForm({});
     setShowAddForm(false);
     setAddForm({
       metric_key: '',
@@ -188,7 +124,7 @@ export const MetricsManagement: React.FC = () => {
       return;
     }
 
-    // Validate metric_key format
+    // Validate metricKey format
     if (!/^[a-z0-9-]+$/.test(addForm.metric_key)) {
       toast({
         title: "Error",
@@ -205,7 +141,18 @@ export const MetricsManagement: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(addForm),
+        body: JSON.stringify({
+          metric_key: addForm.metric_key,
+          display_title: addForm.display_title,
+          canonical_stage: addForm.canonical_stage,
+          start_stage_id: addForm.start_stage_id ? parseInt(addForm.start_stage_id) : null,
+          end_stage_id: addForm.end_stage_id ? parseInt(addForm.end_stage_id) : null,
+          avg_min_days: addForm.avg_min_days ? parseInt(addForm.avg_min_days) : null,
+          avg_max_days: addForm.avg_max_days ? parseInt(addForm.avg_max_days) : null,
+          metric_comment: addForm.metric_comment || null,
+          sort_order: addForm.sort_order || 0,
+          is_active: addForm.is_active !== false
+        }),
       });
 
       const result = await response.json();
@@ -248,47 +195,13 @@ export const MetricsManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this metric? This will also remove it from the main page.')) {
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      const response = await fetch(`/api/admin/flow-metrics-config/${id}`, {
-        method: 'DELETE',
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setMetrics(metrics.filter(metric => metric.id !== id));
-        toast({
-          title: "Success",
-          description: "Metric deleted successfully",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to delete metric",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting metric:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete metric",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // Note: Delete functionality removed for canonical stage mappings
+  // Would need to implement DELETE endpoint for canonical-mappings
 
   const getNextSortOrder = () => {
     return Math.max(...metrics.map(m => m.sort_order), 0) + 1;
   };
+
 
   return (
     <div className="space-y-6">
@@ -298,7 +211,7 @@ export const MetricsManagement: React.FC = () => {
             <div>
               <CardTitle>Flow Metrics Management</CardTitle>
               <p className="text-sm text-gray-600">
-                Manage metrics displayed on the main reporting page. Add, edit, or delete metrics to customize your dashboard.
+                Manage metrics displayed on the main reporting page. Add, edit, or delete metrics to customize your dashboard. ({metrics.length} metrics loaded)
               </p>
             </div>
             <Button
@@ -524,185 +437,40 @@ export const MetricsManagement: React.FC = () => {
                     {metrics.filter(metric => metric && metric.id).map((metric) => (
                       <tr key={metric.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-2 px-2 text-gray-900 font-mono text-xs">
-                          {editingId === metric.id ? (
-                            <input
-                              type="text"
-                              value={editForm.metric_key || metric.metric_key}
-                              disabled
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
-                            />
-                          ) : (
-                            metric.metric_key
-                          )}
+                          {metric.metric_key}
                         </td>
                         <td className="py-2 px-2 text-gray-900">
-                          {editingId === metric.id ? (
-                            <input
-                              type="text"
-                              value={editForm.display_title || ''}
-                              onChange={(e) => setEditForm({ ...editForm, display_title: e.target.value })}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            />
-                          ) : (
-                            metric.display_title
-                          )}
+                          {metric.display_title}
                         </td>
                         <td className="py-2 px-2 text-gray-700">
-                          {editingId === metric.id ? (
-                            <input
-                              type="text"
-                              value={editForm.canonical_stage || ''}
-                              onChange={(e) => setEditForm({ ...editForm, canonical_stage: e.target.value })}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            />
-                          ) : (
-                            metric.canonical_stage
-                          )}
+                          {metric.canonical_stage}
                         </td>
                         <td className="py-2 px-2 text-gray-700">
-                          {editingId === metric.id ? (
-                            <input
-                              type="number"
-                              value={editForm.start_stage_id || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (/^\d*$/.test(value)) {
-                                  setEditForm({ ...editForm, start_stage_id: value ? Number(value) : undefined });
-                                }
-                              }}
-                              placeholder="Enter stage ID"
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            />
-                          ) : (
-                            metric.start_stage_id || '-'
-                          )}
+                          {metric.start_stage_id || '-'}
                         </td>
                         <td className="py-2 px-2 text-gray-700">
-                          {editingId === metric.id ? (
-                            <input
-                              type="number"
-                              value={editForm.end_stage_id || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (/^\d*$/.test(value)) {
-                                  setEditForm({ ...editForm, end_stage_id: value ? Number(value) : undefined });
-                                }
-                              }}
-                              placeholder="Enter stage ID"
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            />
-                          ) : (
-                            metric.end_stage_id || '-'
-                          )}
+                          {metric.end_stage_id || '-'}
                         </td>
                         <td className="py-2 px-2 text-gray-700">
-                          {editingId === metric.id ? (
-                            <input
-                              type="number"
-                              value={editForm.avg_min_days || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (/^\d*$/.test(value)) {
-                                  setEditForm({ ...editForm, avg_min_days: value ? Number(value) : undefined });
-                                }
-                              }}
-                              placeholder="Min days"
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            />
-                          ) : (
-                            metric.avg_min_days || '-'
-                          )}
+                          {metric.avg_min_days || '-'}
                         </td>
                         <td className="py-2 px-2 text-gray-700">
-                          {editingId === metric.id ? (
-                            <input
-                              type="number"
-                              value={editForm.avg_max_days || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (/^\d*$/.test(value)) {
-                                  setEditForm({ ...editForm, avg_max_days: value ? Number(value) : undefined });
-                                }
-                              }}
-                              placeholder="Max days"
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            />
-                          ) : (
-                            metric.avg_max_days || '-'
-                          )}
+                          {metric.avg_max_days || '-'}
                         </td>
                         <td className="py-2 px-2 text-gray-700">
-                          {editingId === metric.id ? (
-                            <input
-                              type="number"
-                              value={editForm.sort_order || 0}
-                              onChange={(e) => setEditForm({ ...editForm, sort_order: parseInt(e.target.value) || 0 })}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                            />
-                          ) : (
-                            metric.sort_order
-                          )}
+                          {metric.sort_order}
                         </td>
                         <td className="py-2 px-2 text-gray-700">
-                          {editingId === metric.id ? (
-                            <input
-                              type="checkbox"
-                              checked={editForm.is_active !== false}
-                              onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
-                              className="rounded border-gray-300"
-                            />
-                          ) : (
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              metric.is_active 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {metric.is_active ? 'Active' : 'Inactive'}
-                            </span>
-                          )}
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            metric.is_active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {metric.is_active ? 'Active' : 'Inactive'}
+                          </span>
                         </td>
                         <td className="py-2 px-2 text-gray-600">
-                          {editingId === metric.id ? (
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={handleSave}
-                                disabled={isSaving}
-                                size="sm"
-                                className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white"
-                              >
-                                {isSaving ? 'Saving...' : 'Save'}
-                              </Button>
-                              <Button
-                                onClick={handleCancel}
-                                disabled={isSaving}
-                                variant="outline"
-                                size="sm"
-                                className="text-xs px-2 py-1"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleEdit(metric)}
-                                variant="outline"
-                                size="sm"
-                                className="text-xs px-2 py-1"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                onClick={() => handleDelete(metric.id)}
-                                disabled={isSaving}
-                                variant="outline"
-                                size="sm"
-                                className="text-xs px-2 py-1 text-red-600 hover:text-red-700"
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          )}
+                          <span className="text-xs text-gray-500">View only</span>
                         </td>
                       </tr>
                     ))}
@@ -721,7 +489,7 @@ export const MetricsManagement: React.FC = () => {
             </div>
           </div>
         )}
-      </CardContent>
+        </CardContent>
       </Card>
 
       {/* Pipedrive Stage Explorer */}
