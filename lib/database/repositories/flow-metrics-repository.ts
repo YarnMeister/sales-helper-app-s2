@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, asc, gte, lte, inArray, sql } from 'drizzle-orm';
 import { db } from '../connection';
 import { 
   flowMetricsConfig, 
@@ -184,6 +184,56 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
       return RepositoryResult.success(result);
     } catch (error) {
       return RepositoryResult.error(this.createError('Failed to get deals for canonical stage', 'unknown_error', error));
+    }
+  }
+
+  async getStageTransitionMetrics(startStageId: number, endStageId: number, startDate: Date, endDate: Date): Promise<RepositoryResult<{ dealId: number, startTime: Date, endTime: Date, durationSeconds: number }[]>> {
+    try {
+      // Using raw SQL to match the main branch logic exactly
+      // This gets deals where the START happened within the time period (not end)
+      const result = await db.execute(sql`
+        WITH deal_stages AS (
+          SELECT 
+            deal_id,
+            stage_id,
+            timestamp as entered_at,
+            ROW_NUMBER() OVER (PARTITION BY deal_id, stage_id ORDER BY timestamp) as rn
+          FROM pipedrive_deal_flow_data
+          WHERE stage_id = ${startStageId} OR stage_id = ${endStageId}
+        ),
+        start_stages AS (
+          SELECT deal_id, entered_at as start_date
+          FROM deal_stages 
+          WHERE stage_id = ${startStageId} AND rn = 1
+        ),
+        end_stages AS (
+          SELECT deal_id, entered_at as end_date
+          FROM deal_stages 
+          WHERE stage_id = ${endStageId} AND rn = 1
+        )
+        SELECT 
+          s.deal_id,
+          s.start_date,
+          e.end_date,
+          EXTRACT(EPOCH FROM (e.end_date - s.start_date))::BIGINT as duration_seconds
+        FROM start_stages s
+        JOIN end_stages e ON s.deal_id = e.deal_id
+        WHERE e.end_date > s.start_date
+        AND s.start_date >= ${startDate.toISOString()}
+        AND s.start_date <= ${endDate.toISOString()}
+        ORDER BY s.start_date DESC
+      `);
+      
+      const transitions = result.rows.map((row: any) => ({
+        dealId: parseInt(row.deal_id),
+        startTime: new Date(row.start_date),
+        endTime: new Date(row.end_date),
+        durationSeconds: parseInt(row.duration_seconds)
+      }));
+      
+      return RepositoryResult.success(transitions);
+    } catch (error) {
+      return RepositoryResult.error(this.createError('Failed to get stage transition metrics', 'unknown_error', error));
     }
   }
 }

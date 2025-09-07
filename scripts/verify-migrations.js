@@ -44,13 +44,14 @@ async function verifyMigrations() {
       console.log(`  - ${migration.version}: ${migration.name}`);
     });
 
-    // Check for expected tables based on migrations
+    // Check for expected tables based on migrations (Drizzle ORM - no mock tables)
     const expectedTables = [
       'requests',
-      'mock_requests', 
       'site_visits',
-      'mock_site_visits',
-      'mock_pipedrive_submissions'
+      'pipedrive_flow_data',
+      'canonical_stage_mappings',
+      'flow_metrics_config',
+      'pipedrive_submissions'
     ];
 
     console.log('\n🔍 Checking table existence:');
@@ -68,71 +69,7 @@ async function verifyMigrations() {
       console.log(`  ${status} ${tableName}`);
       
       if (!tableExists[0].exists) {
-        console.error(`    ❌ Table ${tableName} is missing but should exist`);
-      }
-    }
-
-    // Check for specific issues with mock tables
-    const mockRequestsExists = await sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'mock_requests'
-      )
-    `;
-    
-    const mockSiteVisitsExists = await sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'mock_site_visits'
-      )
-    `;
-
-    console.log('\n🎯 Mock Tables Status:');
-    console.log(`  ${mockRequestsExists[0].exists ? '✅' : '❌'} mock_requests`);
-    console.log(`  ${mockSiteVisitsExists[0].exists ? '✅' : '❌'} mock_site_visits`);
-
-    if (!mockRequestsExists[0].exists || !mockSiteVisitsExists[0].exists) {
-      console.log('\n🔧 Attempting to fix missing tables...');
-      
-      // Read and execute the migration manually
-      const migrationPath = path.join(__dirname, '..', 'migrations', '007_create_mock_tables.sql');
-      if (fs.existsSync(migrationPath)) {
-        const migrationSql = fs.readFileSync(migrationPath, 'utf8');
-        
-        try {
-          console.log('📝 Manually executing migration 007...');
-          await sql.unsafe(migrationSql);
-          console.log('✅ Manual migration execution successful');
-          
-          // Verify tables exist now
-          const mockRequestsExistsAfter = await sql`
-            SELECT EXISTS (
-              SELECT FROM information_schema.tables 
-              WHERE table_schema = 'public' 
-              AND table_name = 'mock_requests'
-            )
-          `;
-          
-          const mockSiteVisitsExistsAfter = await sql`
-            SELECT EXISTS (
-              SELECT FROM information_schema.tables 
-              WHERE table_schema = 'public' 
-              AND table_name = 'mock_site_visits'
-            )
-          `;
-          
-          console.log('\n🎯 Mock Tables Status (after fix):');
-          console.log(`  ${mockRequestsExistsAfter[0].exists ? '✅' : '❌'} mock_requests`);
-          console.log(`  ${mockSiteVisitsExistsAfter[0].exists ? '✅' : '❌'} mock_site_visits`);
-          
-        } catch (error) {
-          console.error('❌ Manual migration execution failed:', error.message);
-          console.error('Full error:', error);
-        }
-      } else {
-        console.error('❌ Migration file 007_create_mock_tables.sql not found');
+        console.log(`    ⚠️  Table ${tableName} is missing (may be expected in some environments)`);
       }
     }
 

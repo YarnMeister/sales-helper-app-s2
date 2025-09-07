@@ -307,11 +307,56 @@ export class SiteVisitsRepository extends BaseRepositoryImpl<SiteVisit> implemen
   protected db = db;
 
   async create(data: NewSiteVisit): Promise<RepositoryResult<SiteVisit>> {
+    const operationId = `sv-create-${Date.now()}`;
+    
     try {
+      console.log(`[${operationId}] SiteVisitsRepository.create: Starting`, {
+        salesperson: data.salesperson,
+        plannedMinesCount: data.plannedMines?.length,
+        mainPurpose: data.mainPurpose,
+        availability: data.availability,
+        hasComments: !!data.comments
+      });
+
+      // Validate required fields before insertion
+      if (!data.salesperson) {
+        console.error(`[${operationId}] SiteVisitsRepository.create: Missing salesperson`);
+        return RepositoryResult.error(
+          this.createError('Salesperson is required', 'validation_error', new Error('Missing salesperson'))
+        );
+      }
+
+      if (!data.plannedMines || data.plannedMines.length === 0) {
+        console.error(`[${operationId}] SiteVisitsRepository.create: Missing planned mines`);
+        return RepositoryResult.error(
+          this.createError('Planned mines are required', 'validation_error', new Error('Missing planned mines'))
+        );
+      }
+
+      console.log(`[${operationId}] SiteVisitsRepository.create: Executing Drizzle insert`, {
+        tableName: this.tableName,
+        dataKeys: Object.keys(data)
+      });
+
       const [result] = await db.insert(siteVisits).values(data).returning();
+
+      console.log(`[${operationId}] SiteVisitsRepository.create: Success`, {
+        insertedId: result.id,
+        date: result.date,
+        createdAt: result.createdAt
+      });
+
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to create site visit', 'unknown_error', error));
+      console.error(`[${operationId}] SiteVisitsRepository.create: Error`, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        inputData: data
+      });
+      
+      return RepositoryResult.error(
+        this.createError('Failed to create site visit', 'unknown_error', error)
+      );
     }
   }
 
