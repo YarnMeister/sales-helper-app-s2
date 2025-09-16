@@ -44,6 +44,7 @@ interface RequestCardProps {
   onSubmit?: (requestId: string) => Promise<void>;
   onUpdateInline?: (requestId: string, field: string, value: any) => Promise<void>;
   onViewDeal?: (dealId: number) => void;
+  onDeleteRequest?: (requestId: string) => Promise<void>;
 }
 
 export const RequestCard: React.FC<RequestCardProps> = ({
@@ -52,25 +53,54 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   onAddLineItems,
   onSubmit,
   onUpdateInline,
-  onViewDeal
+  onViewDeal,
+  onDeleteRequest
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [optimisticQuantities, setOptimisticQuantities] = useState<{[key: number]: number}>({});
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // PRD: Submit enabled only when contact AND line items exist
-  const canSubmit = request.contact && request.line_items.length > 0;
+  // PRD: Submit enabled only when contact AND line items AND salesperson exist
+  const canSubmit = request.contact &&
+                   request.line_items.length > 0 &&
+                   request.salesperson_first_name &&
+                   request.salesperson_first_name !== 'Select Name';
   const isSubmitted = request.status === 'submitted';
   const isFailed = request.status === 'failed';
 
   const handleSubmit = async () => {
     if (!canSubmit || !onSubmit) return;
-    
+
     setIsSubmitting(true);
     try {
       await onSubmit(request.id);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!onDeleteRequest) return;
+
+    setIsDeleting(true);
+    try {
+      await onDeleteRequest(request.id);
+      setShowDeleteConfirmation(false);
+    } catch (error) {
+      console.error('Failed to delete request:', error);
+      // Keep the modal open if deletion fails
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirmation(false);
   };
 
   const handleDeleteLineItem = async (itemIndex: number) => {
@@ -150,21 +180,57 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       {/* Header with Request ID and Status */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex justify-between items-center">
-          <div>
-            <h2 
+          <div className="flex items-center gap-3">
+            <h2
               className="text-2xl font-bold text-red-600 font-mono"
               data-testid="sh-request-id"
             >
               {request.request_id}
             </h2>
+            {/* Delete button - only show for draft requests */}
+            {!isSubmitted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDeleteClick}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1"
+                data-testid="sh-delete-request"
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-3">
-            {request.salesperson_first_name && (
+            {/* Salesperson selection/display */}
+            {isSubmitted ? (
+              // Static display for submitted requests - show the name or "Not Selected" if still default
               <p className="text-sm text-gray-600 font-medium">
-                {request.salesperson_first_name}
+                {request.salesperson_first_name && request.salesperson_first_name !== 'Select Name'
+                  ? request.salesperson_first_name
+                  : 'Not Selected'}
               </p>
+            ) : (
+              // Dropdown for draft requests
+              <select
+                value={request.salesperson_first_name || 'Select Name'}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  if (onUpdateInline && newValue !== 'Select Name') {
+                    onUpdateInline(request.id, 'salespersonFirstName', newValue);
+                  }
+                }}
+                className="w-32 h-8 text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Select Name" disabled>
+                  Select Name
+                </option>
+                <option value="Stefan">Stefan</option>
+                <option value="James">James</option>
+                <option value="Luyanda">Luyanda</option>
+              </select>
             )}
-            <Badge 
+            <Badge
               className={`${statusConfig.bgColor} ${statusConfig.textColor} border-0 text-xs font-medium`}
               data-testid="sh-request-status"
             >
@@ -404,16 +470,54 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         {!canSubmit && !isSubmitted && !isFailed && (
           <div className="text-center mt-2">
             <p className="text-xs text-gray-500">
-              {!request.contact && !request.line_items.length 
-                ? 'Add contact and line items to submit'
-                : !request.contact 
-                  ? 'Add contact to submit'
-                  : 'Add line items to submit'
-              }
+              {(() => {
+                const missingItems = [];
+                if (!request.contact) missingItems.push('contact');
+                if (!request.line_items.length) missingItems.push('line items');
+                if (!request.salesperson_first_name || request.salesperson_first_name === 'Select Name') {
+                  missingItems.push('salesperson name');
+                }
+
+                if (missingItems.length === 0) return '';
+                if (missingItems.length === 1) return `Add ${missingItems[0]} to submit`;
+                if (missingItems.length === 2) return `Add ${missingItems[0]} and ${missingItems[1]} to submit`;
+                return `Add ${missingItems.slice(0, -1).join(', ')}, and ${missingItems[missingItems.length - 1]} to submit`;
+              })()}
             </p>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Delete Request?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete request {request.request_id}? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={handleDeleteCancel}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };

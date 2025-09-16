@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Package, User, Plus, Filter, List, CheckSquare } from 'lucide-react';
 import { HamburgerMenu } from './HamburgerMenu';
-import { SalespersonModal } from './SalespersonModal';
 import { useRouter, usePathname } from 'next/navigation';
 import { generateQRId } from '@/lib/client-qr-generator';
 
@@ -11,17 +10,14 @@ interface CommonFooterProps {
   isCreating?: boolean;
   selectedSalesperson?: string;
   onSalespersonChange?: (salesperson: string) => void;
-  onShowSalespersonModal?: () => void;
 }
 
-export const CommonFooter: React.FC<CommonFooterProps> = ({ 
-  onNewRequest, 
+export const CommonFooter: React.FC<CommonFooterProps> = ({
+  onNewRequest,
   isCreating = false,
   selectedSalesperson = 'All requests',
   onSalespersonChange,
-  onShowSalespersonModal
 }) => {
-  const [showModal, setShowModal] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isMainPage = pathname === '/';
@@ -29,31 +25,21 @@ export const CommonFooter: React.FC<CommonFooterProps> = ({
   const isActive = (path: string) => pathname === path;
 
   const handlePlusClick = () => {
-    // If we're on main page and have a specific salesperson selected, create request directly
-    if (isMainPage && selectedSalesperson && selectedSalesperson !== 'All requests') {
-      if (onNewRequest) {
-        onNewRequest();
-      }
+    // Always create request directly with default salesperson name
+    if (isMainPage && onNewRequest) {
+      onNewRequest();
       return;
     }
 
-    // If we're on main page but no specific salesperson, show modal
-    if (isMainPage && onShowSalespersonModal) {
-      onShowSalespersonModal();
-      return;
-    }
-
-    // For non-main pages, show our own modal
-    setShowModal(true);
+    // For non-main pages, create request directly and navigate to main page
+    handleSalespersonSelect('Select Name');
   };
 
   const handleSalespersonSelect = async (salesperson: string) => {
-    setShowModal(false);
-    
     // Generate QR-ID client-side (consistent with main page approach)
     const requestId = generateQRId();
     console.log('🔍 Generated client-side QR-ID for non-main page:', requestId);
-    
+
     // Create new request by calling the API
     try {
       const response = await fetch('/api/requests', {
@@ -157,14 +143,6 @@ export const CommonFooter: React.FC<CommonFooterProps> = ({
           />
         </div>
       </div>
-      
-      {/* Salesperson Modal for non-main pages */}
-      <SalespersonModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSelect={handleSalespersonSelect}
-        title="Select salesperson for new request"
-      />
     </>
   );
 };

@@ -53,7 +53,6 @@ export default function MainPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [recentlyUpdated, setRecentlyUpdated] = useState<Set<string>>(new Set());
-  const [showSalespersonModal, setShowSalespersonModal] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -144,10 +143,9 @@ export default function MainPage() {
   };
 
   const handleNewRequest = async () => {
-    // If "All requests" is selected, show the modal
-    if (selectedSalesperson === 'All requests') {
-      setShowSalespersonModal(true);
-      return;
+    // Set filter to "All requests" when creating new request
+    if (selectedSalesperson !== 'All requests') {
+      setSelectedSalesperson('All requests');
     }
 
     setIsCreating(true);
@@ -163,7 +161,7 @@ export default function MainPage() {
         },
         body: JSON.stringify({
           request_id: requestId, // Send the client-generated ID
-          salespersonFirstName: selectedSalesperson,
+          salespersonFirstName: 'Select Name', // Use default value
         }),
       });
 
@@ -175,10 +173,10 @@ export default function MainPage() {
       if (data.ok) {
         // Add new request at the top of the list
         setRequests(prev => [data.data, ...prev]);
-        
+
         // Scroll to top so user can see the new request
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
         // Success - no toast to avoid distraction
         console.log('🔍 Request created with client-side ID:', data.data);
       } else {
@@ -192,59 +190,6 @@ export default function MainPage() {
     }
   };
 
-  const handleShowSalespersonModal = () => {
-    setShowSalespersonModal(true);
-  };
-
-  const handleSalespersonSelect = (salesperson: string) => {
-    setShowSalespersonModal(false);
-    
-    // Create the request with the selected salesperson
-    handleNewRequestWithSalesperson(salesperson);
-  };
-
-  const handleNewRequestWithSalesperson = async (salesperson: string) => {
-    setIsCreating(true);
-    try {
-      // Generate QR-ID client-side (consistent with non-main pages)
-      const requestId = generateQRId();
-      console.log('🔍 Generated client-side QR-ID for main page modal:', requestId);
-
-      const response = await fetch('/api/requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          request_id: requestId, // Send the client-generated ID
-          salespersonFirstName: salesperson,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create request');
-      }
-
-      const data = await response.json();
-      if (data.ok) {
-        // Add new request at the top of the list
-        setRequests(prev => [data.data, ...prev]);
-        
-        // Scroll to top so user can see the new request
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Success - no toast to avoid distraction
-        console.log('🔍 Request created with client-side ID:', data.data);
-      } else {
-        throw new Error(data.message || 'Failed to create request');
-      }
-    } catch (err) {
-      console.error('Error creating request:', err);
-      setError('Failed to create new request. Please try again.');
-    } finally {
-      setIsCreating(false);
-    }
-  };
 
   const handleAddContact = (requestId: string) => {
     // Find the current request to get contact information
@@ -415,6 +360,43 @@ export default function MainPage() {
     window.open(`https://yourcompany.pipedrive.com/deal/${dealId}`, '_blank');
   };
 
+  const handleDeleteRequest = async (requestId: string) => {
+    try {
+      const response = await fetch(`/api/requests?id=${requestId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete request');
+      }
+
+      const result = await response.json();
+
+      if (result.ok) {
+        // Remove the request from the list
+        setRequests(prev => prev.filter(req => req.id !== requestId));
+
+        // Show success toast
+        toast({
+          title: "Request Deleted",
+          description: "The draft request has been deleted successfully.",
+        });
+      } else {
+        throw new Error(result.message || 'Failed to delete request');
+      }
+    } catch (error) {
+      console.error('Error deleting request:', error);
+
+      // Show error toast
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Filter requests based on status only
   const filteredRequests = requests.filter((request) => {
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
@@ -499,6 +481,7 @@ export default function MainPage() {
                   onSubmit={handleSubmitRequest}
                   onUpdateInline={handleInlineUpdate}
                   onViewDeal={handleViewDeal}
+                  onDeleteRequest={handleDeleteRequest}
                 />
               </div>
             ))}
@@ -507,12 +490,11 @@ export default function MainPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <CommonFooter 
-        onNewRequest={handleNewRequest} 
+      <CommonFooter
+        onNewRequest={handleNewRequest}
         isCreating={isCreating}
         selectedSalesperson={selectedSalesperson}
         onSalespersonChange={handleSalespersonChange}
-        onShowSalespersonModal={handleShowSalespersonModal}
       />
 
       {/* Loading Overlay for New Request Creation */}
@@ -525,12 +507,6 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* Salesperson Selection Modal */}
-      <SalespersonModal
-        isOpen={showSalespersonModal}
-        onClose={() => setShowSalespersonModal(false)}
-        onSelect={handleSalespersonSelect}
-      />
     </div>
   );
 }
