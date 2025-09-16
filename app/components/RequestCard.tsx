@@ -60,6 +60,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   const [optimisticQuantities, setOptimisticQuantities] = useState<{[key: number]: number}>({});
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
 
   // PRD: Submit enabled only when contact AND line items AND salesperson exist
   const canSubmit = request.contact &&
@@ -105,26 +106,44 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
   const handleDeleteLineItem = async (itemIndex: number) => {
     if (!onUpdateInline) return;
-    
-    const updatedItems = request.line_items.filter((_, index) => index !== itemIndex);
-    await onUpdateInline(request.id, 'line_items', updatedItems);
+
+    const operationKey = `delete-${itemIndex}`;
+    if (operationInProgress[operationKey]) return; // Prevent double-click
+
+    setOperationInProgress(prev => ({ ...prev, [operationKey]: true }));
+
+    try {
+      const updatedItems = request.line_items.filter((_, index) => index !== itemIndex);
+      await onUpdateInline(request.id, 'line_items', updatedItems);
+    } finally {
+      setOperationInProgress(prev => {
+        const newState = { ...prev };
+        delete newState[operationKey];
+        return newState;
+      });
+    }
   };
 
   const handleQuantityChange = async (itemIndex: number, newQuantity: number) => {
     if (!onUpdateInline) return;
+
+    const operationKey = `quantity-${itemIndex}`;
+    if (operationInProgress[operationKey]) return; // Prevent rapid clicks
 
     // Optimistic update - immediately update the UI
     setOptimisticQuantities(prev => ({
       ...prev,
       [itemIndex]: newQuantity
     }));
-    
+
+    setOperationInProgress(prev => ({ ...prev, [operationKey]: true }));
+
     // Then update the backend
     try {
       const updatedItems = [...request.line_items];
       updatedItems[itemIndex].quantity = newQuantity;
       await onUpdateInline(request.id, 'line_items', updatedItems);
-      
+
       // Clear optimistic state on success
       setOptimisticQuantities(prev => {
         const newState = { ...prev };
@@ -139,6 +158,12 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         return newState;
       });
       console.error('Failed to update quantity:', error);
+    } finally {
+      setOperationInProgress(prev => {
+        const newState = { ...prev };
+        delete newState[operationKey];
+        return newState;
+      });
     }
   };
 

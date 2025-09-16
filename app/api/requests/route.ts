@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server';
 import { withTiming } from '@/lib/db-utils';
-import { 
-  createRequest, 
-  updateRequest, 
-  getRequestById, 
-  getRequests, 
-  deleteRequest 
+import {
+  createRequest,
+  updateRequest,
+  addLineItemAtomic,
+  getRequestById,
+  getRequests,
+  deleteRequest
 } from '@/lib/db';
 import { RequestUpsert } from '@/lib/schema';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';

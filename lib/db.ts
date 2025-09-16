@@ -46,6 +46,37 @@ export const createRequest = async (data: {
   }, 'createRequest');
 };
 
+// Atomic line item operations to prevent race conditions
+export const addLineItemAtomic = async (requestId: string, newItem: any) => {
+  return withDbErrorHandling(async () => {
+    logInfo('Adding line item atomically', {
+      requestId,
+      itemCode: newItem.code,
+      itemName: newItem.name
+    });
+
+    const result = await sql`
+      UPDATE requests
+      SET
+        line_items = line_items || ${JSON.stringify([newItem])},
+        updated_at = ${new Date().toISOString()}
+      WHERE id = ${requestId}
+      RETURNING *
+    `;
+
+    if (result.length === 0) {
+      throw new Error('Request not found');
+    }
+
+    logInfo('Line item added successfully', {
+      requestId,
+      newLineItemsCount: result[0].line_items?.length || 0
+    });
+
+    return result[0];
+  }, 'addLineItemAtomic');
+};
+
 export const updateRequest = async (id: string, updates: {
   contact?: any;
   line_items?: any[];
@@ -56,54 +87,61 @@ export const updateRequest = async (id: string, updates: {
   pipedrive_deal_id?: number;
 }) => {
   return withDbErrorHandling(async () => {
-    // Get current request to merge updates
-    const current = await sql`SELECT * FROM requests WHERE id = ${id}`;
-    if (current.length === 0) {
-      throw new Error('Request not found');
-    }
-    
-    const currentRequest = current[0];
-    const updatedData = {
-      contact: updates.contact !== undefined ? updates.contact : currentRequest.contact,
-      line_items: updates.line_items !== undefined ? updates.line_items : currentRequest.line_items,
-      comment: updates.comment !== undefined ? updates.comment : currentRequest.comment,
-      salesperson_first_name: updates.salesperson_first_name !== undefined ? updates.salesperson_first_name : currentRequest.salesperson_first_name,
-      salesperson_selection: updates.salesperson_selection !== undefined ? updates.salesperson_selection : currentRequest.salesperson_selection,
-      status: updates.status !== undefined ? updates.status : currentRequest.status,
-      pipedrive_deal_id: updates.pipedrive_deal_id !== undefined ? updates.pipedrive_deal_id : currentRequest.pipedrive_deal_id
-    };
-    
-    logInfo('Executing update query', { 
+    logInfo('Starting atomic update', {
       id,
       fields: Object.keys(updates),
       hasContact: updates.contact !== undefined,
       hasLineItems: updates.line_items !== undefined,
       hasComment: updates.comment !== undefined,
-      currentLineItemsCount: currentRequest.line_items?.length || 0,
-      updatedLineItemsCount: updatedData.line_items?.length || 0
+      lineItemsCount: Array.isArray(updates.line_items) ? updates.line_items.length : 'undefined'
     });
-    
-    // Debug: Log the data being updated
-    console.log('🔍 About to update, current line_items:', currentRequest.line_items);
-    console.log('🔍 Updated data line_items:', updatedData.line_items);
-    
+
+    // Use atomic UPDATE with CASE statements to prevent race conditions
     const result = await sql`
-      UPDATE requests 
-      SET 
-        contact = ${JSON.stringify(updatedData.contact)},
-        line_items = ${JSON.stringify(updatedData.line_items)},
-        comment = ${updatedData.comment},
-        salesperson_first_name = ${updatedData.salesperson_first_name},
-        salesperson_selection = ${updatedData.salesperson_selection},
-        status = ${updatedData.status},
-        pipedrive_deal_id = ${updatedData.pipedrive_deal_id},
+      UPDATE requests
+      SET
+        contact = CASE
+          WHEN ${updates.contact !== undefined} THEN ${JSON.stringify(updates.contact)}
+          ELSE contact
+        END,
+        line_items = CASE
+          WHEN ${updates.line_items !== undefined} THEN ${JSON.stringify(updates.line_items)}
+          ELSE line_items
+        END,
+        comment = CASE
+          WHEN ${updates.comment !== undefined} THEN ${updates.comment}
+          ELSE comment
+        END,
+        salesperson_first_name = CASE
+          WHEN ${updates.salesperson_first_name !== undefined} THEN ${updates.salesperson_first_name}
+          ELSE salesperson_first_name
+        END,
+        salesperson_selection = CASE
+          WHEN ${updates.salesperson_selection !== undefined} THEN ${updates.salesperson_selection}
+          ELSE salesperson_selection
+        END,
+        status = CASE
+          WHEN ${updates.status !== undefined} THEN ${updates.status}
+          ELSE status
+        END,
+        pipedrive_deal_id = CASE
+          WHEN ${updates.pipedrive_deal_id !== undefined} THEN ${updates.pipedrive_deal_id}
+          ELSE pipedrive_deal_id
+        END,
         updated_at = ${new Date().toISOString()}
-      WHERE id = ${id} 
+      WHERE id = ${id}
       RETURNING *
     `;
-    
-    console.log('🔍 Result after update:', result[0]);
-    
+
+    if (result.length === 0) {
+      throw new Error('Request not found or update failed');
+    }
+
+    logInfo('Atomic update completed', {
+      id,
+      resultLineItemsCount: result[0].line_items?.length || 0
+    });
+
     return result[0];
   }, 'updateRequest');
 };
