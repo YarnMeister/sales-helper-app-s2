@@ -38,6 +38,12 @@ Object.defineProperty(window, 'sessionStorage', {
   value: mockSessionStorage
 });
 
+// Mock window.scrollTo
+Object.defineProperty(window, 'scrollTo', {
+  value: vi.fn(),
+  writable: true
+});
+
 describe('MainPage', () => {
   const mockPush = vi.fn();
   const mockRouter = { push: mockPush };
@@ -116,20 +122,41 @@ describe('MainPage', () => {
       expect(global.fetch).toHaveBeenCalledWith('/api/requests?showAll=true');
     });
 
-    // Click on Stefan (to avoid conflicts with RequestCard content)
-    const stefanButton = screen.getByText('Stefan');
-    fireEvent.click(stefanButton);
+    // Click on Stefan filter button (avoid dropdown options)
+    const stefanButtons = screen.getAllByText('Stefan');
+    const stefanFilterButton = stefanButtons.find(button =>
+      button.className.includes('flex-1') &&
+      button.className.includes('border-gray-200')
+    );
+    if (!stefanFilterButton) throw new Error('Stefan filter button not found');
+    fireEvent.click(stefanFilterButton);
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/requests?salesperson=Stefan');
     });
   });
 
-  it('should show salesperson modal when plus button is clicked with "All requests" selected', async () => {
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ ok: true, data: [] })
-    });
+  it('should create new draft directly when plus button is clicked', async () => {
+    (global.fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: [] })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          ok: true,
+          data: {
+            id: '123',
+            request_id: 'QR-001',
+            status: 'draft',
+            salesperson_first_name: 'Select Name',
+            line_items: [],
+            created_at: '2025-01-01T00:00:00Z',
+            updated_at: '2025-01-01T00:00:00Z'
+          }
+        })
+      });
 
     render(<MainPage />);
 
@@ -138,64 +165,77 @@ describe('MainPage', () => {
       expect(global.fetch).toHaveBeenCalledWith('/api/requests?showAll=true');
     });
 
-    // Click the plus button (New Request) - use a more specific selector
-    const plusButtons = screen.getAllByRole('button', { name: '' }); // The plus button has no accessible name
+    // Click the plus button (New Request)
+    const plusButtons = screen.getAllByRole('button', { name: '' });
     const plusButton = plusButtons.find(button => button.querySelector('svg[class*="lucide-plus"]'));
     if (!plusButton) throw new Error('Plus button not found');
     fireEvent.click(plusButton);
 
-    // Wait for the modal to appear
+    // Wait for the API call to create new request
     await waitFor(() => {
-      expect(screen.getByText("Who's requesting?")).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request_id: 'QR-001',
+          salespersonFirstName: 'Select Name'
+        })
+      });
     });
-
-    // Check salesperson options in modal - use getAllByText since there are multiple instances
-    const jamesButtons = screen.getAllByText('James');
-    const luyandaButtons = screen.getAllByText('Luyanda');
-    const stefanButtons = screen.getAllByText('Stefan');
-    
-    // Should have at least one of each (main page + modal)
-    expect(jamesButtons.length).toBeGreaterThan(0);
-    expect(luyandaButtons.length).toBeGreaterThan(0);
-    expect(stefanButtons.length).toBeGreaterThan(0);
   });
 
-  it('should show salesperson modal when "All requests" is selected and plus is clicked', async () => {
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ ok: true, data: [] })
-    });
+  it('should switch to "All requests" filter when creating new draft', async () => {
+    (global.fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: [] })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: [] })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          ok: true,
+          data: {
+            id: '123',
+            request_id: 'QR-001',
+            status: 'draft',
+            salesperson_first_name: 'Select Name',
+            line_items: [],
+            created_at: '2025-01-01T00:00:00Z',
+            updated_at: '2025-01-01T00:00:00Z'
+          }
+        })
+      });
 
     render(<MainPage />);
 
-    // Click "All requests" button
-    const allRequestsButton = screen.getByText('All requests');
-    fireEvent.click(allRequestsButton);
-
+    // Wait for initial load
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/requests?showAll=true');
     });
 
-    // Click the plus button
-    const plusButtons = screen.getAllByRole('button', { name: '' }); // The plus button has no accessible name
+    // Switch to James filter
+    const jamesButton = screen.getByText('James');
+    fireEvent.click(jamesButton);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests?salesperson=James');
+    });
+
+    // Click the plus button to create new request
+    const plusButtons = screen.getAllByRole('button', { name: '' });
     const plusButton = plusButtons.find(button => button.querySelector('svg[class*="lucide-plus"]'));
     if (!plusButton) throw new Error('Plus button not found');
     fireEvent.click(plusButton);
 
-    // Wait for the modal to appear
+    // Should automatically switch back to "All requests" filter
     await waitFor(() => {
-      expect(screen.getByText("Who's requesting?")).toBeInTheDocument();
+      const allRequestsButton = screen.getByText('All requests');
+      expect(allRequestsButton).toHaveClass('bg-red-600');
     });
-
-    // Check salesperson options in modal - use getAllByText to get all instances
-    const jamesButtons = screen.getAllByText('James');
-    const luyandaButtons = screen.getAllByText('Luyanda');
-    const stefanButtons = screen.getAllByText('Stefan');
-    
-    // Should have at least one of each (main page + modal)
-    expect(jamesButtons.length).toBeGreaterThan(0);
-    expect(luyandaButtons.length).toBeGreaterThan(0);
-    expect(stefanButtons.length).toBeGreaterThan(0);
   });
 
   it('should handle request submission', async () => {
@@ -300,85 +340,293 @@ describe('MainPage', () => {
     expect(mockSessionStorage.removeItem).toHaveBeenCalledWith('selectedSalesperson');
   });
 
-  // SIMPLIFIED TESTS FOR SALESPERSON SELECTION AND REQUEST CREATION
-  it('should show modal when plus button is clicked with "All requests" selected', async () => {
+  it('should render salesperson dropdown in request cards', async () => {
+    const mockRequests = [
+      {
+        id: '1',
+        request_id: 'QR-001',
+        status: 'draft',
+        salesperson_first_name: 'Select Name',
+        line_items: [],
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
+      }
+    ];
+
     (global.fetch as any).mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ ok: true, data: [] })
+      json: () => Promise.resolve({ ok: true, data: mockRequests })
     });
 
     render(<MainPage />);
 
-    // Wait for initial load
+    // Wait for requests to load
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/requests?showAll=true');
+      expect(screen.getByText('QR-001')).toBeInTheDocument();
     });
 
-    // Click the plus button to show modal
-    const plusButtons = screen.getAllByRole('button', { name: '' });
-    const plusButton = plusButtons.find(button => button.querySelector('svg[class*="lucide-plus"]'));
-    if (!plusButton) throw new Error('Plus button not found');
-    fireEvent.click(plusButton);
-
-    // Wait for modal to appear
-    await waitFor(() => {
-      expect(screen.getByText("Who's requesting?")).toBeInTheDocument();
-    });
-
-    // Verify all salesperson options are present in modal
-    expect(screen.getAllByText('James').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Luyanda').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Stefan').length).toBeGreaterThan(0);
+    // Check that salesperson dropdown is present
+    const dropdown = screen.getByDisplayValue('Select Name');
+    expect(dropdown).toBeInTheDocument();
+    expect(dropdown.tagName).toBe('SELECT');
   });
 
-  it('should handle request creation with proper API payload structure', async () => {
-    // Mock successful request creation
+  it('should show validation message when salesperson not selected', async () => {
+    const mockRequests = [
+      {
+        id: '1',
+        request_id: 'QR-001',
+        status: 'draft',
+        salesperson_first_name: 'Select Name',
+        contact: { personId: 1, name: 'Test Contact' },
+        line_items: [{ pipedriveProductId: 1, name: 'Test Product', quantity: 1 }],
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
+      }
+    ];
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, data: mockRequests })
+    });
+
+    render(<MainPage />);
+
+    // Wait for requests to load
+    await waitFor(() => {
+      expect(screen.getByText('QR-001')).toBeInTheDocument();
+    });
+
+    // Check validation message includes salesperson name
+    expect(screen.getByText('Add salesperson name to submit')).toBeInTheDocument();
+  });
+
+  it('should show delete button for draft requests', async () => {
+    const mockRequests = [
+      {
+        id: '1',
+        request_id: 'QR-001',
+        status: 'draft',
+        salesperson_first_name: 'Select Name',
+        line_items: [],
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
+      }
+    ];
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, data: mockRequests })
+    });
+
+    render(<MainPage />);
+
+    // Wait for requests to load
+    await waitFor(() => {
+      expect(screen.getByText('QR-001')).toBeInTheDocument();
+    });
+
+    // Check that delete button is present
+    const deleteButton = screen.getByTestId('sh-delete-request');
+    expect(deleteButton).toBeInTheDocument();
+  });
+
+  it('should not show delete button for submitted requests', async () => {
+    const mockRequests = [
+      {
+        id: '1',
+        request_id: 'QR-001',
+        status: 'submitted',
+        salesperson_first_name: 'James',
+        line_items: [],
+        pipedrive_deal_id: 123,
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
+      }
+    ];
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, data: mockRequests })
+    });
+
+    render(<MainPage />);
+
+    // Wait for requests to load
+    await waitFor(() => {
+      expect(screen.getByText('QR-001')).toBeInTheDocument();
+    });
+
+    // Check that delete button is NOT present for submitted requests
+    expect(screen.queryByTestId('sh-delete-request')).not.toBeInTheDocument();
+  });
+
+  it('should handle delete request functionality', async () => {
+    const mockRequests = [
+      {
+        id: '1',
+        request_id: 'QR-001',
+        status: 'draft',
+        salesperson_first_name: 'Select Name',
+        line_items: [],
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
+      }
+    ];
+
     (global.fetch as any)
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ ok: true, data: [] })
+        json: () => Promise.resolve({ ok: true, data: mockRequests })
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ 
-          ok: true, 
-          data: { 
-            id: '123', 
-            request_id: 'QR-029', 
-            salesperson_first_name: 'James' 
-          } 
+        json: () => Promise.resolve({ ok: true, message: 'Request deleted successfully' })
+      });
+
+    render(<MainPage />);
+
+    // Wait for requests to load
+    await waitFor(() => {
+      expect(screen.getByText('QR-001')).toBeInTheDocument();
+    });
+
+    // Click delete button
+    const deleteButton = screen.getByTestId('sh-delete-request');
+    fireEvent.click(deleteButton);
+
+    // Wait for confirmation modal
+    await waitFor(() => {
+      expect(screen.getByText('Delete Request?')).toBeInTheDocument();
+    });
+
+    // Confirm deletion
+    const confirmButton = screen.getByText('Delete');
+    fireEvent.click(confirmButton);
+
+    // Verify delete API call
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests?id=1', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    });
+  });
+
+  it('should update salesperson via dropdown', async () => {
+    const mockRequests = [
+      {
+        id: '1',
+        request_id: 'QR-001',
+        status: 'draft',
+        salesperson_first_name: 'Select Name',
+        line_items: [],
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
+      }
+    ];
+
+    (global.fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, data: mockRequests })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          ok: true,
+          data: {
+            ...mockRequests[0],
+            salesperson_first_name: 'James'
+          }
         })
       });
 
     render(<MainPage />);
 
-    // Wait for initial load
+    // Wait for requests to load
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/requests?showAll=true');
+      expect(screen.getByText('QR-001')).toBeInTheDocument();
     });
 
-    // Click the plus button to show modal
-    const plusButtons = screen.getAllByRole('button', { name: '' });
-    const plusButton = plusButtons.find(button => button.querySelector('svg[class*="lucide-plus"]'));
-    if (!plusButton) throw new Error('Plus button not found');
-    fireEvent.click(plusButton);
+    // Change salesperson via dropdown
+    const dropdown = screen.getByDisplayValue('Select Name');
+    fireEvent.change(dropdown, { target: { value: 'James' } });
 
-    // Wait for modal to appear
+    // Verify API call to update salesperson
     await waitFor(() => {
-      expect(screen.getByText("Who's requesting?")).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: '1',
+          salespersonFirstName: 'James'
+        })
+      });
+    });
+  });
+
+  it('should disable submit button when salesperson not selected', async () => {
+    const mockRequests = [
+      {
+        id: '1',
+        request_id: 'QR-001',
+        status: 'draft',
+        salesperson_first_name: 'Select Name',
+        contact: { personId: 1, name: 'Test Contact' },
+        line_items: [{ pipedriveProductId: 1, name: 'Test Product', quantity: 1 }],
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
+      }
+    ];
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, data: mockRequests })
     });
 
-    // Click on James in the modal
-    const jamesButtons = screen.getAllByText('James');
-    const modalJamesButton = jamesButtons.find(button => 
-      button.closest('[role="dialog"]') || button.closest('.modal')
-    ) || jamesButtons[0];
-    
-    fireEvent.click(modalJamesButton);
+    render(<MainPage />);
 
-    // Verify that the modal interaction was successful
-    // (The actual API call might be handled differently in the test environment)
-    expect(modalJamesButton).toBeInTheDocument();
-    expect(screen.getByText("Who's requesting?")).toBeInTheDocument();
+    // Wait for requests to load
+    await waitFor(() => {
+      expect(screen.getByText('QR-001')).toBeInTheDocument();
+    });
+
+    // Submit button should be disabled
+    const submitButton = screen.getByTestId('sh-request-submit');
+    expect(submitButton).toBeDisabled();
+    expect(submitButton).toHaveClass('border-gray-300');
+  });
+
+  it('should enable submit button when all requirements are met including salesperson', async () => {
+    const mockRequests = [
+      {
+        id: '1',
+        request_id: 'QR-001',
+        status: 'draft',
+        salesperson_first_name: 'James',
+        contact: { personId: 1, name: 'Test Contact' },
+        line_items: [{ pipedriveProductId: 1, name: 'Test Product', quantity: 1 }],
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
+      }
+    ];
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, data: mockRequests })
+    });
+
+    render(<MainPage />);
+
+    // Wait for requests to load
+    await waitFor(() => {
+      expect(screen.getByText('QR-001')).toBeInTheDocument();
+    });
+
+    // Submit button should be enabled
+    const submitButton = screen.getByTestId('sh-request-submit');
+    expect(submitButton).not.toBeDisabled();
+    expect(submitButton).toHaveClass('bg-green-700');
   });
 });

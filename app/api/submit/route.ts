@@ -109,8 +109,8 @@ export async function POST(req: NextRequest) {
         
         const dealData = {
           title: dealTitle,
-          pipeline_id: 9, // Your pipeline ID
-          stage_id: 57,   // Your stage ID
+          pipeline_id: 20, // Your pipeline ID
+          stage_id: 129,   // Your stage ID
           person_id: requestData.contact.personId,
           org_id: requestData.contact.orgId || null,
           user_id: 22265724, // Ruan's actual user ID from Pipedrive

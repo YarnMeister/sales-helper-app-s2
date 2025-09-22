@@ -18,7 +18,7 @@ describe('PipedriveStageExplorer', () => {
     success: true,
     data: [
       {
-        id: 9,
+        id: 20,
         name: "Ruan - New Request OEM",
         order_nr: 0,
         active: true,
@@ -36,10 +36,10 @@ describe('PipedriveStageExplorer', () => {
     success: true,
     data: [
       {
-        id: 57,
+        id: 129,
         name: "New Request - Ruan",
         order_nr: 1,
-        pipeline_id: 9,
+        pipeline_id: 20,
         active_flag: true,
         deal_probability: 100,
       },
@@ -47,7 +47,7 @@ describe('PipedriveStageExplorer', () => {
         id: 58,
         name: "Budget Quotes (OEM/General)",
         order_nr: 2,
-        pipeline_id: 9,
+        pipeline_id: 20,
         active_flag: true,
         deal_probability: 100,
       },
@@ -78,7 +78,7 @@ describe('PipedriveStageExplorer', () => {
       expect(screen.getByText('Johan - Repairs - OEM')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Pipeline ID: 9')).toBeInTheDocument();
+    expect(screen.getByText('Pipeline ID: 20')).toBeInTheDocument();
     expect(screen.getByText('Pipeline ID: 14')).toBeInTheDocument();
   });
 
@@ -116,7 +116,7 @@ describe('PipedriveStageExplorer', () => {
     });
 
     // Should show stage IDs and order
-    expect(screen.getByText('57')).toBeInTheDocument();
+    expect(screen.getByText('129')).toBeInTheDocument();
     expect(screen.getByText('58')).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
@@ -236,7 +236,7 @@ describe('PipedriveStageExplorer', () => {
       success: true,
       data: [
         {
-          id: 9,
+          id: 20,
           name: "Active Pipeline",
           order_nr: 0,
           active: true,
