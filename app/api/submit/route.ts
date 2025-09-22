@@ -7,6 +7,18 @@ import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 import { logInfo, logError, generateCorrelationId } from '@/lib/log';
 import { z } from 'zod';
 
+// Salesperson mapping to Pipedrive IDs
+function getSalespersonPipedriveId(salespersonName: string | null | undefined): string {
+  const mapping: Record<string, string> = {
+    'James': '47',
+    'Luyanda': '46', 
+    'Stefan': '48'
+  };
+  
+  // Default to James if no salesperson selected or invalid name
+  return mapping[salespersonName || ''] || '47';
+}
+
 const SubmitRequest = z.object({
   id: z.string().uuid().optional(),
   requestId: z.string().optional()
@@ -96,7 +108,9 @@ export async function POST(req: NextRequest) {
         // Real Pipedrive submission - no mock submission record needed
         logInfo('Processing real Pipedrive submission', { 
           correlationId,
-          requestId: requestData.request_id
+          requestId: requestData.request_id,
+          selectedSalesperson: requestData.salesperson_first_name,
+          pipedriveSalespersonId: getSalespersonPipedriveId(requestData.salesperson_first_name)
         });
         
         // Build deal title with all line items (improved format)
@@ -116,7 +130,7 @@ export async function POST(req: NextRequest) {
           user_id: 22265724, // Ruan's actual user ID from Pipedrive
           // Custom fields for tracking (matching legacy specs)
           '4ad64c7e225ef479139742cdb9bf93f956298f69': requestData.request_id, // Request ID
-          '1fe134689b48d31c77a75af4a44d8a613da61df3': '47', // Salesperson (James)
+          '1fe134689b48d31c77a75af4a44d8a613da61df3': getSalespersonPipedriveId(requestData.salesperson_first_name), // Salesperson (dynamic)
           'a6321f3f56ba1e30978e1176bef2ca18dab2066b': '38'  // Assigned Person (Ruan)
         };
         
