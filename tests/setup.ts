@@ -218,7 +218,7 @@ vi.mock('../../lib/config/test-env', () => ({
   getTableName: (table: string) => `test_${table}`
 }));
 
-// Mock the Redis client creation function
+// Mock the Redis client creation function with proper implementation
 vi.mock('../../lib/cache', async () => {
   const mockRedisClient = {
     get: vi.fn().mockResolvedValue(null),
@@ -226,17 +226,24 @@ vi.mock('../../lib/cache', async () => {
     setex: vi.fn().mockResolvedValue('OK'),
     del: vi.fn().mockResolvedValue(1),
     ttl: vi.fn().mockResolvedValue(-1),
-    scan: vi.fn().mockResolvedValue(['0', []]), // Fixed: Proper scan response format
+    scan: vi.fn().mockResolvedValue(['0', []]),
     keys: vi.fn().mockResolvedValue([]),
     pipeline: vi.fn(() => ({
       get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue('OK'),
+      setex: vi.fn().mockResolvedValue('OK'),
+      del: vi.fn().mockResolvedValue(1),
       ttl: vi.fn().mockResolvedValue(-1),
       exec: vi.fn().mockResolvedValue([null, -1])
     }))
   };
   
+  // Mock Redis class constructor
+  const MockRedis = vi.fn().mockImplementation(() => mockRedisClient);
+  
   return {
     getRedisClient: vi.fn(() => mockRedisClient),
+    Redis: MockRedis,
     KVCache: vi.fn().mockImplementation(() => ({
       redis: mockRedisClient,
       get: vi.fn().mockResolvedValue(null),

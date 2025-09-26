@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:quiet": "vitest run --reporter=dot --silent --bail=1",
     "db:migrate": "node scripts/migrate.js",
     "db:migrate-drizzle": "node scripts/migrate-drizzle-data.js",
     "db:generate": "drizzle-kit generate --custom",

@@ -32,6 +32,22 @@ export default defineConfig({
     // Clear all mocks between tests
     clearMocks: true,
     // Restore mocks between tests
-    restoreMocks: true
+    restoreMocks: true,
+    // Compact reporter for less verbose output
+    reporters: ["dot"],
+    // Fail fast
+    bail: 1,
+    // Suppress console.log noise
+    silent: true,
+    // Filter out known verbose logs
+    onConsoleLog(log) {
+      // Drop known verbose logs but keep errors
+      if (
+        /ReactDOMTestUtils\.act|Warning: An update to|DeprecationWarning|ResizeObserver|IntersectionObserver/i.test(log) ||
+        log.includes('Redis client was initialized without url or token') ||
+        log.includes('The \'url\' property is missing or undefined') ||
+        log.includes('The \'token\' property is missing or undefined')
+      ) return false;
+    },
   },
 });
