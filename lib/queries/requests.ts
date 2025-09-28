@@ -1,6 +1,22 @@
 import { sql } from '@/lib/db';
 import { RequestStatus, SalespersonSelection } from '@/types/shared/database';
-import { Request } from '@/types/features/sales-requests';
+
+// Define Request interface locally to avoid import issues
+interface Request {
+  id: string;
+  requestId: string;
+  status: RequestStatus;
+  salespersonFirstName?: string;
+  salespersonSelection?: SalespersonSelection;
+  mineGroup?: string;
+  mineName?: string;
+  contact: any;
+  lineItems: any[];
+  comment?: string;
+  pipedriveDealId?: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // DEPRECATED: This function has been replaced by getRequests in lib/db.ts
 // The simplified version in lib/db.ts handles the core filtering needs

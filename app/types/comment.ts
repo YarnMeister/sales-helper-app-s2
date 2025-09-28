@@ -1,12 +1,26 @@
 /**
- * @deprecated Use types from '@/types/features/sales-requests' instead
- * This file is kept for backward compatibility during migration
+ * Comment types for the application
+ * Consolidated to avoid module resolution issues
  */
 
-export type {
-  CommentState,
-  CommentControlProps,
-} from '@/types/features/sales-requests';
+/**
+ * Comment state for inline editing
+ */
+export interface CommentState {
+  isEditing: boolean;
+  currentValue: string;
+  originalValue: string;
+  hasChanges: boolean;
+  isSaving: boolean;
+}
+
+export interface CommentControlProps {
+  comment?: string;
+  onCommentChange: (comment: string) => Promise<void>;
+  disabled?: boolean;
+  requestId: string;
+  className?: string;
+}
 
 // These types are specific to comment components and not moved to shared types yet
 export interface CommentEditProps {
