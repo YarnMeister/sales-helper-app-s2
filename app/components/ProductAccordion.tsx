@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { ChevronDown, ChevronRight, Package, AlertCircle } from 'lucide-react';
-import { LineItem } from '@/types/features/sales-requests';
+import { LineItem } from '../../types/features/sales-requests';
 
 
 interface ProductAccordionProps {

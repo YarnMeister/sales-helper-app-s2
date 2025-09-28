@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, usePathname } from 'next/navigation';
 import AddLineItemsPage from '../add-line-items/page';
-import { LineItem } from '@/types/features/sales-requests';
+import { LineItem } from '../../types/features/sales-requests';
 
 // Mock Next.js router with proper structure
 const mockRouter = {
