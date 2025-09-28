@@ -59,7 +59,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
   const filteredContactsData = contactsData;
 
   const toggleGroup = (group: string) => {
-    setState(prev => {
+    setState((prev: ContactSelectionState) => {
       const newExpandedGroups = new Set(prev.expandedGroups);
       const newExpandedMines = new Set(prev.expandedMines);
       
@@ -83,7 +83,7 @@ export const ContactAccordion: React.FC<ContactAccordionProps> = ({
 
   const toggleMine = (group: string, mine: string) => {
     const mineKey = `${group}-${mine}`;
-    setState(prev => {
+    setState((prev: ContactSelectionState) => {
       const newExpandedMines = new Set(prev.expandedMines);
       
       if (newExpandedMines.has(mineKey)) {
