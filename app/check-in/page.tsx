@@ -25,6 +25,11 @@ export default function CheckInPage() {
       return total + Object.keys(mines || {}).length;
     }, 0);
   };
+
+  // Helper function to safely get sorted entries from ContactsHierarchy
+  const getSortedContactEntries = (data: ContactsHierarchy): [string, Record<string, any>][] => {
+    return (Object.entries(data) as [string, Record<string, any>][]).sort(([a], [b]) => a.localeCompare(b));
+  };
   
   // Check-in form state
   const [selectedSalesperson, setSelectedSalesperson] = useState('');
@@ -281,7 +286,7 @@ export default function CheckInPage() {
               {/* All Mine Groups */}
               {expandedGroups.has('all-mines') && (
                 <div className="bg-white">
-                  {Object.entries(contactsData).sort(([a], [b]) => a.localeCompare(b)).map(([group, mines]: [string, Record<string, any>]) => {
+                  {getSortedContactEntries(contactsData).map(([group, mines]) => {
                     const isGroupExpanded = expandedGroups.has(group);
                     const totalMines = Object.keys(mines).length;
                     
