@@ -1,5 +1,5 @@
 // Re-export comprehensive database types
-export * from './types/database';
+export * from '../types/shared/database';
 
 // Legacy types for backward compatibility (can be removed later)
 export interface Contact {

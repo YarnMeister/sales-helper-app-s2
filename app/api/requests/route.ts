@@ -12,7 +12,7 @@ import { ensureDatabaseInitialized } from '@/lib/database/init';
 import { RequestUpsert } from '@/lib/schema';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 import { logInfo, logError, generateCorrelationId } from '@/lib/log';
-import { RequestStatus, SalespersonSelection } from '@/lib/types/database';
+import { RequestStatus, SalespersonSelection } from '@/types/shared/database';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';

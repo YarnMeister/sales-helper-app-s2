@@ -1,5 +1,6 @@
 import { sql } from '@/lib/db';
-import { Request, RequestStatus, SalespersonSelection } from '@/lib/types/database';
+import { RequestStatus, SalespersonSelection } from '@/types/shared/database';
+import { Request } from '@/types/features/sales-requests';
 
 // DEPRECATED: This function has been replaced by getRequests in lib/db.ts
 // The simplified version in lib/db.ts handles the core filtering needs
