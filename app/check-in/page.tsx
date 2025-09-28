@@ -18,6 +18,13 @@ export default function CheckInPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  // Helper function to safely count total mines
+  const getTotalMineCount = (data: ContactsHierarchy): number => {
+    return Object.values(data).reduce((total: number, mines) => {
+      return total + Object.keys(mines || {}).length;
+    }, 0);
+  };
   
   // Check-in form state
   const [selectedSalesperson, setSelectedSalesperson] = useState('');
@@ -265,7 +272,7 @@ export default function CheckInPage() {
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-xs">
-                      {Object.values(contactsData).reduce((total: number, mines) => total + Object.keys(mines).length, 0)} mines
+                      {getTotalMineCount(contactsData)} mines
                     </Badge>
                   )}
                 </div>
@@ -274,7 +281,7 @@ export default function CheckInPage() {
               {/* All Mine Groups */}
               {expandedGroups.has('all-mines') && (
                 <div className="bg-white">
-                  {Object.entries(contactsData).sort(([a], [b]) => a.localeCompare(b)).map(([group, mines]) => {
+                  {Object.entries(contactsData).sort(([a], [b]) => a.localeCompare(b)).map(([group, mines]: [string, Record<string, any>]) => {
                     const isGroupExpanded = expandedGroups.has(group);
                     const totalMines = Object.keys(mines).length;
                     
