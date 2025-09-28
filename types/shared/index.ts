@@ -24,7 +24,7 @@ export * from './common';
 export * from './environment';
 
 // Feature-specific types (re-exported for convenience)
-export * from '../features';
+// export * from '../features';
 
 // External service types (re-exported for convenience)
-export * from '../external';
+// export * from '../external';
