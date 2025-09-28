@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "npm run env:check && npm run db:migrate && next dev",
     "build": "npm run env:check && next build",
+    "build:debug": "npm run debug:typescript && npm run env:check && next build",
     "start": "npm run env:check && next start",
     "lint": "next lint",
     "test": "vitest run",
+    "debug:typescript": "node scripts/debug-typescript.js",
     "test:watch": "vitest",
     "test:quiet": "vitest run --reporter=dot --silent --bail=1",
     "db:migrate": "node scripts/migrate.js",
