@@ -265,7 +265,7 @@ export default function CheckInPage() {
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-xs">
-                      {Object.values(contactsData).reduce((total, mines) => total + Object.keys(mines).length, 0)} mines
+                      {Object.values(contactsData).reduce((total: number, mines) => total + Object.keys(mines).length, 0)} mines
                     </Badge>
                   )}
                 </div>
