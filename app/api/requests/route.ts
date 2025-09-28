@@ -7,7 +7,8 @@ import {
   getRequestById,
   getRequests,
   deleteRequest
-} from '@/lib/db';
+} from '@/lib/database/adapters/legacy-adapter';
+import { ensureDatabaseInitialized } from '@/lib/database/init';
 import { RequestUpsert } from '@/lib/schema';
 import { errorToResponse, ValidationError, NotFoundError } from '@/lib/errors';
 import { logInfo, logError, generateCorrelationId } from '@/lib/log';
@@ -17,8 +18,11 @@ import { RequestStatus, SalespersonSelection } from '@/lib/types/database';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  // Ensure repository system is initialized
+  ensureDatabaseInitialized();
+
   const correlationId = generateCorrelationId();
-  
+
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
   const mineGroup = searchParams.get('mineGroup');
@@ -27,7 +31,7 @@ export async function GET(request: NextRequest) {
   const salesperson = searchParams.get('salesperson'); // PRD: Luyanda, James, Stefan
   const showAll = searchParams.get('showAll') === 'true'; // PRD: Toggle for showing all requests
   const limit = parseInt(searchParams.get('limit') || '50');
-  
+
   try {
     logInfo('Requests API GET request started', { 
       correlationId,
@@ -70,9 +74,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Ensure repository system is initialized
+  ensureDatabaseInitialized();
+
   const correlationId = generateCorrelationId();
   let body: any;
-  
+
   try {
     body = await request.json();
     const parsed = RequestUpsert.parse(body);

@@ -1,11 +1,14 @@
-export interface CommentState {
-  isEditing: boolean;
-  currentValue: string;
-  originalValue: string;
-  hasChanges: boolean;
-  isSaving: boolean;
-}
+/**
+ * @deprecated Use types from '@/types/features/sales-requests' instead
+ * This file is kept for backward compatibility during migration
+ */
 
+export type {
+  CommentState,
+  CommentControlProps,
+} from '@/types/features/sales-requests';
+
+// These types are specific to comment components and not moved to shared types yet
 export interface CommentEditProps {
   comment?: string;
   onSave: (comment: string) => Promise<void>;
@@ -21,12 +24,4 @@ export interface CommentDisplayProps {
   onEdit: () => void;
   disabled?: boolean;
   requestId: string;
-}
-
-export interface CommentControlProps {
-  comment?: string;
-  onCommentChange: (comment: string) => Promise<void>;
-  disabled?: boolean;
-  requestId: string;
-  className?: string;
 }

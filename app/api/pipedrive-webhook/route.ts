@@ -4,6 +4,7 @@ import { logInfo, logError } from '@/lib/log';
 import { generateCorrelationId, withPerformanceLogging } from '@/lib/log';
 import { fetchDealFlow } from '@/lib/pipedrive';
 import { insertDealFlowData } from '@/lib/db';
+import { ensureDatabaseInitialized } from '@/lib/database/init';
 
 // Validation schema for Zapier webhook payload
 const ZapierWebhookSchema = z.object({
@@ -16,8 +17,11 @@ const ZapierWebhookSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Ensure repository system is initialized
+  ensureDatabaseInitialized();
+
   const correlationId = generateCorrelationId();
-  
+
   return await withPerformanceLogging('POST /api/pipedrive-webhook', 'api', async () => {
     try {
       logInfo('🎯 PHASE 1: Zapier webhook received', { correlationId });

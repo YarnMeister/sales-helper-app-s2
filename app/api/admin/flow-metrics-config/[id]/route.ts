@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateFlowMetricConfig, deleteFlowMetricConfig } from '../../../../../lib/db';
 import { logError, logInfo } from '../../../../../lib/log';
+import { ensureDatabaseInitialized } from '../../../../../lib/database/init';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Ensure repository system is initialized
+  ensureDatabaseInitialized();
+
   try {
     const body = await request.json();
     logInfo('PATCH /api/admin/flow-metrics-config/[id] - Updating flow metric configuration', { id: params.id, body });
@@ -46,6 +50,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Ensure repository system is initialized
+  ensureDatabaseInitialized();
+
   try {
     logInfo('DELETE /api/admin/flow-metrics-config/[id] - Deleting flow metric configuration', { id: params.id });
     

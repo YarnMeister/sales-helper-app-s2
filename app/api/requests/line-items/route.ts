@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { addLineItemAtomic } from '@/lib/db';
+import { addLineItemAtomic } from '@/lib/database/adapters/legacy-adapter';
+import { ensureDatabaseInitialized } from '@/lib/database/init';
 import { errorToResponse, ValidationError } from '@/lib/errors';
 import { logInfo, logError, generateCorrelationId } from '@/lib/log';
 
@@ -7,6 +8,9 @@ import { logInfo, logError, generateCorrelationId } from '@/lib/log';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  // Ensure repository system is initialized
+  ensureDatabaseInitialized();
+
   const correlationId = generateCorrelationId();
   let body: any;
 

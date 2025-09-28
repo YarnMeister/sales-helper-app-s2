@@ -1,0 +1,22 @@
+name: Project MCP
+version: 0.0.1
+schema: v1
+
+mcpServers:
+  - name: filesystem-projects
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-filesystem"
+      - /Users/janerasmus/Documents/Projects
+    env: {}
+    autoApprove: true
+
+  - name: shell
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-shell"
+      - ${workspaceFolder}
+    env: {}
+    autoApprove: true

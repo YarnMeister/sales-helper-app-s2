@@ -44,10 +44,12 @@ describe('Flow Metrics Database Functions', () => {
         }
       ];
 
-      // Mock the database query
-      const { neon } = await import('@neondatabase/serverless');
+      // Mock the database connection
       const mockSql = vi.fn().mockResolvedValue(mockData);
-      vi.mocked(neon).mockReturnValue(mockSql as any);
+      vi.doMock('@/lib/database/core/connection', () => ({
+        getDatabaseConnection: () => mockSql,
+        withDbErrorHandling: vi.fn().mockImplementation(async (fn) => await fn())
+      }));
 
       const result = await getFlowMetricsConfig();
 

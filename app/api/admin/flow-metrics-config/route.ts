@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFlowMetricsConfig, createFlowMetricConfig } from '../../../../lib/db';
 import { logError, logInfo } from '../../../../lib/log';
+import { ensureDatabaseInitialized } from '../../../../lib/database/init';
 
 export async function GET() {
+  // Ensure repository system is initialized
+  ensureDatabaseInitialized();
+
   try {
     logInfo('GET /api/admin/flow-metrics-config - Fetching flow metrics configuration');
     
@@ -22,6 +26,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Ensure repository system is initialized
+  ensureDatabaseInitialized();
+
   try {
     const body = await request.json();
     logInfo('POST /api/admin/flow-metrics-config - Creating flow metric configuration', body);

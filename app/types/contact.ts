@@ -1,31 +1,11 @@
-export interface Contact {
-  personId: number;
-  name: string;
-  email?: string;
-  phone?: string;
-  orgId?: number;
-  orgName?: string;
-  mineGroup: string;
-  mineName: string;
-  jobTitle?: string;
-}
+/**
+ * @deprecated Use types from '@/types/features/sales-requests' instead
+ * This file is kept for backward compatibility during migration
+ */
 
-export interface ContactsHierarchy {
-  [mineGroup: string]: {
-    [mineName: string]: Contact[];
-  };
-}
-
-export interface ContactsApiResponse {
-  ok: boolean;
-  data: ContactsHierarchy;
-  stale?: boolean;
-  source?: 'cache' | 'pipedrive' | 'cache_fallback';
-  message?: string;
-}
-
-export interface ContactSelectionState {
-  expandedGroups: Set<string>;
-  expandedMines: Set<string>;
-  searchTerm: string;
-}
+export type {
+  Contact,
+  ContactsHierarchy,
+  ContactsApiResponse,
+  ContactSelectionState,
+} from '@/types/features/sales-requests';

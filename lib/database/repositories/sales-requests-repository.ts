@@ -82,7 +82,7 @@ export class SalesRequestsRepository extends BaseRepositoryImpl<Request> impleme
   async findByMineGroup(mineGroup: string): Promise<RepositoryResult<Request[]>> {
     try {
       const result = await db.select().from(requests)
-        .where(eq(requests.contactMineGroup, mineGroup))
+        .where(eq(requests.mineGroup, mineGroup))
         .orderBy(desc(requests.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
@@ -146,10 +146,10 @@ export class SalesRequestsRepository extends BaseRepositoryImpl<Request> impleme
         conditions.push(eq(requests.salespersonSelection, filters.salesperson));
       }
       if (filters.mineGroup) {
-        conditions.push(eq(requests.contactMineGroup, filters.mineGroup));
+        conditions.push(eq(requests.mineGroup, filters.mineGroup));
       }
       if (filters.mineName) {
-        conditions.push(eq(requests.contactMineName, filters.mineName));
+        conditions.push(eq(requests.mineName, filters.mineName));
       }
       if (filters.startDate) {
         conditions.push(gte(requests.createdAt, filters.startDate));
