@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { ChevronDown, ChevronRight, Mail, Phone, AlertCircle } from 'lucide-react';
-import { Contact, ContactsHierarchy, ContactSelectionState } from '../types/contact';
+import { Contact, ContactsHierarchy, ContactSelectionState } from '../../types/features/sales-requests';
 
 interface ContactAccordionProps {
   onSelectContact: (contact: Contact) => void;

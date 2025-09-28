@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { ContactAccordion } from '../components/ContactAccordion';
-import { Contact } from '../types/contact';
+import { Contact } from '@/types/features/sales-requests';
 import { useRouter } from 'next/navigation';
 import { CommonFooter } from '../components/CommonFooter';
 import { CacheRefreshButton } from '../components/CacheRefreshButton';

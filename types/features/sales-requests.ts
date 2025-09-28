@@ -218,6 +218,23 @@ export interface CommentControlProps {
   className?: string;
 }
 
+export interface CommentEditProps {
+  comment?: string;
+  onSave: (comment: string) => Promise<void>;
+  onCancel: () => void;
+  placeholder?: string;
+  maxLength?: number;
+  disabled?: boolean;
+  requestId: string;
+}
+
+export interface CommentDisplayProps {
+  comment: string;
+  onEdit: () => void;
+  disabled?: boolean;
+  requestId: string;
+}
+
 export interface QuantityControlProps {
   quantity: number;
   onQuantityChange: (newQuantity: number) => void;

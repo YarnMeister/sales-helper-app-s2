@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Trash2, Minus, Plus } from 'lucide-react';
-import { LineItem } from '../types/product';
+import { LineItem } from '@/types/features/sales-requests';
 
 interface LineItemCardProps {
   item: LineItem;

@@ -7,7 +7,7 @@ import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { useRouter } from 'next/navigation';
-import { ContactsHierarchy } from '../types/contact';
+import { ContactsHierarchy } from '../../types/features/sales-requests';
 import { CommonHeader } from '../components/CommonHeader';
 import { CommonFooter } from '../components/CommonFooter';
 import { SalespersonModal } from '../components/SalespersonModal';
