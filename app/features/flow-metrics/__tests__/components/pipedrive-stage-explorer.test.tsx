@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { PipedriveStageExplorer } from '../components/PipedriveStageExplorer';
+import { PipedriveStageExplorer } from '../../components/PipedriveStageExplorer';
 
 // Mock fetch globally
 global.fetch = vi.fn();

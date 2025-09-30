@@ -2,14 +2,14 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
-import FlowMetricsReportPage from '../flow-metrics-report/page';
+import FlowMetricsReportPage from '../../pages/page';
 
 // Mock the components
-vi.mock('../components/CommonHeader', () => ({
-  CommonHeader: ({ title }: any) => <div data-testid="common-header">{title}</div>,
+vi.mock('../../../../components/CommonHeader', () => ({
+  CommonHeader: ({ currentPage }: any) => <div data-testid="common-header">{currentPage}</div>,
 }));
 
-vi.mock('../components/CommonFooter', () => ({
+vi.mock('../../../../components/CommonFooter', () => ({
   CommonFooter: ({ onNewRequest, isCreating }: any) => (
     <div data-testid="common-footer">
       Common Footer Component
@@ -107,21 +107,21 @@ describe('FlowMetricsReportPage', () => {
       
       // The content area should have the correct padding classes
       const contentArea = screen.getByTestId('common-header').nextElementSibling;
-      expect(contentArea).toHaveClass('px-4', 'py-4', 'pb-24');
+      expect(contentArea).toHaveClass('max-w-7xl', 'mx-auto', 'px-4', 'py-8');
     });
   });
 
   describe('Header Section', () => {
-    it('renders the Lead Time Overview title', () => {
+    it('renders the Flow Metrics Report title', () => {
       render(<FlowMetricsReportPage />);
       
-      expect(screen.getByText('Lead Time Overview')).toBeInTheDocument();
+      expect(screen.getByText('Flow Metrics Report')).toBeInTheDocument();
     });
 
     it('renders the subtitle', () => {
       render(<FlowMetricsReportPage />);
       
-      expect(screen.getByText('Track efficiency across your sales pipeline stages')).toBeInTheDocument();
+      expect(screen.getByText('Track and analyze your sales process efficiency')).toBeInTheDocument();
     });
 
     it('renders the period selector', () => {

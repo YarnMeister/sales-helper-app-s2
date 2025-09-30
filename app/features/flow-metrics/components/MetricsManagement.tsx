@@ -490,7 +490,7 @@ export function MetricsManagement() {
 
               {!showAddForm && (!configs || configs.length === 0) && (
                 <div className="text-center py-8 text-gray-500">
-                  No metrics found. Click "Add New Metric" to create one.
+                  No metrics found. Click &ldquo;Add New Metric&rdquo; to create one.
                 </div>
               )}
             </div>
