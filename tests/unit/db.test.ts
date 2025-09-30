@@ -18,7 +18,7 @@ vi.mock('../../lib/database/core/utils', () => ({
 }));
 
 // Mock the legacy adapter for backward compatibility
-vi.mock('../../lib/database/legacy-adapter', () => ({
+vi.mock('../../lib/database/adapters/legacy-adapter', () => ({
   sql: vi.fn()
 }));
 
@@ -32,7 +32,7 @@ import {
   buildOrderByClause,
   buildLimitClause
 } from '../../lib/database/core/utils';
-import { sql } from '../../lib/database/legacy-adapter';
+import { sql } from '../../lib/database/adapters/legacy-adapter';
 
 describe('Database Core Integration', () => {
   beforeEach(() => {

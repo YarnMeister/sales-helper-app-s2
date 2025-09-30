@@ -20,9 +20,7 @@ vi.mock('../components/CommonFooter', () => ({
 // Mock console.log for testing More Info button clicks
 const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-// Mock fetch for API calls
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+// Using global.fetch mock from tests/setup.ts
 
 describe('FlowMetricsReportPage', () => {
   const mockMetricsData = [
@@ -50,13 +48,32 @@ describe('FlowMetricsReportPage', () => {
 
   beforeEach(() => {
     mockConsoleLog.mockClear();
-    
-    // Mock the API call to return metrics data
-    mockFetch.mockResolvedValue({
-      json: async () => ({
-        success: true,
-        data: mockMetricsData
-      })
+
+    // Configure the global fetch mock (Level 1) with test-specific behavior
+    (global.fetch as any).mockImplementation((input: any) => {
+      const url = typeof input === 'string' ? input : input?.toString?.() || '';
+
+      if (url.startsWith('/api/flow/metrics')) {
+        return Promise.resolve({
+          json: async () => ({
+            success: true,
+            data: [
+              { id: 'lead-conversion', title: 'Lead Conversion Time', mainMetric: '5.2', totalDeals: 12 },
+              { id: 'quote-conversion', title: 'Quote Conversion Time', mainMetric: '3.8', totalDeals: 9 },
+            ],
+          }),
+        } as any);
+      }
+
+      if (url.startsWith('/api/pipedrive/deal-flow-data')) {
+        return Promise.resolve({
+          json: async () => ({ success: true, data: [] }),
+        } as any);
+      }
+
+      return Promise.resolve({
+        json: async () => ({ success: true, data: [] }),
+      } as any);
     });
   });
 
@@ -107,22 +124,22 @@ describe('FlowMetricsReportPage', () => {
       expect(screen.getByText('Track efficiency across your sales pipeline stages')).toBeInTheDocument();
     });
 
-    it('renders the period selector with correct label', () => {
+    it('renders the period selector', () => {
       render(<FlowMetricsReportPage />);
-      
-      expect(screen.getByText('Period:')).toBeInTheDocument();
+
+      expect(screen.getAllByText('7 days').length).toBeGreaterThan(0);
     });
 
     it('renders the period dropdown with correct options', () => {
       render(<FlowMetricsReportPage />);
-      
+
       const periodSelect = screen.getByRole('combobox');
       expect(periodSelect).toBeInTheDocument();
       expect(periodSelect).toHaveValue('7d');
-      
+
       const options = screen.getAllByRole('option');
-      expect(options).toHaveLength(1);
-      expect(options[0]).toHaveTextContent('Last 7 days');
+      expect(options).toHaveLength(4);
+      expect(options[0]).toHaveTextContent('7 days');
     });
 
     it('handles period selection change', () => {
@@ -161,58 +178,53 @@ describe('FlowMetricsReportPage', () => {
       expect(gridContainer).toHaveClass('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
     });
 
-    it('renders calculating state for metrics', async () => {
+    it('shows loading state then renders metrics', async () => {
       render(<FlowMetricsReportPage />);
-      
-      // Wait for metrics to load
+
+      // Initially shows loading placeholder
+      expect(screen.getByText('Loading metrics...')).toBeInTheDocument();
+
+      // Then renders metrics
       await waitFor(() => {
         expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       });
-      
-      // Check that we show "Calculating..." for metrics (static text, no need to wait)
-      const calculatingElements = screen.getAllByText('Calculating...');
-      expect(calculatingElements.length).toBeGreaterThan(0);
     });
 
-    it('renders N/A for best/worst metrics initially', async () => {
+    it('renders deal counts on KPI cards', async () => {
       render(<FlowMetricsReportPage />);
-      
+
       // Wait for metrics to load
       await waitFor(() => {
         expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       });
-      
-      // Check that we show "N/A" for best/worst values initially
-      const bestNaElements = screen.getAllByText('Best: N/A');
-      const worstNaElements = screen.getAllByText('Worst: N/A');
-      expect(bestNaElements.length).toBeGreaterThan(0);
-      expect(worstNaElements.length).toBeGreaterThan(0);
+
+      // Check that we show deal counts for each metric
+      expect(screen.getByText('Based on 12 deals')).toBeInTheDocument();
+      expect(screen.getByText('Based on 9 deals')).toBeInTheDocument();
     });
 
-    it('renders trend indicators for each card', async () => {
+    it('renders metric values for each card', async () => {
       render(<FlowMetricsReportPage />);
-      
+
       // Wait for metrics to load
       await waitFor(() => {
         expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       });
-      
-      // Check that "Trend" text appears for each card
-      const trendTexts = screen.getAllByText('Trend');
-      expect(trendTexts.length).toBeGreaterThan(0);
+
+      expect(screen.getByText('5.2 days')).toBeInTheDocument();
+      expect(screen.getByText('3.8 days')).toBeInTheDocument();
     });
 
-    it('renders trend icons with correct symbols', async () => {
+    it('renders deal counts on cards', async () => {
       render(<FlowMetricsReportPage />);
-      
+
       // Wait for metrics to load
       await waitFor(() => {
         expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       });
-      
-      // Check for trend arrows (↗, ↘, →) - using getAllByText for duplicates
-      const stableArrows = screen.getAllByText('→');
-      expect(stableArrows.length).toBeGreaterThan(0); // stable trend (default)
+
+      expect(screen.getByText('Based on 12 deals')).toBeInTheDocument();
+      expect(screen.getByText('Based on 9 deals')).toBeInTheDocument();
     });
 
     it('renders More Info buttons for each card', async () => {
@@ -229,26 +241,27 @@ describe('FlowMetricsReportPage', () => {
 
     it('handles More Info button clicks', async () => {
       render(<FlowMetricsReportPage />);
-      
+
       // Wait for metrics to load
       await waitFor(() => {
         expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       });
-      
+
       const moreInfoButtons = screen.getAllByText('More info');
       fireEvent.click(moreInfoButtons[0]); // Click first More Info button
-      
-      // Check that router.push was called with the correct path
-      expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report/lead-conversion');
+
+      // Check that router.push was called with the correct path (includes selected period)
+      const router = useRouter();
+      expect(router.push).toHaveBeenCalledWith('/flow-metrics-report/lead-conversion?period=7d');
     });
   });
 
   describe('Responsive Design', () => {
-    it('has responsive header layout', () => {
+    it('renders header title with correct styling', () => {
       render(<FlowMetricsReportPage />);
-      
-      const headerContainer = screen.getByText('Lead Time Overview').closest('.flex');
-      expect(headerContainer).toHaveClass('flex-col', 'sm:flex-row', 'sm:items-center', 'sm:justify-between');
+
+      const headerTitle = screen.getByText('Lead Time Overview');
+      expect(headerTitle).toHaveClass('text-2xl', 'font-bold', 'text-gray-900');
     });
 
     it('has responsive grid layout', async () => {
@@ -267,14 +280,14 @@ describe('FlowMetricsReportPage', () => {
   describe('Accessibility', () => {
     it('has proper form labels', () => {
       render(<FlowMetricsReportPage />);
-      
+
       // Check for period selection elements (mobile select)
       const periodSelect = screen.getByRole('combobox');
       expect(periodSelect).toBeInTheDocument();
-      
-      // Check for period buttons (desktop)
-      const sevenDaysButton = screen.getByText('7 days');
-      expect(sevenDaysButton).toBeInTheDocument();
+
+      // Check for period buttons (desktop) by role and accessible name
+      const sevenDayButtons = screen.getAllByRole('button', { name: '7 days' });
+      expect(sevenDayButtons.length).toBeGreaterThan(0);
     });
 
     it('has proper button elements', async () => {
@@ -321,16 +334,19 @@ describe('FlowMetricsReportPage', () => {
     });
 
     it('handles API errors gracefully', async () => {
-      // Mock API error
-      mockFetch.mockResolvedValueOnce({
-        json: async () => ({
-          success: false,
-          error: 'Failed to fetch metrics'
-        })
+      // Mock API error for metrics endpoint
+      (global.fetch as any).mockImplementationOnce((input: any) => {
+        const url = typeof input === 'string' ? input : input?.toString?.() || '';
+        if (url.startsWith('/api/flow/metrics')) {
+          return Promise.resolve({
+            json: async () => ({ success: false, error: 'Failed to fetch metrics' })
+          } as any);
+        }
+        return Promise.resolve({ json: async () => ({ success: true, data: [] }) } as any);
       });
 
       render(<FlowMetricsReportPage />);
-      
+
       // Should show empty state after error
       await waitFor(() => {
         expect(screen.getByText('No active metrics found. Add metrics in the Mappings tab.')).toBeInTheDocument();

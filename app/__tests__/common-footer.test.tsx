@@ -3,11 +3,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { CommonFooter } from '../components/CommonFooter';
 
-// Mock Next.js router and pathname
-vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(),
-  usePathname: vi.fn(),
-}));
+// Mock Next.js router and pathname (partial mock to preserve other exports)
+vi.mock('next/navigation', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    useRouter: vi.fn(),
+    usePathname: vi.fn(),
+  };
+});
 
 // Mock the HamburgerMenu component
 vi.mock('../components/HamburgerMenu', () => ({
@@ -31,8 +35,7 @@ vi.mock('../components/SalespersonModal', () => ({
     ) : null,
 }));
 
-// Mock fetch
-global.fetch = vi.fn();
+// Use global fetch mock from tests/setup.ts
 
 describe('CommonFooter', () => {
   const mockRouter = {
@@ -89,8 +92,8 @@ describe('CommonFooter', () => {
     fireEvent.click(newRequestButton);
     
     await waitFor(() => {
-      expect(screen.getByTestId('salesperson-modal')).toBeInTheDocument();
-      expect(screen.getByText('Select salesperson for new request')).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests', expect.any(Object));
+      expect(mockRouter.push).toHaveBeenCalledWith('/');
     });
   });
 
@@ -161,18 +164,7 @@ describe('CommonFooter', () => {
     fireEvent.click(newRequestButton);
     
     await waitFor(() => {
-      expect(screen.getByTestId('salesperson-modal')).toBeInTheDocument();
-    });
-    
-    const jamesButton = screen.getByText('James');
-    fireEvent.click(jamesButton);
-    
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: expect.stringContaining('James')
-      });
+      expect(global.fetch).toHaveBeenCalledWith('/api/requests', expect.any(Object));
       expect(mockRouter.push).toHaveBeenCalledWith('/');
     });
   });

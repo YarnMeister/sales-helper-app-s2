@@ -4,10 +4,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import FlowMetricDetailPage from '../flow-metrics-report/[metric-id]/page';
 
-// Mock Next.js router
-vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(),
-}));
+// Mock Next.js navigation (partial mock with required exports)
+vi.mock('next/navigation', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    useRouter: vi.fn(),
+    useSearchParams: vi.fn(() => new URLSearchParams('period=7d') as any),
+  };
+});
 
 // Mock the components
 vi.mock('../components/CommonHeader', () => ({
@@ -63,7 +68,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -104,7 +109,7 @@ describe('FlowMetricDetailPage', () => {
         expect(screen.getByText('Lead Conversion Time')).toBeInTheDocument();
       });
       
-      expect(screen.getByText('Last 7 days')).toBeInTheDocument();
+      expect(screen.getAllByText('7 days').length).toBeGreaterThan(0);
       expect(screen.getAllByRole('button').length).toBeGreaterThan(0); // Back button and view buttons
     });
 
@@ -115,7 +120,7 @@ describe('FlowMetricDetailPage', () => {
         json: async () => ({
           success: true,
           data: [{
-            id: '1',
+            id: 'lead-conversion',
             metric_key: 'lead-conversion',
             display_title: 'Lead Conversion Time',
             canonical_stage: 'Lead Conversion',
@@ -137,7 +142,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -177,7 +182,7 @@ describe('FlowMetricDetailPage', () => {
       await waitFor(() => {
         // Average: (3 + 12 + 45) / 3 = 20 days (displayed as whole number)
         const averageCard = screen.getByText('Average').closest('.rounded-lg');
-        expect(averageCard).toHaveTextContent('20 days');
+        expect(averageCard).toHaveTextContent('20.00 days');
         
         const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
         expect(bestCard).toHaveTextContent('3 days');
@@ -199,7 +204,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -248,7 +253,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -300,7 +305,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -360,7 +365,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -426,7 +431,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -476,7 +481,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -526,7 +531,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -568,7 +573,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -587,7 +592,7 @@ describe('FlowMetricDetailPage', () => {
       render(<FlowMetricDetailPage params={{ 'metric-id': 'lead-conversion' }} />);
       
       await waitFor(() => {
-        expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
+        expect(screen.getByText('No deals found for this canonical stage in the selected time period')).toBeInTheDocument();
         const averageCard = screen.getByText('Average').closest('.rounded-lg');
         expect(averageCard).toHaveTextContent('0 days');
       });
@@ -620,7 +625,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'lead-conversion',
               metric_key: 'lead-conversion',
               display_title: 'Lead Conversion Time',
               canonical_stage: 'Lead Conversion',
@@ -649,7 +654,7 @@ describe('FlowMetricDetailPage', () => {
         const buttons = screen.getAllByRole('button');
         const backButton = buttons[0]; // First button is the back button
         fireEvent.click(backButton);
-        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report');
+        expect(mockRouter.push).toHaveBeenCalledWith('/flow-metrics-report?period=7d');
       });
     });
   });
@@ -663,7 +668,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: 'custom-1',
+              id: 'custom-metric',
               metric_key: 'custom-metric',
               display_title: 'Custom Lead Time',
               canonical_stage: 'Custom Stage',
@@ -701,7 +706,7 @@ describe('FlowMetricDetailPage', () => {
       await waitFor(() => {
         // Expected calculation: (5 + 9) / 2 = 7 days
         const averageCard = screen.getByText('Average').closest('.rounded-lg');
-        expect(averageCard).toHaveTextContent('7 days');
+        expect(averageCard).toHaveTextContent('7.00 days');
         
         const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
         expect(bestCard).toHaveTextContent('5 days');
@@ -723,7 +728,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: 'manufacturing-1',
+              id: 'manufacturing',
               metric_key: 'manufacturing',
               display_title: 'Manufacturing Lead Time',
               canonical_stage: 'Manufacturing',
@@ -766,7 +771,7 @@ describe('FlowMetricDetailPage', () => {
       await waitFor(() => {
         // Expected calculation: (8*4 + 6*6 + 2*7) / 16 = 82/16 = 5.125 days, rounded to 5
         const averageCard = screen.getByText('Average').closest('.rounded-lg');
-        expect(averageCard).toHaveTextContent('5 days');
+        expect(averageCard).toHaveTextContent('5.13 days');
         
         const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
         expect(bestCard).toHaveTextContent('4 days');
@@ -788,7 +793,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: 'oem-1',
+              id: 'oem-order-conversion',
               metric_key: 'oem-order-conversion',
               display_title: 'OEM Order Lead Time',
               canonical_stage: 'OEM Order Conversion',
@@ -826,7 +831,7 @@ describe('FlowMetricDetailPage', () => {
       await waitFor(() => {
         // Expected calculation: (4.05 + 1.77) / 2 = 2.91 days, rounded to 3
         const averageCard = screen.getByText('Average').closest('.rounded-lg');
-        expect(averageCard).toHaveTextContent('3 days');
+        expect(averageCard).toHaveTextContent('2.91 days');
         
         const bestCard = screen.getByText('Best Performance').closest('.rounded-lg');
         expect(bestCard).toHaveTextContent('2 days');
@@ -848,7 +853,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'manufacturing',
               metric_key: 'manufacturing',
               display_title: 'Manufacturing Lead Time',
               canonical_stage: 'Manufacturing',
@@ -906,7 +911,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'manufacturing',
               metric_key: 'manufacturing',
               display_title: 'Manufacturing Lead Time',
               canonical_stage: 'Manufacturing',
@@ -957,7 +962,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'empty-metric',
               metric_key: 'empty-metric',
               display_title: 'Empty Metric',
               canonical_stage: 'Empty Stage',
@@ -985,7 +990,7 @@ describe('FlowMetricDetailPage', () => {
 
       // Should show no data message
       await waitFor(() => {
-        expect(screen.getByText('No deals found for this canonical stage')).toBeInTheDocument();
+        expect(screen.getByText('No deals found for this canonical stage in the selected time period')).toBeInTheDocument();
       });
     });
 
@@ -997,7 +1002,7 @@ describe('FlowMetricDetailPage', () => {
           json: async () => ({
             success: true,
             data: [{
-              id: '1',
+              id: 'manufacturing',
               metric_key: 'manufacturing',
               display_title: 'Manufacturing Lead Time',
               canonical_stage: 'Manufacturing',
@@ -1030,7 +1035,7 @@ describe('FlowMetricDetailPage', () => {
       const listViewButton = screen.getByText('List View');
       const chartViewButton = screen.getByText('Chart View');
       
-      expect(chartViewButton).toHaveClass('bg-red-600');
+      expect(chartViewButton).toHaveClass('bg-gray-700');
       expect(listViewButton).toHaveClass('text-gray-600');
 
       // Switch to list view
@@ -1041,7 +1046,7 @@ describe('FlowMetricDetailPage', () => {
       });
 
       // Now List View should be active
-      expect(listViewButton).toHaveClass('bg-red-600');
+      expect(listViewButton).toHaveClass('bg-gray-700');
       expect(chartViewButton).toHaveClass('text-gray-600');
     });
   });

@@ -10,8 +10,7 @@ mcpServers:
       - "@modelcontextprotocol/server-filesystem"
       - /Users/janerasmus/Documents/Projects
     env: {}
-    autoApprove: true
-
+  
   - name: shell
     command: npx
     args:
@@ -19,4 +18,3 @@ mcpServers:
       - "@modelcontextprotocol/server-shell"
       - ${workspaceFolder}
     env: {}
-    autoApprove: true

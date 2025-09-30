@@ -101,7 +101,7 @@ export const CANONICAL_STAGE_DEALS_DATA = [
 // Setup function for flow metrics tests
 export const setupFlowMetricsTest = () => {
   vi.clearAllMocks();
-  global.fetch = vi.fn();
+  // Use global fetch from tests/setup.ts (Level 1 mock)
   vi.mock('../../app/hooks/use-toast', () => ({
     useToast: mockUseToast
   }));

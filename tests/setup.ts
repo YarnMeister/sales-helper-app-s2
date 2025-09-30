@@ -349,8 +349,12 @@ afterEach(async () => {
   
   // Clear any global state
   if (typeof window !== 'undefined') {
-    // Clear localStorage and sessionStorage
-    window.localStorage.clear();
-    window.sessionStorage.clear();
+    // Clear localStorage and sessionStorage (guard for environments without full Web Storage API)
+    if (window.localStorage && typeof window.localStorage.clear === 'function') {
+      window.localStorage.clear();
+    }
+    if (window.sessionStorage && typeof window.sessionStorage.clear === 'function') {
+      window.sessionStorage.clear();
+    }
   }
 });

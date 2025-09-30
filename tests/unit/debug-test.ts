@@ -18,8 +18,7 @@ vi.mock('@/lib/log', () => ({
   logError: vi.fn()
 }));
 
-// Mock global fetch
-global.fetch = vi.fn();
+// Use global fetch from tests/setup.ts (Level 1 mock)
 
 describe('Debug Test', () => {
   it('should understand response structure', async () => {

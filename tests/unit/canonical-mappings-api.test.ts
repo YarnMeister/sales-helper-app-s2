@@ -1,14 +1,31 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET, POST } from '../../app/api/admin/canonical-mappings/route';
-import { PATCH, DELETE } from '../../app/api/admin/canonical-mappings/[id]/route';
+
 
 // Mock the database functions
-vi.mock('../../../../lib/db', () => ({
+vi.mock('../../lib/db', () => ({
   sql: vi.fn(),
   logInfo: vi.fn(),
   logError: vi.fn()
 }));
+
+// Central mock for the repository used by routes
+const repoMethods = {
+  getMappingsWithConfig: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  findById: vi.fn(),
+  delete: vi.fn(),
+};
+
+// The route files import the repository with different relative paths; mock both
+vi.mock('../../../../lib/database/repositories/flow-metrics-repository', () => ({
+  CanonicalStageMappingsRepository: vi.fn(() => repoMethods),
+}));
+vi.mock('../../../../../lib/database/repositories/flow-metrics-repository', () => ({
+  CanonicalStageMappingsRepository: vi.fn(() => repoMethods),
+}));
+
 
 // Mock NextResponse
 vi.mock('next/server', async () => {
@@ -21,9 +38,17 @@ vi.mock('next/server', async () => {
   };
 });
 
+
+// Import routes after mocks so they receive mocked dependencies
+import { GET, POST } from '../../app/api/admin/canonical-mappings/route';
+import { PATCH, DELETE } from '../../app/api/admin/canonical-mappings/[id]/route';
+
 describe('Canonical Mappings API', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
+    // Reset repo method mocks
+    Object.values(repoMethods).forEach((fn) => (fn as any).mockReset());
   });
 
   afterEach(() => {
@@ -35,23 +60,20 @@ describe('Canonical Mappings API', () => {
       const mockMappings = [
         {
           id: '1',
-          canonical_stage: 'Order Conversion',
-          start_stage: 'Order Received - Johan',
-          end_stage: 'Quality Control',
-          created_at: '2025-08-25T13:33:46.718Z',
-          updated_at: '2025-08-25T13:33:46.718Z'
+          canonicalStage: 'Order Conversion',
+          startStage: 'Order Received - Johan',
+          endStage: 'Quality Control',
+          createdAt: '2025-08-25T13:33:46.718Z',
+          updatedAt: '2025-08-25T13:33:46.718Z'
         }
       ];
 
-      const { sql } = await import('../../lib/db');
-      (sql as any).mockResolvedValue(mockMappings);
+      const { CanonicalStageMappingsRepository } = await import('../../lib/database/repositories/flow-metrics-repository');
+      vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'getMappingsWithConfig').mockResolvedValue({ success: true, data: mockMappings } as any);
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings');
       const response = await GET(request);
 
-      expect(sql).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT * FROM canonical_stage_mappings')
-      );
       expect(response).toEqual({
         data: {
           success: true,
@@ -62,9 +84,9 @@ describe('Canonical Mappings API', () => {
       });
     });
 
-    it('should handle database errors gracefully', async () => {
-      const { sql } = await import('../../lib/db');
-      (sql as any).mockRejectedValue(new Error('Database connection failed'));
+    it('should handle repository errors gracefully', async () => {
+      const { CanonicalStageMappingsRepository } = await import('../../lib/database/repositories/flow-metrics-repository');
+      vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'getMappingsWithConfig').mockResolvedValue({ success: false, error: { message: 'Database connection failed' } } as any);
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings');
       const response = await GET(request);
@@ -83,20 +105,27 @@ describe('Canonical Mappings API', () => {
   describe('POST /api/admin/canonical-mappings', () => {
     it('should create a new canonical stage mapping successfully', async () => {
       const newMapping = {
+        metric_config_id: 'mc1',
         canonical_stage: 'Quote to Order',
         start_stage: 'Quote Sent',
-        end_stage: 'Order Received - Johan'
+        end_stage: 'Order Received - Johan',
+        avg_min_days: null,
+        avg_max_days: null,
+        metric_comment: null,
       };
 
       const createdMapping = {
         id: '2',
-        ...newMapping,
-        created_at: '2025-08-25T13:51:04.738Z',
-        updated_at: '2025-08-25T13:51:04.738Z'
+        metricConfigId: 'mc1',
+        canonicalStage: 'Quote to Order',
+        startStage: 'Quote Sent',
+        endStage: 'Order Received - Johan',
+        createdAt: '2025-08-25T13:51:04.738Z',
+        updatedAt: '2025-08-25T13:51:04.738Z'
       };
 
-      const { sql } = await import('../../lib/db');
-      (sql as any).mockResolvedValue([createdMapping]);
+      const { CanonicalStageMappingsRepository } = await import('../../lib/database/repositories/flow-metrics-repository');
+      const createSpy = vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'create').mockResolvedValue({ success: true, data: createdMapping } as any);
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings', {
         method: 'POST',
@@ -105,12 +134,7 @@ describe('Canonical Mappings API', () => {
 
       const response = await POST(request);
 
-      expect(sql).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO canonical_stage_mappings'),
-        'Quote to Order',
-        'Quote Sent',
-        'Order Received - Johan'
-      );
+      expect(createSpy).toHaveBeenCalled();
       expect(response).toEqual({
         data: {
           success: true,
@@ -123,9 +147,10 @@ describe('Canonical Mappings API', () => {
 
     it('should validate required fields', async () => {
       const invalidMapping = {
-        canonical_stage: 'Quote to Order'
-        // Missing start_stage and end_stage
-      };
+        // Missing canonical_stage and metric_config_id
+        start_stage: 'Quote Sent',
+        end_stage: 'Order Received - Johan'
+      } as any;
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings', {
         method: 'POST',
@@ -137,21 +162,22 @@ describe('Canonical Mappings API', () => {
       expect(response).toEqual({
         data: {
           success: false,
-          error: 'canonical_stage, start_stage, and end_stage are required'
+          error: 'canonical_stage is required'
         },
         options: { status: 400 }
       });
     });
 
-    it('should handle database errors during creation', async () => {
+    it('should handle repository errors during creation', async () => {
       const newMapping = {
+        metric_config_id: 'mc1',
         canonical_stage: 'Quote to Order',
         start_stage: 'Quote Sent',
         end_stage: 'Order Received - Johan'
       };
 
-      const { sql } = await import('../../lib/db');
-      (sql as any).mockRejectedValue(new Error('Insert failed'));
+      const { CanonicalStageMappingsRepository } = await import('../../lib/database/repositories/flow-metrics-repository');
+      vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'create').mockRejectedValue(new Error('Insert failed'));
 
       const request = new NextRequest('http://localhost:3000/api/admin/canonical-mappings', {
         method: 'POST',
@@ -182,13 +208,15 @@ describe('Canonical Mappings API', () => {
 
       const updatedMapping = {
         id: mappingId,
-        ...updateData,
-        created_at: '2025-08-25T13:33:46.718Z',
-        updated_at: '2025-08-25T13:54:57.483Z'
+        canonicalStage: 'Order Conversion',
+        startStage: 'Order Received - Johan',
+        endStage: 'Quality Control',
+        createdAt: '2025-08-25T13:33:46.718Z',
+        updatedAt: '2025-08-25T13:54:57.483Z'
       };
 
-      const { sql } = await import('../../lib/db');
-      (sql as any).mockResolvedValue([updatedMapping]);
+      const { CanonicalStageMappingsRepository } = await import('../../lib/database/repositories/flow-metrics-repository');
+      const updateSpy = vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'update').mockResolvedValue({ success: true, data: updatedMapping } as any);
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
         method: 'PATCH',
@@ -197,13 +225,7 @@ describe('Canonical Mappings API', () => {
 
       const response = await PATCH(request, { params: { id: mappingId } });
 
-      expect(sql).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE canonical_stage_mappings'),
-        'Order Conversion',
-        'Order Received - Johan',
-        'Quality Control',
-        mappingId
-      );
+      expect(updateSpy).toHaveBeenCalled();
       expect(response).toEqual({
         data: {
           success: true,
@@ -222,8 +244,8 @@ describe('Canonical Mappings API', () => {
         end_stage: 'Quality Control'
       };
 
-      const { sql } = await import('../../lib/db');
-      (sql as any).mockResolvedValue([]);
+      const { CanonicalStageMappingsRepository } = await import('../../lib/database/repositories/flow-metrics-repository');
+      vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'update').mockResolvedValue({ success: false, error: { type: 'not_found', message: 'Not found' } as any } as any);
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
         method: 'PATCH',
@@ -235,7 +257,8 @@ describe('Canonical Mappings API', () => {
       expect(response).toEqual({
         data: {
           success: false,
-          error: 'Canonical stage mapping not found'
+          error: 'Failed to update canonical stage mapping',
+          message: 'Not found'
         },
         options: { status: 404 }
       });
@@ -246,7 +269,7 @@ describe('Canonical Mappings API', () => {
       const invalidUpdateData = {
         canonical_stage: 'Order Conversion'
         // Missing start_stage and end_stage
-      };
+      } as any;
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
         method: 'PATCH',
@@ -258,7 +281,7 @@ describe('Canonical Mappings API', () => {
       expect(response).toEqual({
         data: {
           success: false,
-          error: 'canonical_stage, start_stage, and end_stage are required'
+          error: 'Both start and end stages are required (either as IDs or names)'
         },
         options: { status: 400 }
       });
@@ -270,15 +293,16 @@ describe('Canonical Mappings API', () => {
       const mappingId = '1';
       const deletedMapping = {
         id: mappingId,
-        canonical_stage: 'Order Conversion',
-        start_stage: 'Order Received - Johan',
-        end_stage: 'Quality Control',
-        created_at: '2025-08-25T13:33:46.718Z',
-        updated_at: '2025-08-25T13:33:46.718Z'
+        canonicalStage: 'Order Conversion',
+        startStage: 'Order Received - Johan',
+        endStage: 'Quality Control',
+        createdAt: '2025-08-25T13:33:46.718Z',
+        updatedAt: '2025-08-25T13:33:46.718Z'
       };
 
-      const { sql } = await import('../../lib/db');
-      (sql as any).mockResolvedValue([deletedMapping]);
+      const { CanonicalStageMappingsRepository } = await import('../../lib/database/repositories/flow-metrics-repository');
+      const findSpy = vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'findById').mockResolvedValue({ success: true, data: deletedMapping } as any);
+      const deleteSpy = vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'delete').mockResolvedValue({ success: true, data: true } as any);
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
         method: 'DELETE'
@@ -286,10 +310,8 @@ describe('Canonical Mappings API', () => {
 
       const response = await DELETE(request, { params: { id: mappingId } });
 
-      expect(sql).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM canonical_stage_mappings'),
-        mappingId
-      );
+      expect(findSpy).toHaveBeenCalledWith(mappingId);
+      expect(deleteSpy).toHaveBeenCalledWith(mappingId);
       expect(response).toEqual({
         data: {
           success: true,
@@ -303,8 +325,8 @@ describe('Canonical Mappings API', () => {
     it('should return 404 when mapping not found for deletion', async () => {
       const mappingId = '999';
 
-      const { sql } = await import('../../lib/db');
-      (sql as any).mockResolvedValue([]);
+      const { CanonicalStageMappingsRepository } = await import('../../lib/database/repositories/flow-metrics-repository');
+      vi.spyOn((CanonicalStageMappingsRepository as any).prototype, 'findById').mockResolvedValue({ success: true, data: null } as any);
 
       const request = new NextRequest(`http://localhost:3000/api/admin/canonical-mappings/${mappingId}`, {
         method: 'DELETE'

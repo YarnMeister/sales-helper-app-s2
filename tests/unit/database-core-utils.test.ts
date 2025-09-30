@@ -14,6 +14,9 @@ import {
   formatQueryForLogging
 } from '../../lib/database/core/utils';
 import { DatabaseConfig, FilterConditions, QueryOptions } from '../../lib/database/core/types';
+import { getDatabaseConnection } from '../../lib/database/core/connection';
+import { logInfo } from '../../lib/log';
+
 
 // Mock the connection module
 vi.mock('../../lib/database/core/connection', () => ({
@@ -29,10 +32,9 @@ vi.mock('../../lib/log', () => ({
 
 describe('Database Core Utils', () => {
   const mockSql = vi.fn();
-  
+
   beforeEach(() => {
     vi.clearAllMocks();
-    const { getDatabaseConnection } = require('../../lib/database/core/connection');
     vi.mocked(getDatabaseConnection).mockReturnValue(mockSql);
   });
 
@@ -47,34 +49,33 @@ describe('Database Core Utils', () => {
   describe('getTableName', () => {
     it('should return mock table name in development environment', () => {
       process.env.NODE_ENV = 'development';
-      
+
       const tableName = getTableName('requests');
-      
+
       expect(tableName).toBe('mock_requests');
     });
 
     it('should return real table name in production environment', () => {
       process.env.NODE_ENV = 'production';
-      
+
       const tableName = getTableName('requests');
-      
+
       expect(tableName).toBe('requests');
     });
 
     it('should return real table name when NODE_ENV is not set', () => {
       delete process.env.NODE_ENV;
-      
+
       const tableName = getTableName('requests');
-      
+
       expect(tableName).toBe('requests');
     });
 
     it('should log table name selection', () => {
       process.env.NODE_ENV = 'development';
-      
+
       getTableName('requests');
-      
-      const { logInfo } = require('../../lib/log');
+
       expect(logInfo).toHaveBeenCalledWith(
         'Table name selected',
         {
@@ -90,9 +91,9 @@ describe('Database Core Utils', () => {
   describe('getRequestsTableName', () => {
     it('should return correct requests table name', () => {
       process.env.NODE_ENV = 'development';
-      
+
       const tableName = getRequestsTableName();
-      
+
       expect(tableName).toBe('mock_requests');
     });
   });
@@ -100,9 +101,9 @@ describe('Database Core Utils', () => {
   describe('getSiteVisitsTableName', () => {
     it('should return correct site visits table name', () => {
       process.env.NODE_ENV = 'production';
-      
+
       const tableName = getSiteVisitsTableName();
-      
+
       expect(tableName).toBe('site_visits');
     });
   });
@@ -110,9 +111,9 @@ describe('Database Core Utils', () => {
   describe('checkDbHealth', () => {
     it('should return healthy status when database responds', async () => {
       mockSql.mockResolvedValue([{ health_check: 1 }]);
-      
+
       const health = await checkDbHealth();
-      
+
       expect(health).toEqual({
         status: 'healthy',
         connected: true,
@@ -125,9 +126,9 @@ describe('Database Core Utils', () => {
     it('should return unhealthy status when database fails', async () => {
       const error = new Error('Connection failed');
       mockSql.mockRejectedValue(error);
-      
+
       const health = await checkDbHealth();
-      
+
       expect(health).toEqual({
         status: 'unhealthy',
         connected: false,
@@ -138,9 +139,9 @@ describe('Database Core Utils', () => {
 
     it('should handle non-Error objects', async () => {
       mockSql.mockRejectedValue('string error');
-      
+
       const health = await checkDbHealth();
-      
+
       expect(health.errors).toEqual(['string error']);
     });
   });
@@ -148,19 +149,18 @@ describe('Database Core Utils', () => {
   describe('generateRequestId', () => {
     it('should generate and return request ID', async () => {
       mockSql.mockResolvedValue([{ generate_request_id: 'QR-001' }]);
-      
+
       const requestId = await generateRequestId();
-      
+
       expect(requestId).toBe('QR-001');
       expect(mockSql).toHaveBeenCalledWith(['SELECT generate_request_id()']);
     });
 
     it('should log the generated request ID', async () => {
       mockSql.mockResolvedValue([{ generate_request_id: 'QR-002' }]);
-      
+
       await generateRequestId();
-      
-      const { logInfo } = require('../../lib/log');
+
       expect(logInfo).toHaveBeenCalledWith(
         'Generated new request ID: QR-002',
         { requestId: 'QR-002' }
@@ -172,29 +172,31 @@ describe('Database Core Utils', () => {
     it('should validate contact and return true for valid contact', async () => {
       const contact = { name: 'John Doe', email: 'john@example.com' };
       mockSql.mockResolvedValue([{ validate_contact_jsonb: true }]);
-      
+
       const isValid = await validateContactJsonb(contact);
-      
+
       expect(isValid).toBe(true);
-      expect(mockSql).toHaveBeenCalledWith([`SELECT validate_contact_jsonb(${JSON.stringify(JSON.stringify(contact))})`]);
+      expect(mockSql).toHaveBeenCalledWith([
+        'SELECT validate_contact_jsonb(',
+        ')'
+      ], JSON.stringify(contact));
     });
 
     it('should return false for invalid contact', async () => {
       const contact = { invalid: 'data' };
       mockSql.mockResolvedValue([{ validate_contact_jsonb: false }]);
-      
+
       const isValid = await validateContactJsonb(contact);
-      
+
       expect(isValid).toBe(false);
     });
 
     it('should log validation result', async () => {
       const contact = { name: 'John Doe' };
       mockSql.mockResolvedValue([{ validate_contact_jsonb: true }]);
-      
+
       await validateContactJsonb(contact);
-      
-      const { logInfo } = require('../../lib/log');
+
       expect(logInfo).toHaveBeenCalledWith(
         'Contact JSONB validation result: true',
         { contact }
@@ -213,9 +215,9 @@ describe('Database Core Utils', () => {
         name: 'John',
         age: 30
       };
-      
+
       const clause = buildWhereClause(conditions);
-      
+
       expect(clause).toBe('WHERE name = "John" AND age = 30');
     });
 
@@ -223,9 +225,9 @@ describe('Database Core Utils', () => {
       const conditions: FilterConditions = {
         deleted_at: null
       };
-      
+
       const clause = buildWhereClause(conditions);
-      
+
       expect(clause).toBe('WHERE deleted_at IS NULL');
     });
 
@@ -233,9 +235,9 @@ describe('Database Core Utils', () => {
       const conditions: FilterConditions = {
         optional_field: undefined
       };
-      
+
       const clause = buildWhereClause(conditions);
-      
+
       expect(clause).toBe('WHERE optional_field IS NULL');
     });
 
@@ -243,9 +245,9 @@ describe('Database Core Utils', () => {
       const conditions: FilterConditions = {
         status: ['active', 'pending']
       };
-      
+
       const clause = buildWhereClause(conditions);
-      
+
       expect(clause).toBe('WHERE status = ANY(["active","pending"])');
     });
   });
@@ -261,9 +263,9 @@ describe('Database Core Utils', () => {
         orderBy: 'name',
         orderDirection: 'ASC'
       };
-      
+
       const clause = buildOrderByClause(options);
-      
+
       expect(clause).toBe('ORDER BY name ASC');
     });
 
@@ -271,9 +273,9 @@ describe('Database Core Utils', () => {
       const options: QueryOptions = {
         orderBy: 'email'
       };
-      
+
       const clause = buildOrderByClause(options);
-      
+
       expect(clause).toBe('ORDER BY email ASC');
     });
   });
@@ -289,9 +291,9 @@ describe('Database Core Utils', () => {
         limit: 25,
         offset: 50
       };
-      
+
       const clause = buildLimitOffsetClause(options);
-      
+
       expect(clause).toBe('LIMIT 25 OFFSET 50');
     });
   });
@@ -302,9 +304,9 @@ describe('Database Core Utils', () => {
         url: 'postgresql://test:test@localhost:5432/test',
         environment: 'development'
       };
-      
+
       const isValid = validateDatabaseConfig(config);
-      
+
       expect(isValid).toBe(true);
     });
 
@@ -312,7 +314,7 @@ describe('Database Core Utils', () => {
       const config = {
         environment: 'development'
       } as DatabaseConfig;
-      
+
       expect(() => validateDatabaseConfig(config)).toThrow('Database URL is required');
     });
 
@@ -320,7 +322,7 @@ describe('Database Core Utils', () => {
       const config = {
         url: 'postgresql://test:test@localhost:5432/test'
       } as DatabaseConfig;
-      
+
       expect(() => validateDatabaseConfig(config)).toThrow('Database environment is required');
     });
   });
@@ -332,9 +334,9 @@ describe('Database Core Utils', () => {
       process.env.DB_MAX_CONNECTIONS = '20';
       process.env.DB_CONNECTION_TIMEOUT = '60000';
       process.env.DB_QUERY_TIMEOUT = '45000';
-      
+
       const config = getDatabaseConfig();
-      
+
       expect(config).toEqual({
         url: 'postgresql://test:test@localhost:5432/test',
         environment: 'production',
@@ -346,9 +348,9 @@ describe('Database Core Utils', () => {
 
     it('should use default values when environment variables are not set', () => {
       process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
-      
+
       const config = getDatabaseConfig();
-      
+
       expect(config).toEqual({
         url: 'postgresql://test:test@localhost:5432/test',
         environment: 'development',
@@ -362,28 +364,28 @@ describe('Database Core Utils', () => {
   describe('formatQueryForLogging', () => {
     it('should format query without parameters', () => {
       const query = 'SELECT * FROM users';
-      
+
       const formatted = formatQueryForLogging(query);
-      
+
       expect(formatted).toBe('SELECT * FROM users');
     });
 
     it('should replace parameter placeholders with values', () => {
       const query = 'SELECT * FROM users WHERE id = $1 AND name = $2';
       const params = [123, 'John'];
-      
+
       const formatted = formatQueryForLogging(query, params);
-      
+
       expect(formatted).toBe('SELECT * FROM users WHERE id = 123 AND name = \'John\'');
     });
 
     it('should truncate long queries', () => {
       const longQuery = 'SELECT * FROM users WHERE ' + 'very_long_condition AND '.repeat(50) + 'id = 1';
-      
+
       const formatted = formatQueryForLogging(longQuery);
-      
+
       expect(formatted.length).toBeLessThanOrEqual(503); // 500 + '...'
-      expect(formatted).toEndWith('...');
+      expect(formatted.endsWith('...')).toBe(true);
     });
   });
 });

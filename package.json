@@ -9,6 +9,8 @@
     "start": "npm run env:check && next start",
     "lint": "next lint",
     "test": "vitest run",
+    "test:ci": "vitest run --reporter=default",
+    "test:dev": "vitest --reporter=default --no-bail",
     "debug:typescript": "node scripts/debug-typescript.js",
     "test:watch": "vitest",
     "test:quiet": "vitest run --reporter=dot --silent --bail=1",

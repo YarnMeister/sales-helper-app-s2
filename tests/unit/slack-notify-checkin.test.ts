@@ -19,8 +19,7 @@ vi.mock('@/lib/log', () => ({
   logError: vi.fn()
 }));
 
-// Mock global fetch
-global.fetch = vi.fn();
+// Use global fetch from tests/setup.ts (Level 1 mock)
 
 // Helper function to parse response
 const parseResponse = async (response: any) => {
