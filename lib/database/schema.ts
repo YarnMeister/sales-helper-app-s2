@@ -9,7 +9,8 @@ export const flowMetricsConfig = pgTable('flow_metrics_config', {
   id: uuid('id').primaryKey().defaultRandom(),
   metricKey: text('metric_key').notNull().unique(),
   displayTitle: text('display_title').notNull(),
-  canonicalStage: text('canonical_stage').notNull(),
+  canonicalStage: text('canonical_stage'), // Legacy field, now nullable
+  config: jsonb('config').notNull().default('{}'), // JSONB configuration (pipeline, stages, thresholds)
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow(),
@@ -18,29 +19,10 @@ export const flowMetricsConfig = pgTable('flow_metrics_config', {
   metricKeyIdx: uniqueIndex('idx_fmc_metric_key').on(table.metricKey),
   sortOrderIdx: index('idx_fmc_sort_order').on(table.sortOrder),
   isActiveIdx: index('idx_fmc_is_active').on(table.isActive),
+  configGinIdx: index('idx_fmc_config_gin').on(table.config), // GIN index for JSONB queries
 }));
 
-export const canonicalStageMappings = pgTable('canonical_stage_mappings', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  metricConfigId: uuid('metric_config_id').references(() => flowMetricsConfig.id),
-  canonicalStage: text('canonical_stage').notNull(),
-  startStage: text('start_stage'),
-  endStage: text('end_stage'),
-  startStageId: integer('start_stage_id'),
-  endStageId: integer('end_stage_id'),
-  avgMinDays: integer('avg_min_days'),
-  avgMaxDays: integer('avg_max_days'),
-  metricComment: text('metric_comment'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-}, (table) => ({
-  canonicalStageIdx: index('idx_csm_canonical_stage').on(table.canonicalStage),
-  startStageIdx: index('idx_csm_start_stage').on(table.startStage),
-  endStageIdx: index('idx_csm_end_stage').on(table.endStage),
-  startStageIdIdx: index('idx_csm_start_stage_id').on(table.startStageId),
-  endStageIdIdx: index('idx_csm_end_stage_id').on(table.endStageId),
-  metricConfigIdIdx: index('idx_csm_metric_config_id').on(table.metricConfigId),
-}));
+// Removed: canonical_stage_mappings table (replaced with JSONB config in flow_metrics_config)
 
 export const requests = pgTable('requests', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -179,16 +161,7 @@ export const schemaMigrations = pgTable('schema_migrations', {
 });
 
 // Relations
-export const flowMetricsConfigRelations = relations(flowMetricsConfig, ({ many }) => ({
-  stageMappings: many(canonicalStageMappings),
-}));
-
-export const canonicalStageMappingsRelations = relations(canonicalStageMappings, ({ one }) => ({
-  metricConfig: one(flowMetricsConfig, {
-    fields: [canonicalStageMappings.metricConfigId],
-    references: [flowMetricsConfig.id],
-  }),
-}));
+// Removed: flowMetricsConfig and canonicalStageMappings relations (canonical_stage_mappings table dropped)
 
 export const requestsRelations = relations(requests, ({ many }) => ({
   pipedriveSubmissions: many(pipedriveSubmissions),
@@ -212,8 +185,7 @@ export const pipedriveSubmissionsRelations = relations(pipedriveSubmissions, ({ 
 // Export types
 export type FlowMetricsConfig = typeof flowMetricsConfig.$inferSelect;
 export type NewFlowMetricsConfig = typeof flowMetricsConfig.$inferInsert;
-export type CanonicalStageMapping = typeof canonicalStageMappings.$inferSelect;
-export type NewCanonicalStageMapping = typeof canonicalStageMappings.$inferInsert;
+// Removed: CanonicalStageMapping types (table dropped)
 export type Request = typeof requests.$inferSelect;
 export type NewRequest = typeof requests.$inferInsert;
 export type MockRequest = typeof mockRequests.$inferSelect;

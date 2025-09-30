@@ -5,7 +5,7 @@ export * from './schema';
 
 // Repository exports - using re-export pattern
 export { FlowMetricsRepository } from './repositories/flow-metrics-repository';
-export { CanonicalStageMappingsRepository } from './repositories/flow-metrics-repository';
+// Removed: CanonicalStageMappingsRepository (canonical_stage_mappings table dropped)
 export { SalesRequestsRepository } from './repositories/sales-requests-repository';
 export { MockRequestsRepository } from './repositories/sales-requests-repository';
 export { SiteVisitsRepository } from './repositories/sales-requests-repository';
