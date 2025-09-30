@@ -75,6 +75,14 @@ export async function POST(request: NextRequest) {
         );
       }
       
+      // Inject legacy top-level pipeline for backward-compat DB constraint
+      if (!config.pipeline) {
+        config.pipeline = {
+          id: config.startStage.pipelineId,
+          name: config.startStage.pipelineName
+        };
+      }
+      
       // Validate same stage
       if (config.startStage.id === config.endStage.id) {
         return NextResponse.json(
