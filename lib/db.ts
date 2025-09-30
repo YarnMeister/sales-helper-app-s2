@@ -581,6 +581,7 @@ export const createFlowMetricConfig = async (data: {
   metric_key: string;
   display_title: string;
   canonical_stage: string;
+  config?: any; // JSONB config
   sort_order?: number;
   is_active?: boolean;
   start_stage_id?: number;
@@ -592,18 +593,20 @@ export const createFlowMetricConfig = async (data: {
   return withDbErrorHandling(async () => {
     logInfo('Creating flow metric configuration', { metricKey: data.metric_key });
     
-    // Insert the config first
+    // Insert the config with JSONB support
     const configResult = await sql`
       INSERT INTO flow_metrics_config (
         metric_key, 
         display_title, 
         canonical_stage, 
+        config,
         sort_order, 
         is_active
       ) VALUES (
         ${data.metric_key},
         ${data.display_title},
         ${data.canonical_stage},
+        ${data.config ? JSON.stringify(data.config) : '{}'}::jsonb,
         ${data.sort_order || 0},
         ${data.is_active !== false}
       )

@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     logInfo('POST /api/admin/flow-metrics-config - Creating flow metric configuration', body);
     
-    // Validate required fields
-    const { metric_key, display_title, canonical_stage, start_stage_id, end_stage_id, avg_min_days, avg_max_days, metric_comment } = body;
+    const { metric_key, display_title, config, sort_order, is_active } = body;
     
-    if (!metric_key || !display_title || !canonical_stage) {
+    // Validate required fields
+    if (!metric_key || !display_title) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: metric_key, display_title, canonical_stage' },
+        { success: false, error: 'Missing required fields: metric_key, display_title' },
         { status: 400 }
       );
     }
@@ -51,55 +51,63 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Validate stage IDs are numbers
-    if (start_stage_id && !Number.isInteger(Number(start_stage_id))) {
-      return NextResponse.json(
-        { success: false, error: 'start_stage_id must be a valid number' },
-        { status: 400 }
-      );
-    }
-    
-    if (end_stage_id && !Number.isInteger(Number(end_stage_id))) {
-      return NextResponse.json(
-        { success: false, error: 'end_stage_id must be a valid number' },
-        { status: 400 }
-      );
-    }
-    
-    // Validate threshold values
-    if (avg_min_days !== undefined && !Number.isInteger(Number(avg_min_days))) {
-      return NextResponse.json(
-        { success: false, error: 'avg_min_days must be a valid number' },
-        { status: 400 }
-      );
-    }
-    
-    if (avg_max_days !== undefined && !Number.isInteger(Number(avg_max_days))) {
-      return NextResponse.json(
-        { success: false, error: 'avg_max_days must be a valid number' },
-        { status: 400 }
-      );
-    }
-    
-    // Validate threshold logic
-    if (avg_min_days !== undefined && avg_max_days !== undefined && Number(avg_min_days) > Number(avg_max_days)) {
-      return NextResponse.json(
-        { success: false, error: 'avg_min_days cannot be greater than avg_max_days' },
-        { status: 400 }
-      );
+    // Validate config structure (JSONB)
+    if (config) {
+      if (!config.startStage || !config.endStage) {
+        return NextResponse.json(
+          { success: false, error: 'config must include startStage and endStage' },
+          { status: 400 }
+        );
+      }
+      
+      // Validate stage structure
+      if (!config.startStage.id || !config.startStage.name || !config.startStage.pipelineId || !config.startStage.pipelineName) {
+        return NextResponse.json(
+          { success: false, error: 'startStage must include id, name, pipelineId, and pipelineName' },
+          { status: 400 }
+        );
+      }
+      
+      if (!config.endStage.id || !config.endStage.name || !config.endStage.pipelineId || !config.endStage.pipelineName) {
+        return NextResponse.json(
+          { success: false, error: 'endStage must include id, name, pipelineId, and pipelineName' },
+          { status: 400 }
+        );
+      }
+      
+      // Validate same stage
+      if (config.startStage.id === config.endStage.id) {
+        return NextResponse.json(
+          { success: false, error: 'Start and end stages cannot be the same' },
+          { status: 400 }
+        );
+      }
+      
+      // Validate thresholds if provided
+      if (config.thresholds) {
+        if (config.thresholds.minDays !== undefined && config.thresholds.maxDays !== undefined) {
+          if (config.thresholds.minDays > config.thresholds.maxDays) {
+            return NextResponse.json(
+              { success: false, error: 'minDays cannot be greater than maxDays' },
+              { status: 400 }
+            );
+          }
+        }
+      }
     }
     
     const newConfig = await createFlowMetricConfig({
       metric_key,
       display_title,
-      canonical_stage,
-      sort_order: body.sort_order,
-      is_active: body.is_active !== false,
-      start_stage_id: start_stage_id ? Number(start_stage_id) : undefined,
-      end_stage_id: end_stage_id ? Number(end_stage_id) : undefined,
-      avg_min_days: avg_min_days !== undefined ? Number(avg_min_days) : undefined,
-      avg_max_days: avg_max_days !== undefined ? Number(avg_max_days) : undefined,
-      metric_comment: metric_comment || undefined
+      canonical_stage: config?.startStage?.name || 'default', // Legacy field - use start stage name
+      config: config, // Store JSONB config
+      sort_order: sort_order || 0,
+      is_active: is_active !== false,
+      start_stage_id: config?.startStage?.id,
+      end_stage_id: config?.endStage?.id,
+      avg_min_days: config?.thresholds?.minDays,
+      avg_max_days: config?.thresholds?.maxDays,
+      metric_comment: config?.comment || undefined
     });
     
     return NextResponse.json({
