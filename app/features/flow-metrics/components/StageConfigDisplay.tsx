@@ -68,7 +68,18 @@ export function StageConfigDisplay({
               )}
             </div>
           ) : (
-            <div className="text-gray-400 text-sm">No start stage selected</div>
+            <div className="space-y-2">
+              <div className="text-gray-400 text-sm mb-2">No start stage selected</div>
+              {onEditStart && (
+                <Button
+                  onClick={onEditStart}
+                  size="sm"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Select Start Stage
+                </Button>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -121,7 +132,18 @@ export function StageConfigDisplay({
               )}
             </div>
           ) : (
-            <div className="text-gray-400 text-sm">No end stage selected</div>
+            <div className="space-y-2">
+              <div className="text-gray-400 text-sm mb-2">No end stage selected</div>
+              {onEditEnd && (
+                <Button
+                  onClick={onEditEnd}
+                  size="sm"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Select End Stage
+                </Button>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
