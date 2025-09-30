@@ -16,11 +16,42 @@ function splitSqlStatements(sqlContent) {
     .replace(/--.*$/gm, '') // Remove single line comments
     .replace(/\/\*[\s\S]*?\*\//g, ''); // Remove multi-line comments
   
-  // Split by semicolon, but be careful with semicolons in strings
-  const statements = withoutComments
-    .split(';')
-    .map(stmt => stmt.trim())
-    .filter(stmt => stmt.length > 0 && !stmt.match(/^\s*$/));
+  // Split by semicolon, but respect $$ delimiters for functions
+  const statements = [];
+  let currentStatement = '';
+  let inFunction = false;
+  
+  for (let i = 0; i < withoutComments.length; i++) {
+    const char = withoutComments[i];
+    const nextChar = withoutComments[i + 1];
+    
+    // Check for $$ delimiter
+    if (char === '$' && nextChar === '$') {
+      inFunction = !inFunction;
+      currentStatement += char + nextChar;
+      i++; // Skip next character
+      continue;
+    }
+    
+    // If we hit a semicolon outside of a function, end the statement
+    if (char === ';' && !inFunction) {
+      currentStatement += char;
+      const trimmed = currentStatement.trim();
+      if (trimmed && !trimmed.match(/^\s*$/)) {
+        statements.push(trimmed);
+      }
+      currentStatement = '';
+      continue;
+    }
+    
+    currentStatement += char;
+  }
+  
+  // Add any remaining statement
+  const trimmed = currentStatement.trim();
+  if (trimmed && !trimmed.match(/^\s*$/)) {
+    statements.push(trimmed);
+  }
   
   return statements;
 }
