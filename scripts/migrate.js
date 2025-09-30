@@ -122,36 +122,13 @@ async function runMigrations() {
           if (statement.trim()) {
             console.log(`  Executing: ${statement.substring(0, 50)}...`);
             
-            // Handle different types of statements appropriately
-            const upperStatement = statement.trim().toUpperCase();
-            
-            if (upperStatement.startsWith('CREATE TABLE')) {
-              // For CREATE TABLE, use sql.unsafe() but verify table was created
-              await sql.unsafe(statement);
-              // Extract table name and verify it exists
-              const tableNameMatch = statement.match(/CREATE TABLE (?:IF NOT EXISTS )?(\w+)/i);
-              if (tableNameMatch) {
-                const tableName = tableNameMatch[1];
-                const tableExists = await sql`SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = ${tableName})`;
-                if (!tableExists[0].exists) {
-                  throw new Error(`Table ${tableName} was not created successfully`);
-                }
-              }
-            } else if (upperStatement.startsWith('INSERT INTO')) {
-              // For INSERT, use sql.unsafe() and verify at least one row was affected
-              const result = await sql.unsafe(statement);
-              if (!result || result.length === 0) {
-                throw new Error(`INSERT statement did not insert any rows: ${statement.substring(0, 100)}`);
-              }
-            } else if (upperStatement.startsWith('SELECT')) {
-              // For SELECT, use sql.unsafe() and verify we got a result
-              const result = await sql.unsafe(statement);
-              if (result === undefined || result === null) {
-                throw new Error(`SELECT statement failed: ${statement.substring(0, 100)}`);
-              }
-            } else {
-              // For other statements, use sql.unsafe() and hope for the best
-              await sql.unsafe(statement);
+            // Execute the statement using neon's query method for raw SQL
+            try {
+              const result = await sql.query(statement);
+              // Silently succeed - if there's an error, it will throw
+            } catch (stmtError) {
+              console.error(`    Failed: ${stmtError.message}`);
+              throw stmtError;
             }
           }
         }

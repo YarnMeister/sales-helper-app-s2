@@ -5,21 +5,20 @@ import { relations } from 'drizzle-orm';
 export const requestStatusEnum = pgEnum('request_status', ['draft', 'submitted', 'failed']);
 
 // Base tables
-export const flowMetricsConfig = pgTable('flow_metrics_config', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const flowMetricsConfig = pgTable('flow_metrics', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   metricKey: text('metric_key').notNull().unique(),
   displayTitle: text('display_title').notNull(),
-  canonicalStage: text('canonical_stage'), // Legacy field, now nullable
-  config: jsonb('config').notNull().default('{}'), // JSONB configuration (pipeline, stages, thresholds)
+  config: jsonb('config').notNull().default('{}'), // JSONB configuration (startStage, endStage, thresholds)
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
-  metricKeyIdx: uniqueIndex('idx_fmc_metric_key').on(table.metricKey),
-  sortOrderIdx: index('idx_fmc_sort_order').on(table.sortOrder),
-  isActiveIdx: index('idx_fmc_is_active').on(table.isActive),
-  configGinIdx: index('idx_fmc_config_gin').on(table.config), // GIN index for JSONB queries
+  metricKeyIdx: index('idx_flow_metrics_config_metric_key').on(table.metricKey),
+  sortOrderIdx: index('idx_flow_metrics_config_sort_order').on(table.sortOrder),
+  isActiveIdx: index('idx_flow_metrics_config_is_active').on(table.isActive),
+  configGinIdx: index('idx_flow_metrics_config_gin').on(table.config), // GIN index for JSONB queries
 }));
 
 // Removed: canonical_stage_mappings table (replaced with JSONB config in flow_metrics_config)
