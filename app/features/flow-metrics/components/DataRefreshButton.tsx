@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '../../../components/ui/button';
 import { useToast } from '../../../hooks/use-toast';
 import { RefreshCw, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
@@ -31,7 +31,7 @@ export function DataRefreshButton({
 }: DataRefreshButtonProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   // Fetch current sync status
@@ -50,39 +50,47 @@ export function DataRefreshButton({
     return null;
   }, []);
 
+  // Handle sync completion
+  const handleSyncComplete = useCallback(() => {
+    setIsRefreshing(false);
+
+    toast({
+      title: 'Sync Complete',
+      description: 'Data refresh completed successfully',
+    });
+
+    onSyncComplete?.();
+    onDataUpdate?.();
+  }, [toast, onSyncComplete, onDataUpdate]);
+
   // Poll for sync status while running
   useEffect(() => {
     if (isRefreshing) {
       const interval = setInterval(async () => {
         const status = await fetchSyncStatus();
-        
+
         // If sync is no longer running, stop polling
         if (status && !status.isRunning) {
-          setIsRefreshing(false);
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          
-          toast({
-            title: 'Sync Complete',
-            description: 'Data refresh completed successfully',
-          });
-          
-          onSyncComplete?.();
-          onDataUpdate?.();
+          handleSyncComplete();
         }
       }, 3000); // Poll every 3 seconds
 
-      setPollingInterval(interval);
+      pollingIntervalRef.current = interval;
 
       return () => {
-        if (interval) {
-          clearInterval(interval);
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
         }
       };
+    } else {
+      // Clean up interval when not refreshing
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
     }
-  }, [isRefreshing, fetchSyncStatus, toast, onSyncComplete, onDataUpdate, pollingInterval]);
+  }, [isRefreshing, fetchSyncStatus, handleSyncComplete]);
 
   // Initial status fetch
   useEffect(() => {
