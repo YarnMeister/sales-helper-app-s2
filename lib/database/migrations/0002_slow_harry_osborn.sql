@@ -37,7 +37,17 @@ BEGIN
   END IF;
 END $$;
 --> statement-breakpoint
-ALTER TABLE "site_visits" DROP CONSTRAINT "site_visits_request_id_requests_request_id_fk";
+-- Safely drop foreign key constraint if it exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'site_visits_request_id_requests_request_id_fk'
+    AND table_name = 'site_visits'
+  ) THEN
+    ALTER TABLE "site_visits" DROP CONSTRAINT "site_visits_request_id_requests_request_id_fk";
+  END IF;
+END $$;
 --> statement-breakpoint
 -- Safely handle request_status enum migration
 DO $$
