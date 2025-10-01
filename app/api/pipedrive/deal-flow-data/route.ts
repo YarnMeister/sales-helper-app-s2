@@ -12,19 +12,32 @@ export async function GET(request: NextRequest) {
 
     logInfo('Fetching stored deal flow data', { deal_id: dealId });
 
-    const data = await getDealFlowData(dealId ? parseInt(dealId) : undefined);
+    const rawData = await getDealFlowData(dealId ? parseInt(dealId) : undefined);
+
+    // Transform data to match UI expectations
+    const transformedData = rawData.map((row: any) => ({
+      id: row.id,
+      dealId: row.deal_id,
+      pipelineId: row.pipeline_id,
+      stageId: row.stage_id,
+      stageName: row.stage_name,
+      timestamp: row.entered_at, // Map entered_at to timestamp
+      dealTitle: row.deal_title || null,
+      dealValue: row.deal_value || null,
+      dealCurrency: row.deal_currency || null,
+    }));
 
     return NextResponse.json({
       success: true,
-      data,
+      data: transformedData,
       message: 'Successfully fetched deal flow data'
     });
 
   } catch (error) {
     logError('Error fetching deal flow data', { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to fetch deal flow data',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

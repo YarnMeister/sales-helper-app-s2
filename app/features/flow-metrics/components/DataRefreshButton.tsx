@@ -92,10 +92,16 @@ export function DataRefreshButton({
     }
   }, [isRefreshing, fetchSyncStatus, handleSyncComplete]);
 
-  // Initial status fetch
+  // Initial status fetch (but don't auto-start syncing)
   useEffect(() => {
-    fetchSyncStatus();
-  }, [fetchSyncStatus]);
+    fetchSyncStatus().then(status => {
+      // If there's a stale "running" sync, ignore it
+      // Only trust isRefreshing state that we control
+      if (status?.isRunning && !isRefreshing) {
+        console.warn('Ignoring stale sync status from database');
+      }
+    });
+  }, [fetchSyncStatus, isRefreshing]);
 
   const handleRefresh = async () => {
     // Check if sync is already running
@@ -175,10 +181,10 @@ export function DataRefreshButton({
     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
       <Button
         onClick={handleRefresh}
-        disabled={isRefreshing || syncStatus?.isRunning}
+        disabled={isRefreshing}
         className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
       >
-        {isRefreshing || syncStatus?.isRunning ? (
+        {isRefreshing ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Syncing...
@@ -191,24 +197,10 @@ export function DataRefreshButton({
         )}
       </Button>
 
-      {syncStatus && (
+      {syncStatus && syncStatus.lastSync && !isRefreshing && (
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          {syncStatus.isRunning ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-              <span>Sync in progress...</span>
-            </>
-          ) : syncStatus.lastSync ? (
-            <>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>Last synced: {formatLastSync(syncStatus.lastSync)}</span>
-            </>
-          ) : (
-            <>
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
-              <span>No previous sync</span>
-            </>
-          )}
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <span>Last synced: {formatLastSync(syncStatus.lastSync)}</span>
         </div>
       )}
     </div>
