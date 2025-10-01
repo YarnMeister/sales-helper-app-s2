@@ -519,16 +519,8 @@ export const getFlowMetricsConfig = async () => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching flow metrics configuration');
     const result = await sql`
-      SELECT 
-        fmc.*,
-        csm.start_stage_id,
-        csm.end_stage_id,
-        csm.avg_min_days,
-        csm.avg_max_days,
-        csm.metric_comment
-      FROM flow_metrics_config fmc
-      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
-      ORDER BY fmc.sort_order, fmc.display_title
+      SELECT * FROM flow_metrics
+      ORDER BY sort_order, display_title
     `;
     return result;
   }, 'getFlowMetricsConfig');
@@ -538,22 +530,22 @@ export const getActiveFlowMetricsConfig = async (): Promise<any[]> => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching active flow metrics configuration');
     
-    // Use the same function as admin API and filter for active metrics
-    const allMetrics = await getFlowMetricsConfig();
-    const activeMetrics = allMetrics.filter((metric: any) => metric.is_active === true);
+    const result = await sql`
+      SELECT * FROM flow_metrics
+      WHERE is_active = true
+      ORDER BY sort_order, display_title
+    `;
     
     logInfo('Active flow metrics configuration result', { 
-      totalCount: allMetrics.length,
-      activeCount: activeMetrics.length,
-      metrics: activeMetrics.map((m: any) => ({ 
+      totalCount: result.length,
+      metrics: result.map((m: any) => ({ 
         id: m.id, 
-        title: m.display_title, 
-        canonical_stage: m.canonical_stage,
-        has_mapping: !!m.start_stage_id 
+        title: m.display_title,
+        metric_key: m.metric_key
       }))
     });
     
-    return activeMetrics;
+    return result;
   }, 'getActiveFlowMetricsConfig');
 };
 
@@ -561,16 +553,8 @@ export const getFlowMetricConfig = async (metricKey: string) => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching flow metric configuration', { metricKey });
     const result = await sql`
-      SELECT 
-        fmc.*,
-        csm.start_stage_id,
-        csm.end_stage_id,
-        csm.avg_min_days,
-        csm.avg_max_days,
-        csm.metric_comment
-      FROM flow_metrics_config fmc
-      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
-      WHERE fmc.metric_key = ${metricKey}
+      SELECT * FROM flow_metrics
+      WHERE metric_key = ${metricKey}
       LIMIT 1
     `;
     return result[0] || null;
@@ -580,76 +564,33 @@ export const getFlowMetricConfig = async (metricKey: string) => {
 export const createFlowMetricConfig = async (data: {
   metric_key: string;
   display_title: string;
-  canonical_stage: string;
+  config?: any; // JSONB config
   sort_order?: number;
   is_active?: boolean;
-  start_stage_id?: number;
-  end_stage_id?: number;
-  avg_min_days?: number;
-  avg_max_days?: number;
-  metric_comment?: string;
 }) => {
   return withDbErrorHandling(async () => {
     logInfo('Creating flow metric configuration', { metricKey: data.metric_key });
     
-    // Insert the config first
+    // Insert the config with JSONB support
     const configResult = await sql`
-      INSERT INTO flow_metrics_config (
+      INSERT INTO flow_metrics (
         metric_key, 
         display_title, 
-        canonical_stage, 
+        config,
         sort_order, 
         is_active
       ) VALUES (
         ${data.metric_key},
         ${data.display_title},
-        ${data.canonical_stage},
+        ${data.config ? JSON.stringify(data.config) : '{}'}::jsonb,
         ${data.sort_order || 0},
         ${data.is_active !== false}
       )
       RETURNING *
     `;
     
-    const config = configResult[0];
-    
-    // Insert mapping if stage IDs are provided
-    if (data.start_stage_id && data.end_stage_id) {
-      await sql`
-        INSERT INTO canonical_stage_mappings (
-          metric_config_id,
-          canonical_stage,
-          start_stage_id,
-          end_stage_id,
-          avg_min_days,
-          avg_max_days,
-          metric_comment
-        ) VALUES (
-          ${config.id},
-          ${data.canonical_stage},
-          ${data.start_stage_id},
-          ${data.end_stage_id},
-          ${data.avg_min_days || null},
-          ${data.avg_max_days || null},
-          ${data.metric_comment || null}
-        )
-      `;
-    }
-    
-    // Return the config with mapping data
-    const result = await sql`
-      SELECT 
-        fmc.*,
-        csm.start_stage_id,
-        csm.end_stage_id,
-        csm.avg_min_days,
-        csm.avg_max_days,
-        csm.metric_comment
-      FROM flow_metrics_config fmc
-      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
-      WHERE fmc.id = ${config.id}
-    `;
-    
-    return result[0];
+    // Return the created config
+    return configResult[0];
   }, 'createFlowMetricConfig');
 };
 
@@ -657,89 +598,29 @@ export const updateFlowMetricConfig = async (
   id: string, 
   data: {
     display_title?: string;
-    canonical_stage?: string;
+    config?: any;
     sort_order?: number;
     is_active?: boolean;
-    start_stage_id?: number;
-    end_stage_id?: number;
-    avg_min_days?: number;
-    avg_max_days?: number;
-    metric_comment?: string;
   }
 ) => {
   return withDbErrorHandling(async () => {
     logInfo('Updating flow metric configuration', { id });
     
-    // Update the config
-    if (data.display_title || data.canonical_stage !== undefined || data.sort_order !== undefined || data.is_active !== undefined) {
-      await sql`
-        UPDATE flow_metrics_config 
-        SET 
-          display_title = COALESCE(${data.display_title}, display_title),
-          canonical_stage = COALESCE(${data.canonical_stage}, canonical_stage),
-          sort_order = COALESCE(${data.sort_order}, sort_order),
-          is_active = COALESCE(${data.is_active}, is_active)
-        WHERE id = ${id}
-      `;
-    }
-    
-    // Update or create the mapping if provided
-    if (data.start_stage_id !== undefined || data.end_stage_id !== undefined || 
-        data.avg_min_days !== undefined || data.avg_max_days !== undefined || 
-        data.metric_comment !== undefined) {
-      // Check if mapping exists
-      const existingMapping = await sql`
-        SELECT id FROM canonical_stage_mappings WHERE metric_config_id = ${id}
-      `;
-      
-      if (existingMapping.length > 0) {
-        // Update existing mapping
-        await sql`
-          UPDATE canonical_stage_mappings 
-          SET 
-            start_stage_id = COALESCE(${data.start_stage_id}, start_stage_id),
-            end_stage_id = COALESCE(${data.end_stage_id}, end_stage_id),
-            avg_min_days = COALESCE(${data.avg_min_days}, avg_min_days),
-            avg_max_days = COALESCE(${data.avg_max_days}, avg_max_days),
-            metric_comment = COALESCE(${data.metric_comment}, metric_comment)
-          WHERE metric_config_id = ${id}
-        `;
-      } else {
-        // Create new mapping
-        await sql`
-          INSERT INTO canonical_stage_mappings (
-            metric_config_id,
-            canonical_stage,
-            start_stage_id,
-            end_stage_id,
-            avg_min_days,
-            avg_max_days,
-            metric_comment
-          ) VALUES (
-            ${id},
-            (SELECT canonical_stage FROM flow_metrics_config WHERE id = ${id}),
-            ${data.start_stage_id || null},
-            ${data.end_stage_id || null},
-            ${data.avg_min_days || null},
-            ${data.avg_max_days || null},
-            ${data.metric_comment || null}
-          )
-        `;
-      }
-    }
+    await sql`
+      UPDATE flow_metrics 
+      SET 
+        display_title = COALESCE(${data.display_title}, display_title),
+        config = COALESCE(${data.config ? JSON.stringify(data.config) : null}::jsonb, config),
+        sort_order = COALESCE(${data.sort_order}, sort_order),
+        is_active = COALESCE(${data.is_active}, is_active),
+        updated_at = NOW()
+      WHERE id = ${id}
+    `;
     
     // Return the updated record
     const result = await sql`
-      SELECT 
-        fmc.*,
-        csm.start_stage_id,
-        csm.end_stage_id,
-        csm.avg_min_days,
-        csm.avg_max_days,
-        csm.metric_comment
-      FROM flow_metrics_config fmc
-      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
-      WHERE fmc.id = ${id}
+      SELECT * FROM flow_metrics
+      WHERE id = ${id}
       LIMIT 1
     `;
     
@@ -751,12 +632,9 @@ export const deleteFlowMetricConfig = async (id: string) => {
   return withDbErrorHandling(async () => {
     logInfo('Deleting flow metric configuration', { id });
     
-    // Delete the mapping first (due to foreign key constraint)
-    await sql`DELETE FROM canonical_stage_mappings WHERE metric_config_id = ${id}`;
-    
     // Delete the config
     const result = await sql`
-      DELETE FROM flow_metrics_config 
+      DELETE FROM flow_metrics 
       WHERE id = ${id}
       RETURNING *
     `;
@@ -772,7 +650,7 @@ export const reorderFlowMetrics = async (reorderData: Array<{ id: string; sort_o
     // Update sort orders in batch
     for (const item of reorderData) {
       await sql`
-        UPDATE flow_metrics_config 
+        UPDATE flow_metrics 
         SET sort_order = ${item.sort_order}
         WHERE id = ${item.id}
       `;
@@ -807,7 +685,7 @@ export const updateFlowMetricComment = async (id: string, comment: string) => {
           metric_comment
         ) VALUES (
           ${id},
-          (SELECT canonical_stage FROM flow_metrics_config WHERE id = ${id}),
+          (SELECT canonical_stage FROM flow_metrics WHERE id = ${id}),
           ${comment}
         )
       `;
@@ -822,7 +700,7 @@ export const updateFlowMetricComment = async (id: string, comment: string) => {
         csm.avg_min_days,
         csm.avg_max_days,
         csm.metric_comment
-      FROM flow_metrics_config fmc
+      FROM flow_metrics fmc
       LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
       WHERE fmc.id = ${id}
       LIMIT 1

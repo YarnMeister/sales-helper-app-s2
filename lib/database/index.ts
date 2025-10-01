@@ -3,9 +3,8 @@ export * from './connection';
 export * from './migrations';
 export * from './schema';
 
-// Repository exports - using re-export pattern
-export { FlowMetricsRepository } from './repositories/flow-metrics-repository';
-export { CanonicalStageMappingsRepository } from './repositories/flow-metrics-repository';
+// Repository exports - using new feature-based pattern
+export { FlowMetricsRepository } from './features/flow-metrics/repository';
 export { SalesRequestsRepository } from './repositories/sales-requests-repository';
 export { SiteVisitsRepository } from './repositories/sales-requests-repository';
 export { PipedriveSubmissionsRepository } from './repositories/sales-requests-repository';

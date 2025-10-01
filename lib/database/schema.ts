@@ -9,39 +9,20 @@ export const flowMetricsConfig = pgTable('flow_metrics_config', {
   id: uuid('id').primaryKey().defaultRandom(),
   metricKey: text('metric_key').notNull().unique(),
   displayTitle: text('display_title').notNull(),
-  canonicalStage: text('canonical_stage').notNull(),
+  config: jsonb('config').notNull().default('{}'), // JSONB configuration (startStage, endStage, thresholds)
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   metricKeyIdx: uniqueIndex('idx_fmc_metric_key').on(table.metricKey),
   sortOrderIdx: index('idx_fmc_sort_order').on(table.sortOrder),
   isActiveIdx: index('idx_fmc_is_active').on(table.isActive),
-  createdAtIdx: index('idx_fmc_created_at').on(table.createdAt), // Test migration - Oct 2025
+  configGinIdx: index('idx_fmc_config_gin').on(table.config), // GIN index for JSONB queries
+  createdAtIdx: index('idx_fmc_created_at').on(table.createdAt),
 }));
 
-export const canonicalStageMappings = pgTable('canonical_stage_mappings', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  metricConfigId: uuid('metric_config_id').references(() => flowMetricsConfig.id),
-  canonicalStage: text('canonical_stage').notNull(),
-  startStage: text('start_stage'),
-  endStage: text('end_stage'),
-  startStageId: integer('start_stage_id'),
-  endStageId: integer('end_stage_id'),
-  avgMinDays: integer('avg_min_days'),
-  avgMaxDays: integer('avg_max_days'),
-  metricComment: text('metric_comment'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-}, (table) => ({
-  canonicalStageIdx: index('idx_csm_canonical_stage').on(table.canonicalStage),
-  startStageIdx: index('idx_csm_start_stage').on(table.startStage),
-  endStageIdx: index('idx_csm_end_stage').on(table.endStage),
-  startStageIdIdx: index('idx_csm_start_stage_id').on(table.startStageId),
-  endStageIdIdx: index('idx_csm_end_stage_id').on(table.endStageId),
-  metricConfigIdIdx: index('idx_csm_metric_config_id').on(table.metricConfigId),
-}));
+// Removed: canonical_stage_mappings table (replaced with JSONB config in flow_metrics_config)
 
 export const requests = pgTable('requests', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -131,6 +112,26 @@ export const pipedriveMetricData = pgTable('pipedrive_metric_data', {
   statusIdx: index('idx_pipedrive_metric_data_status').on(table.status),
 }));
 
+export const dealFlowSyncStatus = pgTable('deal_flow_sync_status', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  syncType: text('sync_type').notNull(), // 'full' | 'incremental'
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  status: text('status').notNull(), // 'running' | 'completed' | 'failed'
+  totalDeals: integer('total_deals'),
+  processedDeals: integer('processed_deals'),
+  successfulDeals: integer('successful_deals'),
+  failedDeals: jsonb('failed_deals'), // Array of deal IDs
+  errors: jsonb('errors'), // Array of error messages
+  duration: integer('duration_ms'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  syncTypeIdx: index('idx_deal_flow_sync_status_sync_type').on(table.syncType),
+  statusIdx: index('idx_deal_flow_sync_status_status').on(table.status),
+  startedAtIdx: index('idx_deal_flow_sync_status_started_at').on(table.startedAt),
+  completedAtIdx: index('idx_deal_flow_sync_status_completed_at').on(table.completedAt),
+}));
+
 // flow_metrics table removed - doesn't exist in production
 
 // kv_cache table removed - doesn't exist in production
@@ -141,17 +142,8 @@ export const schemaMigrations = pgTable('schema_migrations', {
   executedAt: timestamp('executed_at').notNull().defaultNow(),
 });
 
-// Relations (matching production foreign keys)
-export const flowMetricsConfigRelations = relations(flowMetricsConfig, ({ many }) => ({
-  stageMappings: many(canonicalStageMappings),
-}));
-
-export const canonicalStageMappingsRelations = relations(canonicalStageMappings, ({ one }) => ({
-  metricConfig: one(flowMetricsConfig, {
-    fields: [canonicalStageMappings.metricConfigId],
-    references: [flowMetricsConfig.id],
-  }),
-}));
+// Relations
+// Removed: flowMetricsConfig and canonicalStageMappings relations (canonical_stage_mappings table dropped)
 
 export const requestsRelations = relations(requests, ({ many }) => ({
   pipedriveSubmissions: many(pipedriveSubmissions),
@@ -167,8 +159,7 @@ export const pipedriveSubmissionsRelations = relations(pipedriveSubmissions, ({ 
 // Export types
 export type FlowMetricsConfig = typeof flowMetricsConfig.$inferSelect;
 export type NewFlowMetricsConfig = typeof flowMetricsConfig.$inferInsert;
-export type CanonicalStageMapping = typeof canonicalStageMappings.$inferSelect;
-export type NewCanonicalStageMapping = typeof canonicalStageMappings.$inferInsert;
+// Removed: CanonicalStageMapping types (table dropped)
 export type Request = typeof requests.$inferSelect;
 export type NewRequest = typeof requests.$inferInsert;
 export type SiteVisit = typeof siteVisits.$inferSelect;

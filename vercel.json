@@ -11,8 +11,21 @@
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
+    },
+    "app/api/cron/**/*.ts": {
+      "maxDuration": 300
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/sync-deal-flow",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-deal-flow-incremental",
+      "schedule": "0 */6 * * *"
+    }
+  ],
   "regions": ["iad1"],
   "public": false
 }

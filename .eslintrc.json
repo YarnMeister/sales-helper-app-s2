@@ -1,5 +1,32 @@
 {
   "extends": [
     "next/core-web-vitals"
+  ],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@neondatabase/serverless",
+            "importNames": [
+              "neon"
+            ],
+            "message": "Direct neon() imports are not allowed. Use createStandardConnection() from lib/database/connection-standard instead to ensure consistent database connections."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "lib/database/connection-standard.ts",
+        "lib/database/connection-standard.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
   ]
 }

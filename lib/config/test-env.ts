@@ -1,4 +1,5 @@
-import { neon, neonConfig } from '@neondatabase/serverless';
+import { neonConfig } from '@neondatabase/serverless';
+import { createStandardConnection } from '../database/connection-standard';
 import { Redis } from '@upstash/redis';
 
 // Environment detection
@@ -15,10 +16,10 @@ export const getAppEnv = () => {
 // Database configuration with proper test isolation
 export const getDatabaseConfig = () => {
   const env = getAppEnv();
-  
+
   // Use different table prefixes for test environment
   const tablePrefix = env === 'test' ? 'test_' : '';
-  
+
   return {
     env,
     tablePrefix,
@@ -53,14 +54,14 @@ let testDb: any = null;
 
 export const getTestDb = () => {
   if (!testDb) {
-    const config = getDatabaseConfig();
-    
     // Configure Neon for test environment
     neonConfig.fetchConnectionCache = true;
-    
-    testDb = neon(config.databaseUrl);
+
+    // Use standard connection module
+    const { sqlClient } = createStandardConnection();
+    testDb = sqlClient;
   }
-  
+
   return testDb;
 };
 

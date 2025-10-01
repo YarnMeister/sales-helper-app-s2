@@ -1,30 +1,32 @@
-import { neon } from '@neondatabase/serverless';
+import { createStandardConnection } from '../connection-standard';
 import { logInfo, logError } from '../../log';
 import { AppError } from '../../errors';
 
-// Database connection instance
-let sql: ReturnType<typeof neon> | null = null;
+// Database connection instance (lazy-loaded)
+let sqlClient: ReturnType<typeof createStandardConnection>['sqlClient'] | null = null;
 
 /**
  * Get the database connection instance
  * Creates a new connection if one doesn't exist
+ * Uses standard connection module for consistency
  */
-export const getDatabaseConnection = (): ReturnType<typeof neon> => {
-  if (!sql) {
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      throw new AppError('DATABASE_URL environment variable is required', {
+export const getDatabaseConnection = (): ReturnType<typeof createStandardConnection>['sqlClient'] => {
+  if (!sqlClient) {
+    try {
+      const connection = createStandardConnection();
+      sqlClient = connection.sqlClient;
+      logInfo('Database connection established', {
         context: 'database-connection'
       });
+    } catch (error) {
+      throw new AppError('Failed to establish database connection', {
+        context: 'database-connection',
+        originalError: error
+      });
     }
-    
-    sql = neon(databaseUrl);
-    logInfo('Database connection established', {
-      context: 'database-connection'
-    });
   }
-  
-  return sql;
+
+  return sqlClient;
 };
 
 /**
@@ -83,7 +85,7 @@ export const testDatabaseConnection = async (): Promise<boolean> => {
  */
 export const getConnectionStatus = () => {
   return {
-    connected: sql !== null,
+    connected: sqlClient !== null,
     hasDatabaseUrl: !!process.env.DATABASE_URL
   };
 };

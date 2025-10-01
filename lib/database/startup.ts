@@ -7,7 +7,7 @@
 
 import { initializeRepositoryFactory, registerRepository } from './core/repository-factory';
 import { SalesRequestsRepository } from './repositories/sales-requests-repository';
-import { FlowMetricsRepository } from './repositories/flow-metrics-repository';
+import { FlowMetricsRepository } from './features/flow-metrics/repository';
 import { logInfo, logError } from '../log';
 
 /**

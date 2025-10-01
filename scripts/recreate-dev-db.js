@@ -3,23 +3,11 @@
  * This is a one-time operation to reset dev to a known state
  */
 
-import { neon } from '@neondatabase/serverless';
-import { config } from 'dotenv';
-import { resolve } from 'path';
-
-// Load environment variables
-config({ path: resolve(process.cwd(), '.env.local') });
-config({ path: resolve(process.cwd(), '.env') });
+// Use standard connection module for consistency
+import { createStandardConnection } from '../lib/database/connection-standard.js';
 
 async function recreateDevDatabase() {
-  const connectionString = process.env.DATABASE_URL;
-  
-  if (!connectionString) {
-    console.error('❌ DATABASE_URL not set');
-    process.exit(1);
-  }
-
-  const sql = neon(connectionString);
+  const { sqlClient: sql, connectionString } = createStandardConnection();
 
   try {
     console.log('🔄 Recreating dev database from scratch...\n');
