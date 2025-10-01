@@ -12,24 +12,11 @@ import { Button } from '../../../components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { FlowDataRow } from '../types';
 
-interface FlowDataRecord {
-  id: string;
-  deal_id: number;
-  pipeline_id: number;
-  stage_id: number;
-  stage_name: string;
-  entered_at: string;
-  left_at?: string;
-  duration_seconds?: number;
-  created_at: string;
-  updated_at: string;
-}
-
 interface FlowDataTableProps {
-  data: FlowDataRecord[];
+  data: FlowDataRow[];
   isLoading?: boolean;
   dealId?: number;
-  onDataLoad?: (data: FlowDataRecord[]) => void;
+  onDataLoad?: (data: FlowDataRow[]) => void;
 }
 
 const INITIAL_ROW_LIMIT = 50;
@@ -60,12 +47,6 @@ export function FlowDataTable({
     }
   };
 
-  const formatDuration = (seconds?: number) => {
-    if (!seconds) return '-';
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
-  };
 
   if (isLoading) {
     return (
@@ -118,20 +99,20 @@ export function FlowDataTable({
                 <th className="text-left p-2">Stage Name</th>
                 <th className="text-left p-2">Stage ID</th>
                 <th className="text-left p-2">Deal ID</th>
-                <th className="text-left p-2">Entered</th>
-                <th className="text-left p-2">Left</th>
-                <th className="text-left p-2">Duration</th>
+                <th className="text-left p-2">Timestamp</th>
+                <th className="text-left p-2">Deal Title</th>
+                <th className="text-left p-2">Deal Value</th>
               </tr>
             </thead>
             <tbody>
               {displayData.map((record) => (
                 <tr key={record.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2">{record.stage_name}</td>
-                  <td className="p-2">{record.stage_id}</td>
-                  <td className="p-2">{record.deal_id}</td>
-                  <td className="p-2">{formatDate(record.entered_at)}</td>
-                  <td className="p-2">{formatDate(record.left_at || '')}</td>
-                  <td className="p-2">{formatDuration(record.duration_seconds)}</td>
+                  <td className="p-2">{record.stageName}</td>
+                  <td className="p-2">{record.stageId}</td>
+                  <td className="p-2">{record.dealId}</td>
+                  <td className="p-2">{formatDate(record.timestamp)}</td>
+                  <td className="p-2">{record.dealTitle || '—'}</td>
+                  <td className="p-2">{record.dealValue ? `${record.dealValue} ${record.dealCurrency || ''}` : '—'}</td>
                 </tr>
               ))}
             </tbody>
