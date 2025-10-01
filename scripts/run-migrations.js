@@ -15,12 +15,15 @@ config({ path: resolve(process.cwd(), '.env.local') });
 config({ path: resolve(process.cwd(), '.env') });
 
 async function runMigrations() {
-  const connectionString = process.env.DATABASE_URL;
+  // Prefer unpooled connection for migrations, fallback to pooled
+  const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
   
   if (!connectionString) {
-    console.error('❌ DATABASE_URL not set');
+    console.error('❌ DATABASE_URL or DATABASE_URL_UNPOOLED not set');
     process.exit(1);
   }
+  
+  console.log('Using connection:', connectionString.substring(0, 30) + '...');
 
   try {
     console.log('🔄 Checking for pending migrations...');
