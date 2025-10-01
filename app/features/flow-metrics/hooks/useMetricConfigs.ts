@@ -47,7 +47,7 @@ export function useMetricConfigs(): UseMetricConfigsReturn {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/flow/canonical-stage-deals?all=true');
+      const response = await fetch('/api/admin/flow-metrics-config');
       const result = await response.json();
 
       if (result.success) {
@@ -100,8 +100,8 @@ export function useMetricConfigs(): UseMetricConfigsReturn {
           comment: config.metricComment,
         };
 
-        // For now, use legacy API endpoint (will be replaced in Task 7)
-        const response = await fetch('/api/flow/canonical-stage-deals', {
+        // Use the new API endpoint
+        const response = await fetch('/api/admin/flow-metrics-config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -146,13 +146,52 @@ export function useMetricConfigs(): UseMetricConfigsReturn {
   const updateConfig = useCallback(
     async (id: string, config: Partial<MetricConfigForm>): Promise<boolean> => {
       try {
-        // Will be implemented with proper API in Task 7
-        toast({
-          title: 'Not Implemented',
-          description: 'Update functionality will be added in Phase 7',
-          variant: 'default',
+        const response = await fetch(`/api/admin/flow-metrics-config/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            display_title: config.displayTitle,
+            config: config.startStage && config.endStage ? {
+              startStage: {
+                id: config.startStage.stageId,
+                name: config.startStage.stageName,
+                pipelineId: config.startStage.pipelineId,
+                pipelineName: config.startStage.pipelineName,
+              },
+              endStage: {
+                id: config.endStage.stageId,
+                name: config.endStage.stageName,
+                pipelineId: config.endStage.pipelineId,
+                pipelineName: config.endStage.pipelineName,
+              },
+              thresholds: {
+                minDays: config.avgMinDays,
+                maxDays: config.avgMaxDays,
+              },
+              comment: config.metricComment,
+            } : undefined,
+            sort_order: config.sortOrder,
+            is_active: config.isActive,
+          }),
         });
-        return false;
+
+        const result = await response.json();
+
+        if (result.success) {
+          toast({
+            title: 'Success',
+            description: 'Metric configuration updated successfully',
+          });
+          await fetchConfigs(); // Refresh list
+          return true;
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Failed to update configuration',
+            variant: 'destructive',
+          });
+          return false;
+        }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         toast({
@@ -163,19 +202,33 @@ export function useMetricConfigs(): UseMetricConfigsReturn {
         return false;
       }
     },
-    [toast]
+    [fetchConfigs, toast]
   );
 
   const deleteConfig = useCallback(
     async (id: string): Promise<boolean> => {
       try {
-        // Will be implemented with proper API in Task 7
-        toast({
-          title: 'Not Implemented',
-          description: 'Delete functionality will be added in Phase 7',
-          variant: 'default',
+        const response = await fetch(`/api/admin/flow-metrics-config/${id}`, {
+          method: 'DELETE',
         });
-        return false;
+
+        const result = await response.json();
+
+        if (result.success) {
+          toast({
+            title: 'Success',
+            description: 'Metric configuration deleted successfully',
+          });
+          await fetchConfigs(); // Refresh list
+          return true;
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Failed to delete configuration',
+            variant: 'destructive',
+          });
+          return false;
+        }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         toast({
@@ -186,7 +239,7 @@ export function useMetricConfigs(): UseMetricConfigsReturn {
         return false;
       }
     },
-    [toast]
+    [fetchConfigs, toast]
   );
 
   useEffect(() => {

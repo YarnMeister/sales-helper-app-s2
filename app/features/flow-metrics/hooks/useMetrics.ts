@@ -26,19 +26,19 @@ export function useMetrics(period: string): UseMetricsReturn {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/flow/metrics?period=${period}`);
+      const response = await fetch('/api/admin/flow-metrics-config');
       const result = await response.json();
 
       if (result.success) {
         // Convert API response to FlowMetricData format
         const formattedMetrics = result.data.map((metric: any) => ({
           id: metric.id,
-          title: metric.title,
-          mainMetric: `${metric.mainMetric} days`,
-          totalDeals: metric.totalDeals,
-          avg_min_days: metric.avg_min_days,
-          avg_max_days: metric.avg_max_days,
-          metric_comment: metric.metric_comment,
+          title: metric.displayTitle,
+          mainMetric: `${metric.config?.thresholds?.minDays || 0}-${metric.config?.thresholds?.maxDays || 0} days`,
+          totalDeals: 0, // Will be calculated from actual data
+          avg_min_days: metric.config?.thresholds?.minDays,
+          avg_max_days: metric.config?.thresholds?.maxDays,
+          metric_comment: metric.config?.comment,
         }));
 
         setMetrics(formattedMetrics);
