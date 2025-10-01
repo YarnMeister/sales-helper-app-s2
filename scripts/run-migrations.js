@@ -2,13 +2,16 @@
  * Drizzle Migration Runner
  * Runs all pending migrations from lib/database/migrations/
  * Safe for CI/CD - no interactive prompts
+ * Uses node-postgres for reliable build-time execution
  */
 
-import { drizzle } from 'drizzle-orm/neon-http';
-import { migrate } from 'drizzle-orm/neon-http/migrator';
-import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import pg from 'pg';
 import { config } from 'dotenv';
 import { resolve } from 'path';
+
+const { Pool } = pg;
 
 // Load environment variables
 config({ path: resolve(process.cwd(), '.env.local') });
@@ -25,11 +28,15 @@ async function runMigrations() {
   
   console.log('Using connection:', connectionString.substring(0, 30) + '...');
 
+  const pool = new Pool({
+    connectionString,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  });
+
   try {
     console.log('🔄 Checking for pending migrations...');
     
-    const sql = neon(connectionString);
-    const db = drizzle(sql);
+    const db = drizzle(pool);
 
     await migrate(db, { 
       migrationsFolder: './lib/database/migrations',
@@ -61,6 +68,8 @@ async function runMigrations() {
     console.error('❌ Migration failed:', error.message);
     console.error('   Cause:', error.cause?.message || 'Unknown');
     process.exit(1);
+  } finally {
+    await pool.end();
   }
 }
 
