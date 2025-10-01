@@ -23,7 +23,7 @@ class UnifiedMigrationSystem {
     this.sqlClient = connection.sqlClient;
     this.db = connection.db;
     this.connectionString = connection.connectionString;
-    this.migrationsFolder = './lib/database/migrations';
+    this.migrationsFolder = './migrations'; // Use root migrations folder (022-026), not legacy lib/database/migrations
   }
 
   /**
