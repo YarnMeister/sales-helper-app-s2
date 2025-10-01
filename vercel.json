@@ -4,7 +4,7 @@
       "main": true
     }
   },
-  "buildCommand": "npm run build:debug",
+  "buildCommand": "npm run db:migrate && npm run build:debug",
   "installCommand": "npm install",
   "framework": "nextjs",
   "ignoreCommand": "echo 'Preview deployments disabled' && exit 1",
