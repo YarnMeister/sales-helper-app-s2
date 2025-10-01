@@ -14,7 +14,7 @@
     "debug:typescript": "node scripts/debug-typescript.js",
     "test:watch": "vitest",
     "test:quiet": "vitest run --reporter=dot --silent --bail=1",
-    "db:migrate": "node scripts/run-migrations.js",
+    "db:migrate": "node scripts/run-migrations-simple.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push --force",
     "db:studio": "drizzle-kit studio",

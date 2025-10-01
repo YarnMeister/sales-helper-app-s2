@@ -60,9 +60,9 @@ async function runMigrations() {
     
     // Check if error is about objects already existing
     if (error.message?.includes('already exists') || error.cause?.code === '42710' || error.cause?.code === '42P07') {
-      console.log('⚠️  Schema objects already exist - assuming database is up to date');
-      console.log('   Tip: Run "npm run db:reset-dev" to start fresh with migrations');
-      process.exit(0);
+      console.log('⚠️  Some schema objects already exist - this is expected for baseline migration');
+      console.log('   Continuing to check for newer migrations...');
+      // Don't exit - let it try to run newer migrations
     }
     
     console.error('❌ Migration failed:', error.message);
