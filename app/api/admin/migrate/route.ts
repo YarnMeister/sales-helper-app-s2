@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { postDeployMigrate } from '../../../../scripts/post-deploy-migrate';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { migrate } from 'drizzle-orm/neon-http/migrator';
+import { neon } from '@neondatabase/serverless';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,27 +16,48 @@ export async function POST(request: NextRequest) {
 
     console.log('🔄 Admin migration endpoint triggered');
     
-    const result = await postDeployMigrate();
-    
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        message: result.message,
-        timestamp: new Date().toISOString()
-      });
-    } else {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
       return NextResponse.json(
         { 
           success: false, 
-          error: result.error,
+          error: 'DATABASE_URL not configured',
           timestamp: new Date().toISOString()
         },
         { status: 500 }
       );
     }
+
+    // Run Drizzle migrations
+    const sql = neon(connectionString);
+    const db = drizzle(sql);
+    
+    await migrate(db, { 
+      migrationsFolder: './lib/database/migrations',
+      migrationsTable: '__drizzle_migrations'
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Migrations completed successfully',
+      timestamp: new Date().toISOString()
+    });
     
   } catch (error) {
     console.error('❌ Migration endpoint error:', error);
+    
+    // Handle "already exists" gracefully
+    if (error instanceof Error && 
+        (error.message?.includes('already exists') || 
+         (error as any).cause?.code === '42710' || 
+         (error as any).cause?.code === '42P07')) {
+      return NextResponse.json({
+        success: true,
+        message: 'Database is already up to date',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     return NextResponse.json(
       { 
         success: false, 
