@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { reorderFlowMetrics } from '../../../../../lib/db';
-import { logError, logInfo } from '../../../../../lib/log';
+import { reorderFlowMetrics } from '@/lib/db';
+import { logError, logInfo } from '@/lib/log';
 
 export async function POST(request: NextRequest) {
   try {

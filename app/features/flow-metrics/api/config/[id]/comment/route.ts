@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateFlowMetricComment } from '../../../../../../lib/db';
-import { logError, logInfo } from '../../../../../../lib/log';
+import { updateFlowMetricComment } from '@/lib/db';
+import { logError, logInfo } from '@/lib/log';
 
 export async function PATCH(
   request: NextRequest,

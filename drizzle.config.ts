@@ -7,9 +7,8 @@ dotenv.config({ path: '.env' });
 
 export default defineConfig({
   schema: './lib/database/schema.ts',
-  out: './lib/database/migrations',
+  out: './migrations',
   dialect: 'postgresql',
-  driver: 'neon-http', // Force consistent connection method
   dbCredentials: {
     url: process.env.DATABASE_URL!,
   },

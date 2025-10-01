@@ -115,16 +115,16 @@ export class DealFlowSyncEngine {
       return await fetchAllDealsUpdatedSince(options.daysBack || 365);
     } else {
       const lastSyncResult = await this.repository.getLastSyncTimestamp();
-      const lastSyncTime = lastSyncResult.success ? lastSyncResult.data : 0;
-      
-      if (lastSyncTime === 0) {
+      const lastSyncTime = lastSyncResult.success ? lastSyncResult.data : undefined;
+
+      if (!lastSyncTime || lastSyncTime === 0) {
         // No previous sync, do a 7-day sync
         return await fetchAllDealsUpdatedSince(7);
       }
-      
+
       const hoursSinceSync = (Date.now() - lastSyncTime) / (1000 * 60 * 60);
       const daysSinceSync = Math.ceil(hoursSinceSync / 24);
-      
+
       return await fetchAllDealsUpdatedSince(Math.max(1, daysSinceSync));
     }
   }

@@ -73,9 +73,9 @@ export async function DELETE(
 
   try {
     logInfo('DELETE /api/admin/flow-metrics-config/[id] - Deleting flow metric configuration', { id: params.id });
-    
+
     const repository = new FlowMetricsRepository();
-    const result = await repository.delete(params.id);
+    const result = await repository.deleteAndReturn(params.id);
     
     if (!result.success) {
       if (result.error?.code === 'not_found') {
@@ -88,6 +88,13 @@ export async function DELETE(
     }
     
     const deletedConfig = result.data;
+
+    if (!deletedConfig) {
+      return NextResponse.json(
+        { success: false, error: 'Flow metric configuration not found' },
+        { status: 404 }
+      );
+    }
 
     // Transform camelCase to snake_case for UI compatibility
     const transformedConfig = {

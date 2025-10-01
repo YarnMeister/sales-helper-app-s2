@@ -132,6 +132,10 @@ export async function POST(request: NextRequest) {
 
     const newConfig = result.data;
 
+    if (!newConfig) {
+      throw new Error('Failed to create metric - no data returned');
+    }
+
     // Transform camelCase to snake_case for UI compatibility
     const transformedConfig = {
       id: newConfig.id,

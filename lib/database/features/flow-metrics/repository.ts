@@ -316,7 +316,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
         totalRecords: countResult.count,
         oldestRecord: dateResult.oldest,
         newestRecord: dateResult.newest,
-        lastSyncTime: syncResult?.lastSync
+        lastSyncTime: syncResult?.lastSync || undefined
       });
     } catch (error) {
       return RepositoryResult.error(new ConcreteRepositoryError('Failed to get flow data stats', 'unknown_error', error));
@@ -328,12 +328,52 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
     throw new Error('findWithPagination not implemented for FlowMetricsRepository');
   }
 
-  async update(): Promise<RepositoryResult<any>> {
-    throw new Error('update not implemented for FlowMetricsRepository');
+  async update(id: string, data: Partial<FlowMetricsConfig>): Promise<RepositoryResult<FlowMetricsConfig | null>> {
+    try {
+      const [result] = await this.db
+        .update(flowMetricsConfig)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(flowMetricsConfig.id, id))
+        .returning();
+
+      return RepositoryResult.success(result as FlowMetricsConfig || null);
+    } catch (error) {
+      return RepositoryResult.error(new ConcreteRepositoryError('Failed to update metric', 'unknown_error', error));
+    }
   }
 
-  async delete(): Promise<RepositoryResult<any>> {
-    throw new Error('delete not implemented for FlowMetricsRepository');
+  async delete(id: string): Promise<RepositoryResult<boolean>> {
+    try {
+      const [result] = await this.db
+        .delete(flowMetricsConfig)
+        .where(eq(flowMetricsConfig.id, id))
+        .returning();
+
+      if (!result) {
+        return RepositoryResult.error(new ConcreteRepositoryError('Flow metric configuration not found', 'not_found'));
+      }
+
+      return RepositoryResult.success(true);
+    } catch (error) {
+      return RepositoryResult.error(new ConcreteRepositoryError('Failed to delete metric', 'unknown_error', error));
+    }
+  }
+
+  async deleteAndReturn(id: string): Promise<RepositoryResult<FlowMetricsConfig | null>> {
+    try {
+      const [result] = await this.db
+        .delete(flowMetricsConfig)
+        .where(eq(flowMetricsConfig.id, id))
+        .returning();
+
+      if (!result) {
+        return RepositoryResult.error(new ConcreteRepositoryError('Flow metric configuration not found', 'not_found'));
+      }
+
+      return RepositoryResult.success(result as FlowMetricsConfig);
+    } catch (error) {
+      return RepositoryResult.error(new ConcreteRepositoryError('Failed to delete metric', 'unknown_error', error));
+    }
   }
 
   async count(): Promise<RepositoryResult<any>> {
