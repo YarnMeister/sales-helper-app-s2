@@ -14,7 +14,7 @@ import { BaseRepository, BaseRepositoryImpl } from '../core/base-repository';
 import { RepositoryResult } from '../../../types/shared/repository';
 
 export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig> implements BaseRepository<FlowMetricsConfig> {
-  protected tableName = 'flow_metrics_config';
+  protected tableName = 'flow_metrics';
   protected db = db;
 
   async create(data: NewFlowMetricsConfig): Promise<RepositoryResult<FlowMetricsConfig>> {
@@ -236,4 +236,4 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 }
 
 // Removed: CanonicalStageMappingsRepository class (canonical_stage_mappings table dropped)
-// JSONB config in flow_metrics_config replaces the need for separate mappings table
+// JSONB config in flow_metrics replaces the need for separate mappings table
