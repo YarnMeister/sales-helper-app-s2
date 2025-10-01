@@ -1,4 +1,4 @@
-CREATE TABLE "deal_flow_sync_status" (
+CREATE TABLE IF NOT EXISTS "deal_flow_sync_status" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"sync_type" text NOT NULL,
 	"started_at" timestamp with time zone NOT NULL,
@@ -13,36 +13,64 @@ CREATE TABLE "deal_flow_sync_status" (
 	"created_at" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "canonical_stage_mappings" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "flow_metrics" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "kv_cache" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "mock_requests" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-DROP TABLE "canonical_stage_mappings" CASCADE;--> statement-breakpoint
-DROP TABLE "flow_metrics" CASCADE;--> statement-breakpoint
-DROP TABLE "kv_cache" CASCADE;--> statement-breakpoint
-DROP TABLE "mock_requests" CASCADE;--> statement-breakpoint
+-- Safely drop tables if they exist
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'canonical_stage_mappings') THEN
+    ALTER TABLE "canonical_stage_mappings" DISABLE ROW LEVEL SECURITY;
+    DROP TABLE "canonical_stage_mappings" CASCADE;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'flow_metrics') THEN
+    ALTER TABLE "flow_metrics" DISABLE ROW LEVEL SECURITY;
+    DROP TABLE "flow_metrics" CASCADE;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'kv_cache') THEN
+    ALTER TABLE "kv_cache" DISABLE ROW LEVEL SECURITY;
+    DROP TABLE "kv_cache" CASCADE;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'mock_requests') THEN
+    ALTER TABLE "mock_requests" DISABLE ROW LEVEL SECURITY;
+    DROP TABLE "mock_requests" CASCADE;
+  END IF;
+END $$;
+--> statement-breakpoint
 ALTER TABLE "site_visits" DROP CONSTRAINT "site_visits_request_id_requests_request_id_fk";
 --> statement-breakpoint
-ALTER TABLE "requests" ALTER COLUMN "status" SET DATA TYPE text;--> statement-breakpoint
-ALTER TABLE "requests" ALTER COLUMN "status" SET DEFAULT 'draft'::text;--> statement-breakpoint
-DROP TYPE "public"."request_status";--> statement-breakpoint
-CREATE TYPE "public"."request_status" AS ENUM('draft', 'submitted', 'approved', 'rejected');--> statement-breakpoint
+-- Safely handle request_status enum migration
+DO $$
+BEGIN
+  -- First, change column to text if it's using the enum
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'request_status') THEN
+    ALTER TABLE "requests" ALTER COLUMN "status" SET DATA TYPE text;
+    ALTER TABLE "requests" ALTER COLUMN "status" SET DEFAULT 'draft'::text;
+    DROP TYPE "public"."request_status";
+  END IF;
+
+  -- Create the enum type if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'request_status') THEN
+    CREATE TYPE "public"."request_status" AS ENUM('draft', 'submitted', 'approved', 'rejected');
+  END IF;
+END $$;
+--> statement-breakpoint
 ALTER TABLE "requests" ALTER COLUMN "status" SET DEFAULT 'draft'::"public"."request_status";--> statement-breakpoint
 ALTER TABLE "requests" ALTER COLUMN "status" SET DATA TYPE "public"."request_status" USING "status"::"public"."request_status";--> statement-breakpoint
-DROP INDEX "idx_pipedrive_deal_flow_data_timestamp";--> statement-breakpoint
-DROP INDEX "idx_pipedrive_metric_data_deal_id";--> statement-breakpoint
-DROP INDEX "idx_pipedrive_metric_data_metric_key";--> statement-breakpoint
-DROP INDEX "idx_pipedrive_metric_data_start_stage_id";--> statement-breakpoint
-DROP INDEX "idx_pipedrive_metric_data_end_stage_id";--> statement-breakpoint
-DROP INDEX "idx_requests_person_id";--> statement-breakpoint
-DROP INDEX "idx_requests_org_id";--> statement-breakpoint
-DROP INDEX "idx_site_visits_request_id";--> statement-breakpoint
-DROP INDEX "idx_site_visits_visit_date";--> statement-breakpoint
-DROP INDEX "idx_site_visits_mine_group";--> statement-breakpoint
-DROP INDEX "idx_site_visits_mine_name";--> statement-breakpoint
-DROP INDEX "idx_requests_mine_group";--> statement-breakpoint
-DROP INDEX "idx_requests_mine_name";--> statement-breakpoint
-DROP INDEX "idx_site_visits_salesperson";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_pipedrive_deal_flow_data_timestamp";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_pipedrive_metric_data_deal_id";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_pipedrive_metric_data_metric_key";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_pipedrive_metric_data_start_stage_id";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_pipedrive_metric_data_end_stage_id";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_requests_person_id";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_requests_org_id";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_site_visits_request_id";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_site_visits_visit_date";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_site_visits_mine_group";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_site_visits_mine_name";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_requests_mine_group";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_requests_mine_name";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_site_visits_salesperson";--> statement-breakpoint
 ALTER TABLE "flow_metrics_config" ALTER COLUMN "created_at" SET DATA TYPE timestamp with time zone;--> statement-breakpoint
 ALTER TABLE "flow_metrics_config" ALTER COLUMN "created_at" SET DEFAULT now();--> statement-breakpoint
 ALTER TABLE "flow_metrics_config" ALTER COLUMN "created_at" SET NOT NULL;--> statement-breakpoint
