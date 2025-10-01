@@ -72,7 +72,8 @@ export function FlowDataTable({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            No flow data available. Enter a deal ID above to fetch data.
+            <p className="mb-2">No flow data available.</p>
+            <p className="text-sm">Click &ldquo;Refresh Data&rdquo; above to sync data from Pipedrive.</p>
           </div>
         </CardContent>
       </Card>

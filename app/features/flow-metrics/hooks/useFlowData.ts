@@ -1,12 +1,13 @@
 /**
  * useFlowData Hook
- * 
+ *
  * Fetches and manages raw Pipedrive flow data
+ * Supports auto-refresh during sync operations
  */
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FlowDataRow } from '../types';
 
 interface UseFlowDataReturn {
@@ -15,12 +16,15 @@ interface UseFlowDataReturn {
   error: string | null;
   refresh: () => Promise<void>;
   addData: (newData: FlowDataRow[]) => void;
+  startAutoRefresh: () => void;
+  stopAutoRefresh: () => void;
 }
 
 export function useFlowData(): UseFlowDataReturn {
   const [data, setData] = useState<FlowDataRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
 
   const fetchFlowData = useCallback(async () => {
     try {
@@ -56,6 +60,34 @@ export function useFlowData(): UseFlowDataReturn {
     });
   }, []);
 
+  const startAutoRefresh = useCallback(() => {
+    // Clear any existing interval
+    if (autoRefreshInterval.current) {
+      clearInterval(autoRefreshInterval.current);
+    }
+
+    // Refresh every 5 seconds during sync
+    autoRefreshInterval.current = setInterval(() => {
+      fetchFlowData();
+    }, 5000);
+  }, [fetchFlowData]);
+
+  const stopAutoRefresh = useCallback(() => {
+    if (autoRefreshInterval.current) {
+      clearInterval(autoRefreshInterval.current);
+      autoRefreshInterval.current = null;
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (autoRefreshInterval.current) {
+        clearInterval(autoRefreshInterval.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     fetchFlowData();
   }, [fetchFlowData]);
@@ -66,5 +98,7 @@ export function useFlowData(): UseFlowDataReturn {
     error,
     refresh: fetchFlowData,
     addData,
+    startAutoRefresh,
+    stopAutoRefresh,
   };
 }

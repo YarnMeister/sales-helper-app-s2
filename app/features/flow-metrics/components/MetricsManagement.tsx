@@ -457,6 +457,16 @@ export function MetricsManagement() {
                                       metric.end_stage_id ||
                                       'N/A'}
                                   </div>
+                                  {(metric.avg_min_days !== undefined || metric.avg_max_days !== undefined) && (
+                                    <div>
+                                      <span className="text-gray-500">Threshold:</span>{' '}
+                                      {metric.avg_min_days !== undefined && metric.avg_max_days !== undefined
+                                        ? `${metric.avg_min_days}-${metric.avg_max_days} days`
+                                        : metric.avg_min_days !== undefined
+                                        ? `${metric.avg_min_days}+ days`
+                                        : `${metric.avg_max_days} days max`}
+                                    </div>
+                                  )}
                                   {(metric.config as any).startStage &&
                                     (metric.config as any).endStage &&
                                     (metric.config as any).startStage.pipelineId !==

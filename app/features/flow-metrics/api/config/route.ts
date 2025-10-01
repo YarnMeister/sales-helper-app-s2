@@ -9,17 +9,33 @@ export async function GET() {
 
   try {
     logInfo('GET /api/admin/flow-metrics-config - Fetching flow metrics configuration');
-    
+
     const repository = new FlowMetricsRepository();
     const result = await repository.findAll();
-    
+
     if (!result.success) {
       throw new Error(result.error?.message || 'Failed to fetch metrics');
     }
-    
+
+    // Transform camelCase to snake_case for UI compatibility
+    const transformedData = result.data?.map((metric: any) => ({
+      id: metric.id,
+      metric_key: metric.metricKey,
+      display_title: metric.displayTitle,
+      config: metric.config,
+      sort_order: metric.sortOrder,
+      is_active: metric.isActive,
+      created_at: metric.createdAt,
+      updated_at: metric.updatedAt,
+      // Extract threshold values from config for display
+      avg_min_days: metric.config?.thresholds?.minDays,
+      avg_max_days: metric.config?.thresholds?.maxDays,
+      metric_comment: metric.config?.comment,
+    }));
+
     return NextResponse.json({
       success: true,
-      data: result.data
+      data: transformedData
     });
   } catch (error) {
     logError('Error fetching flow metrics configuration', { error: error instanceof Error ? error.message : String(error) });
@@ -109,16 +125,32 @@ export async function POST(request: NextRequest) {
       sortOrder: sort_order || 0,
       isActive: is_active !== false
     });
-    
+
     if (!result.success) {
       throw new Error(result.error?.message || 'Failed to create metric');
     }
-    
+
     const newConfig = result.data;
-    
+
+    // Transform camelCase to snake_case for UI compatibility
+    const transformedConfig = {
+      id: newConfig.id,
+      metric_key: newConfig.metricKey,
+      display_title: newConfig.displayTitle,
+      config: newConfig.config,
+      sort_order: newConfig.sortOrder,
+      is_active: newConfig.isActive,
+      created_at: newConfig.createdAt,
+      updated_at: newConfig.updatedAt,
+      // Extract threshold values from config for display
+      avg_min_days: newConfig.config?.thresholds?.minDays,
+      avg_max_days: newConfig.config?.thresholds?.maxDays,
+      metric_comment: newConfig.config?.comment,
+    };
+
     return NextResponse.json({
       success: true,
-      data: newConfig
+      data: transformedConfig
     });
   } catch (error) {
     logError('Error creating flow metric configuration', { error: error instanceof Error ? error.message : String(error) });

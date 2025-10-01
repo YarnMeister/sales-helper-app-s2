@@ -15,7 +15,7 @@ import {
   MetricsDashboard,
   ViewToggle,
   FlowDataTable,
-  DealInputForm,
+  DataRefreshButton,
   MetricsManagement,
 } from '../components';
 import { useMetrics, useFlowData } from '../hooks';
@@ -32,7 +32,13 @@ export default function FlowMetricsReportPage() {
 
   // Use custom hooks for data management
   const { metrics, loading: isLoadingMetrics, refresh: refreshMetrics } = useMetrics(selectedPeriod);
-  const { data: flowData, loading: isLoadingData, addData: addFlowData } = useFlowData();
+  const {
+    data: flowData,
+    loading: isLoadingData,
+    refresh: refreshFlowData,
+    startAutoRefresh,
+    stopAutoRefresh
+  } = useFlowData();
 
   // Sync state with URL changes
   useEffect(() => {
@@ -53,8 +59,20 @@ export default function FlowMetricsReportPage() {
     updateUrl(period);
   };
 
-  const handleFetchSuccess = (newData: any[]) => {
-    addFlowData(newData);
+  const handleSyncStart = () => {
+    // Start auto-refreshing data during sync
+    startAutoRefresh();
+  };
+
+  const handleSyncComplete = () => {
+    // Stop auto-refresh and do final refresh
+    stopAutoRefresh();
+    refreshFlowData();
+  };
+
+  const handleDataUpdate = () => {
+    // Refresh data immediately when sync starts
+    refreshFlowData();
   };
 
   return (
@@ -115,11 +133,12 @@ export default function FlowMetricsReportPage() {
 
         {currentView === 'raw-data' && (
           <>
-            {/* Deal Input Form - Only visible in Raw Data view */}
+            {/* Data Refresh Button - Triggers Pipedrive sync */}
             <div className="mb-6">
-              <DealInputForm
-                onFetchSuccess={handleFetchSuccess}
-                isLoading={isLoadingData}
+              <DataRefreshButton
+                onSyncStart={handleSyncStart}
+                onSyncComplete={handleSyncComplete}
+                onDataUpdate={handleDataUpdate}
               />
             </div>
 

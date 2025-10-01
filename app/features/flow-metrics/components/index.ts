@@ -1,9 +1,10 @@
 /**
  * Flow Metrics Components
- * 
+ *
  * Barrel export for all components
  */
 
+export * from './DataRefreshButton';
 export * from './DealInputForm';
 export * from './FlowDataTable';
 export * from './KPICard';

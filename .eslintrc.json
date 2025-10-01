@@ -21,7 +21,8 @@
   "overrides": [
     {
       "files": [
-        "lib/database/connection-standard.ts"
+        "lib/database/connection-standard.ts",
+        "lib/database/connection-standard.js"
       ],
       "rules": {
         "no-restricted-imports": "off"
