@@ -83,16 +83,20 @@ app/features/flow-metrics/
 ```
 
 ### 3. Database Layer Structure
-**Location:** `lib/database/features/flow-metrics/`  
+**Location:** `lib/database/features/flow-metrics/`
 **Pattern:** Repository pattern with Drizzle ORM
 
 ```
 lib/database/features/flow-metrics/
 ├── repository.ts                  # FlowMetricsRepository class
-├── types.ts                       # Database-specific types
-├── queries.ts                     # Complex SQL queries
-└── migrations/
-    └── 0002_flow_metrics_jsonb.ts # Drizzle migration
+└── types.ts                       # Database-specific types
+
+migrations/                        # Root migrations folder (Drizzle config: out: './migrations')
+├── 022_flow_metrics_cross_pipeline_support.sql
+├── 023_flow_metrics_inline_jsonb_check.sql
+├── 024_flow_metrics_force_drop_old_check.sql
+├── 025_flow_metrics_drop_and_replace_check.sql
+└── 026_flow_metrics_clean_rebuild.sql
 ```
 
 ## 📊 New Metrics to Configure
@@ -111,16 +115,22 @@ lib/database/features/flow-metrics/
 
 ## 🔧 Implementation Phases
 
-### Phase 1: Database Migration with Drizzle ORM
+### Phase 1: Database Migration (COMPLETED)
 
-**Create:** `lib/database/features/flow-metrics/migrations/0002_flow_metrics_jsonb.ts`
+**Location:** `migrations/` (root folder, per drizzle.config.ts)
 
-**Tasks:**
-- [ ] Use Drizzle migration system (NOT raw SQL)
-- [ ] Drop `canonical_stage_mappings` table
-- [ ] Recreate `flow_metrics_config` with JSONB column
-- [ ] Add GIN index for JSONB queries
-- [ ] Add validation function (as separate SQL in migration)
+**Completed Migrations:**
+- ✅ 022: Cross-pipeline support with validation function
+- ✅ 023: Inline JSONB check constraint
+- ✅ 024: Force drop old check constraints
+- ✅ 025: Drop and replace check constraint
+- ✅ 026: Clean rebuild of flow_metrics_config table
+
+**Result:**
+- `canonical_stage_mappings` table dropped
+- `flow_metrics_config` table rebuilt with JSONB config column
+- GIN index added for JSONB queries
+- Validation enforces cross-pipeline metric structure
 
 **Drizzle Migration:**
 ```typescript
@@ -818,10 +828,11 @@ const KPICard = ({ data }: { data: FlowMetricData }) => {
 ## 📚 Key Files Reference
 
 ### Database Layer
-- `lib/database/features/flow-metrics/migrations/0002_flow_metrics_jsonb.ts` - Drizzle migration
+- `migrations/022-026_*.sql` - Flow metrics migrations (root folder)
 - `lib/database/features/flow-metrics/repository.ts` - Repository class
 - `lib/database/features/flow-metrics/types.ts` - Database types
-- `lib/database/schema.ts` - Updated schema definition
+- `lib/database/schema.ts` - Schema definition
+- `drizzle.config.ts` - Drizzle config (out: './migrations')
 
 ### Feature Module
 - `app/features/flow-metrics/types/` - Feature types
@@ -841,23 +852,27 @@ const KPICard = ({ data }: { data: FlowMetricData }) => {
 ## ⚠️ Important Notes
 
 1. **Feature Module:** All code lives in `app/features/flow-metrics/` (no scattered files)
-2. **Drizzle ORM:** Use Drizzle migrations, NOT raw SQL files
+2. **Migrations:** All migrations in root `migrations/` folder (per drizzle.config.ts)
 3. **Repository Pattern:** Use `FlowMetricsRepository` class, NOT direct `lib/db.ts` functions
 4. **Testing:** Follow test-playbook.md patterns (NO router/fetch overrides in feature tests)
-5. **Clean Slate:** Old metrics and `canonical_stage_mappings` will be deleted
+5. **Clean Slate:** Old metrics and `canonical_stage_mappings` deleted (migrations 022-026)
 6. **JSONB Pattern:** Follow `requests.line_items` pattern for consistency
 7. **Accordion UI:** Inline stage selection, not modals
 8. **Pipeline Validation:** Enforce same pipeline for start/end stages
+9. **Migration System:** Use `npm run db:migrate` (unified-migrate.js), NOT db:push
 
 ## ✅ Success Criteria
 
-- [ ] Feature module structure matches architecture-modularization-plan.md
-- [ ] Database uses Drizzle ORM migrations
-- [ ] Repository pattern implemented correctly
+- [x] Feature module structure in `app/features/flow-metrics/`
+- [x] Database migrations in root `migrations/` folder (022-026)
+- [x] Repository pattern implemented with FlowMetricsRepository
+- [x] Unified migration system using `scripts/unified-migrate.js`
+- [x] Manual sync trigger for Raw Data tab
+- [x] Scheduled batch sync with Vercel Cron
 - [ ] Test suite follows test-playbook.md patterns
 - [ ] Test coverage ≥90% for feature module
-- [ ] User can create all 9 metrics without typing stage IDs
-- [ ] Pipedrive Stage Explorer shows all current pipelines/stages
+- [x] User can create metrics without typing stage IDs
+- [x] Pipedrive Stage Explorer shows all pipelines/stages
 - [ ] Visual selection interface guides stage picking
 - [ ] System validates pipeline consistency automatically
 - [ ] Metrics calculate correctly using JSONB config

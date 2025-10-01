@@ -37,6 +37,10 @@ This document outlines the comprehensive plan to restructure the Sales Helper Ap
 
 ## Proposed Architecture Restructure
 
+> **⚠️ IMPORTANT**: This document describes the FUTURE target architecture.
+> **Current State (as of Oct 2025)**: Migrations are in root `migrations/` folder per `drizzle.config.ts`.
+> **Future State**: Per-feature migrations in `lib/database/features/*/migrations/` (not yet implemented).
+
 ### 1. Feature-Based Module Organization
 
 ```
@@ -252,52 +256,30 @@ lib/
 ├── database/
 │   ├── core/                    # Base database utilities
 │   │   ├── connection.ts        # Database connection management
-│   │   ├── migrations.ts        # Migration system
+│   │   ├── connection-standard.ts # Standard connection module (enforced)
 │   │   ├── repository.ts        # Base repository pattern
 │   │   ├── types.ts            # Core database types
 │   │   └── utils.ts            # Database utilities
 │   ├── features/
 │   │   ├── sales-requests/
 │   │   │   ├── repository.ts    # Request CRUD operations
-│   │   │   ├── types.ts        # Request-specific types
-│   │   │   ├── queries.ts      # SQL queries
-│   │   │   └── migrations/
-│   │   │       ├── 001_requests.sql
-│   │   │       └── 002_request_indexes.sql
-│   │   ├── flow-metrics/
-│   │   │   ├── repository.ts    # Metrics CRUD operations
-│   │   │   ├── types.ts        # Metrics-specific types
-│   │   │   ├── queries.ts      # Metrics queries
-│   │   │   └── migrations/
-│   │   │       ├── 001_flow_metrics.sql
-│   │   │       └── 002_metrics_config.sql
-│   │   ├── voice-commands/
-│   │   │   ├── repository.ts    # Voice command storage
-│   │   │   ├── types.ts        # Voice command types
-│   │   │   ├── queries.ts      # Voice command queries
-│   │   │   └── migrations/
-│   │   │       └── 001_voice_commands.sql
-│   │   ├── customer-sentiment/
-│   │   │   ├── repository.ts    # Survey and response storage
-│   │   │   ├── types.ts        # Sentiment types
-│   │   │   ├── queries.ts      # Sentiment queries
-│   │   │   └── migrations/
-│   │   │       ├── 001_surveys.sql
-│   │   │       └── 002_responses.sql
-│   │   ├── authentication/
-│   │   │   ├── repository.ts    # User session storage (optional)
-│   │   │   ├── types.ts        # Authentication types
-│   │   │   ├── queries.ts      # Session queries (if needed)
-│   │   │   └── migrations/
-│   │   │       └── 001_auth_sessions.sql
-│   │   └── offline-support/
-│   │       ├── repository.ts    # Queue and sync storage
-│   │       ├── types.ts        # Offline types
-│   │       ├── queries.ts      # Queue queries
-│   │       └── migrations/
-│   │           ├── 001_offline_queue.sql
-│   │           └── 002_sync_status.sql
+│   │   │   └── types.ts        # Request-specific types
+│   │   └── flow-metrics/
+│   │       ├── repository.ts    # Metrics CRUD operations (FlowMetricsRepository)
+│   │       └── types.ts        # Metrics-specific types
 │   └── shared/
+│       ├── base-repository.ts   # Common repository methods
+│       └── common-types.ts     # Shared database types
+│
+migrations/                      # Root migrations folder (Drizzle: out: './migrations')
+├── 022_flow_metrics_cross_pipeline_support.sql
+├── 023_flow_metrics_inline_jsonb_check.sql
+├── 024_flow_metrics_force_drop_old_check.sql
+├── 025_flow_metrics_drop_and_replace_check.sql
+└── 026_flow_metrics_clean_rebuild.sql
+│
+scripts/
+└── unified-migrate.js           # Unified migration system (uses migrations/ folder)
 │       ├── base-repository.ts   # Common repository methods
 │       ├── common-types.ts     # Shared database types
 │       ├── transaction.ts      # Transaction management

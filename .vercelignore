@@ -1,10 +1,10 @@
 # Prevent preview deployments by ignoring feature branch specific files
 # This file helps suppress automatic deployments for non-main branches
 
-# Ignore all feature branch specific files
-feature/
-feature-*/
-*feature*
+# Ignore feature branch directories (but NOT app/features/ which is our code!)
+# Note: app/features/ is our feature module architecture and must NOT be ignored
+.git/refs/heads/feature/
+.git/refs/heads/feature-*/
 
 # Ignore development and testing files that might trigger deployments
 .env.local
