@@ -8,6 +8,13 @@
       "when": 1756871102169,
       "tag": "0000_mighty_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1756872000000,
+      "tag": "0001_add_flow_metrics_created_at_index",
+      "breakpoints": true
     }
   ]
 }

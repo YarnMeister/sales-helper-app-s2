@@ -18,6 +18,7 @@ export const flowMetricsConfig = pgTable('flow_metrics_config', {
   metricKeyIdx: uniqueIndex('idx_fmc_metric_key').on(table.metricKey),
   sortOrderIdx: index('idx_fmc_sort_order').on(table.sortOrder),
   isActiveIdx: index('idx_fmc_is_active').on(table.isActive),
+  createdAtIdx: index('idx_fmc_created_at').on(table.createdAt), // Test migration - Oct 2025
 }));
 
 export const canonicalStageMappings = pgTable('canonical_stage_mappings', {
