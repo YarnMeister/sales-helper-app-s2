@@ -2,13 +2,10 @@ import { eq, and, desc, asc, like, gte, lte } from 'drizzle-orm';
 import { db } from '../connection';
 import { 
   requests, 
-  mockRequests, 
   siteVisits,
   pipedriveSubmissions,
   type Request,
   type NewRequest,
-  type MockRequest,
-  type NewMockRequest,
   type SiteVisit,
   type NewSiteVisit,
   type PipedriveSubmission,
@@ -207,100 +204,8 @@ export class SalesRequestsRepository extends BaseRepositoryImpl<Request> impleme
   }
 }
 
-export class MockRequestsRepository extends BaseRepositoryImpl<MockRequest> implements BaseRepository<MockRequest> {
-  protected tableName = 'mock_requests';
-  protected db = db;
-
-  async create(data: NewMockRequest): Promise<RepositoryResult<MockRequest>> {
-    try {
-      const [result] = await db.insert(mockRequests).values(data).returning();
-      return RepositoryResult.success(result);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to create mock request', 'unknown_error', error));
-    }
-  }
-
-  async findById(id: string): Promise<RepositoryResult<MockRequest | null>> {
-    try {
-      const [result] = await db.select().from(mockRequests).where(eq(mockRequests.id, id));
-      return RepositoryResult.success(result || null);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to find mock request by ID', 'unknown_error', error));
-    }
-  }
-
-  async findByRequestId(requestId: string): Promise<RepositoryResult<MockRequest | null>> {
-    try {
-      const [result] = await db.select().from(mockRequests).where(eq(mockRequests.requestId, requestId));
-      return RepositoryResult.success(result || null);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to find mock request by request ID', 'unknown_error', error));
-    }
-  }
-
-  async findAll(): Promise<RepositoryResult<MockRequest[]>> {
-    try {
-      const result = await db.select().from(mockRequests).orderBy(desc(mockRequests.createdAt));
-      return RepositoryResult.success(result);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to find all mock requests', 'unknown_error', error));
-    }
-  }
-
-  async update(id: string, data: Partial<NewMockRequest>): Promise<RepositoryResult<MockRequest | null>> {
-    try {
-      const [result] = await db.update(mockRequests)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(mockRequests.id, id))
-        .returning();
-      return RepositoryResult.success(result || null);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to update mock request', 'unknown_error', error));
-    }
-  }
-
-  async delete(id: string): Promise<RepositoryResult<boolean>> {
-    try {
-      const result = await db.delete(mockRequests).where(eq(mockRequests.id, id));
-      return RepositoryResult.success(result.rowCount > 0);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to delete mock request', 'unknown_error', error));
-    }
-  }
-
-  async findWithPagination(page: number = 1, limit: number = 10): Promise<RepositoryResult<{ data: MockRequest[], total: number, page: number, limit: number }>> {
-    try {
-      const offset = (page - 1) * limit;
-      const [data, totalResult] = await Promise.all([
-        db.select().from(mockRequests).limit(limit).offset(offset).orderBy(desc(mockRequests.createdAt)),
-        db.select({ count: mockRequests.id }).from(mockRequests)
-      ]);
-      
-      const total = totalResult.length;
-      return RepositoryResult.success({ data, total, page, limit });
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to find mock requests with pagination', 'unknown_error', error));
-    }
-  }
-
-  async exists(id: string): Promise<RepositoryResult<boolean>> {
-    try {
-      const result = await db.select({ id: mockRequests.id }).from(mockRequests).where(eq(mockRequests.id, id)).limit(1);
-      return RepositoryResult.success(result.length > 0);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to check if mock request exists', 'unknown_error', error));
-    }
-  }
-
-  async count(): Promise<RepositoryResult<number>> {
-    try {
-      const result = await db.select({ count: mockRequests.id }).from(mockRequests);
-      return RepositoryResult.success(result.length);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to count mock requests', 'unknown_error', error));
-    }
-  }
-}
+// MockRequestsRepository removed - mock_requests table doesn't exist in production
+// The table was dropped in cleanup migrations and is not part of the production schema
 
 export class SiteVisitsRepository extends BaseRepositoryImpl<SiteVisit> implements BaseRepository<SiteVisit> {
   protected tableName = 'site_visits';

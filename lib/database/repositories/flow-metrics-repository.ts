@@ -3,15 +3,12 @@ import { db } from '../connection';
 import { 
   flowMetricsConfig, 
   canonicalStageMappings, 
-  flowMetrics,
   pipedriveMetricData,
   pipedriveDealFlowData,
   type FlowMetricsConfig,
   type NewFlowMetricsConfig,
   type CanonicalStageMapping,
   type NewCanonicalStageMapping,
-  type FlowMetric,
-  type NewFlowMetric
 } from '../schema';
 import { BaseRepository, BaseRepositoryImpl } from '../core/base-repository';
 import { RepositoryResult } from '../../../types/shared/repository';
@@ -122,82 +119,70 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
   }
 
   // Flow metrics specific methods
-  async createMetric(data: NewFlowMetric): Promise<RepositoryResult<FlowMetric>> {
-    try {
-      const [result] = await db.insert(flowMetrics).values(data).returning();
-      return RepositoryResult.success(result);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to create flow metric', 'unknown_error', error));
-    }
-  }
-
-  async getMetricsByDateRange(startDate: Date, endDate: Date): Promise<RepositoryResult<FlowMetric[]>> {
-    try {
-      const result = await db.select().from(flowMetrics)
-        .where(and(
-          gte(flowMetrics.startDate, startDate),
-          lte(flowMetrics.endDate, endDate)
-        ))
-        .orderBy(desc(flowMetrics.startDate));
-      return RepositoryResult.success(result);
-    } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to get flow metrics by date range', 'unknown_error', error));
-    }
-  }
-
-  async getMetricDataByKey(metricKey: string, startDate: Date, endDate: Date): Promise<RepositoryResult<any[]>> {
+  
+  async getMetricDataByStageAndPipeline(
+    pipelineId: number, 
+    stageId: number, 
+    startDate: Date, 
+    endDate: Date
+  ): Promise<RepositoryResult<any[]>> {
     try {
       const result = await db.select({
-        metricKey: pipedriveMetricData.metricKey,
-        dealId: pipedriveMetricData.dealId,
-        startStageId: pipedriveMetricData.startStageId,
-        endStageId: pipedriveMetricData.endStageId,
-        startTimestamp: pipedriveMetricData.startTimestamp,
-        endTimestamp: pipedriveMetricData.endTimestamp,
-        durationDays: pipedriveMetricData.durationDays,
+        id: pipedriveMetricData.id,
+        title: pipedriveMetricData.title,
+        pipelineId: pipedriveMetricData.pipelineId,
+        stageId: pipedriveMetricData.stageId,
+        status: pipedriveMetricData.status,
+        firstFetchedAt: pipedriveMetricData.firstFetchedAt,
+        lastFetchedAt: pipedriveMetricData.lastFetchedAt,
       })
       .from(pipedriveMetricData)
       .where(and(
-        eq(pipedriveMetricData.metricKey, metricKey),
-        gte(pipedriveMetricData.startTimestamp, startDate),
-        lte(pipedriveMetricData.endTimestamp, endDate)
+        eq(pipedriveMetricData.pipelineId, pipelineId),
+        eq(pipedriveMetricData.stageId, stageId),
+        gte(pipedriveMetricData.firstFetchedAt, startDate),
+        lte(pipedriveMetricData.lastFetchedAt, endDate)
       ));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to get metric data by key', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to get metric data by stage and pipeline', 'unknown_error', error));
     }
   }
 
-  async getDealsForCanonicalStage(canonicalStage: string, startDate: Date, endDate: Date): Promise<RepositoryResult<any[]>> {
+  async getDealsForStage(stageId: number, startDate: Date, endDate: Date): Promise<RepositoryResult<any[]>> {
     try {
       const result = await db.select({
         dealId: pipedriveDealFlowData.dealId,
+        pipelineId: pipedriveDealFlowData.pipelineId,
         stageName: pipedriveDealFlowData.stageName,
-        timestamp: pipedriveDealFlowData.timestamp,
+        enteredAt: pipedriveDealFlowData.enteredAt,
+        leftAt: pipedriveDealFlowData.leftAt,
+        durationSeconds: pipedriveDealFlowData.durationSeconds,
       })
       .from(pipedriveDealFlowData)
       .where(and(
-        gte(pipedriveDealFlowData.timestamp, startDate),
-        lte(pipedriveDealFlowData.timestamp, endDate)
+        eq(pipedriveDealFlowData.stageId, stageId),
+        gte(pipedriveDealFlowData.enteredAt, startDate),
+        lte(pipedriveDealFlowData.enteredAt, endDate)
       ))
-      .orderBy(desc(pipedriveDealFlowData.timestamp));
+      .orderBy(desc(pipedriveDealFlowData.enteredAt));
       return RepositoryResult.success(result);
     } catch (error) {
-      return RepositoryResult.error(this.createError('Failed to get deals for canonical stage', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to get deals for stage', 'unknown_error', error));
     }
   }
 
   async getStageTransitionMetrics(startStageId: number, endStageId: number, startDate: Date, endDate: Date): Promise<RepositoryResult<{ dealId: number, startTime: Date, endTime: Date, durationSeconds: number }[]>> {
     try {
-      // Using raw SQL to match the main branch logic exactly
+      // Using raw SQL to match production schema
       // This gets deals where the START happened within the time period (not end)
       const result = await db.execute(sql`
         WITH deal_stages AS (
           SELECT 
             deal_id,
             stage_id,
-            timestamp as entered_at,
-            ROW_NUMBER() OVER (PARTITION BY deal_id, stage_id ORDER BY timestamp) as rn
+            entered_at,
+            ROW_NUMBER() OVER (PARTITION BY deal_id, stage_id ORDER BY entered_at) as rn
           FROM pipedrive_deal_flow_data
           WHERE stage_id = ${startStageId} OR stage_id = ${endStageId}
         ),

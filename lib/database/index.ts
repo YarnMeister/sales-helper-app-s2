@@ -7,9 +7,9 @@ export * from './schema';
 export { FlowMetricsRepository } from './repositories/flow-metrics-repository';
 export { CanonicalStageMappingsRepository } from './repositories/flow-metrics-repository';
 export { SalesRequestsRepository } from './repositories/sales-requests-repository';
-export { MockRequestsRepository } from './repositories/sales-requests-repository';
 export { SiteVisitsRepository } from './repositories/sales-requests-repository';
 export { PipedriveSubmissionsRepository } from './repositories/sales-requests-repository';
+// MockRequestsRepository removed - mock_requests table doesn't exist in production
 
 // Core infrastructure exports
 export * from './core/base-repository';

@@ -79,6 +79,8 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
    ```bash
    npm run db:migrate
    ```
+   
+   This runs Drizzle ORM migrations from `lib/database/migrations/`. For a fresh start, use `npm run db:reset-dev` to drop all tables and recreate from schema.
 
 4. **Start development server:**
    ```bash
@@ -120,10 +122,11 @@ The Sales Helper App is a Next.js 14 application designed for mobile-first sales
 - **Validation**: Zod schema validation
 
 #### Database Layer
-- **Neon Serverless**: Connection pooling
-- **Query Builders**: Type-safe database operations
+- **Neon Serverless**: Connection pooling with @neondatabase/serverless
+- **Drizzle ORM**: Type-safe database operations and migrations
+- **Query Builders**: Type-safe database operations via Drizzle
 - **Transaction Support**: ACID compliance
-- **Migration System**: Schema versioning
+- **Migration System**: Drizzle Kit for schema versioning (tracked in `__drizzle_migrations`)
 - **Environment Isolation**: Separate database instances for development and production
 
 #### Architecture Approach
@@ -785,8 +788,12 @@ npm run lint                   # Run ESLint
 npm run test                   # Run tests
 npm run test:watch             # Run tests in watch mode
 
-# Database
-npm run db:migrate             # Run database migrations
+# Database (Drizzle ORM)
+npm run db:migrate             # Run pending database migrations
+npm run db:generate            # Generate new migration from schema.ts changes
+npm run db:push                # Push schema directly to database (dev only, bypasses migrations)
+npm run db:studio              # Open Drizzle Studio (database GUI)
+npm run db:reset-dev           # Drop all tables and recreate from schema (dev only)
 npm run env:check              # Validate environment configuration
 
 # Neon Database Management
@@ -798,12 +805,10 @@ npm run neon:create <branch>   # Create a new database branch
 npm run neon:delete <branch>   # Delete a branch
 npm run neon:cleanup           # Clean up old preview branches
 
-# Environment Setup
-npm run db:setup-dev           # Setup development environment
-npm run db:setup-preview       # Setup preview environment
-npm run db:migrate-dev         # Run migrations on development
-npm run db:migrate-preview     # Run migrations on preview
-npm run db:migrate-prod        # Run migrations on production
+# Environment-specific migrations
+npm run db:migrate-dev         # Run migrations on development database
+npm run db:migrate-preview     # Run migrations on preview database
+npm run db:migrate-prod        # Run migrations on production database
 
 # Utilities
 npm run workflow:update        # Update workflow state dashboard
