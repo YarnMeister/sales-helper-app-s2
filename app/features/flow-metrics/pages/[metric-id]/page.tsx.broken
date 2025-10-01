@@ -12,7 +12,7 @@ import { CommonHeader } from '../../../../components/CommonHeader';
 import { CommonFooter } from '../../../../components/CommonFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { Button } from '../../../../components/ui/button';
-import LeadTimeChart from '../../../../components/LeadTimeChart';
+import { LeadTimeChart } from '../../../../components/LeadTimeChart';
 import { useMetricDetail } from '../../hooks';
 import { calculateMetrics, TIME_PERIODS, DEFAULT_PERIOD } from '../../utils';
 
@@ -56,7 +56,10 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CommonHeader title="Flow Metric Detail" />
+        <CommonHeader
+          currentPage="Flow Metric Detail"
+          onNavigateHome={() => router.push('/')}
+        />
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-16">
             <div className="text-gray-500">Loading metric details...</div>
@@ -69,7 +72,10 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CommonHeader title="Flow Metric Detail" />
+        <CommonHeader
+          currentPage="Flow Metric Detail"
+          onNavigateHome={() => router.push('/')}
+        />
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800 font-medium">Error loading metric:</p>
@@ -83,7 +89,10 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Common Header */}
-        <CommonHeader title="Flow Metric Detail" />
+      <CommonHeader
+        currentPage="Flow Metric Detail"
+        onNavigateHome={() => router.push('/')}
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -91,92 +100,116 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
         <div className="mb-6">
           <Button
             variant="outline"
-            onClick={() => router.push('/flow-metrics-report')}
+            onClick={() => router.push(`/flow-metrics-report?period=${selectedPeriod}`)}
             className="mb-4"
           >
-            ← Back to Flow Metrics
+            ← Back to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {config?.display_title || 'Flow Metric Detail'}
+          <h1 className="text-2xl font-bold text-gray-900">
+            {config?.display_title || 'Metric Detail'}
           </h1>
+          {config?.metric_comment && (
+            <p className="text-sm text-gray-600 mt-1">{config.metric_comment}</p>
+          )}
         </div>
 
-        {/* Period Selection */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Time Period</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              {TIME_PERIODS.map((period) => (
-                <Button
-                  key={period.value}
-                  variant={selectedPeriod === period.value ? 'default' : 'outline'}
-                  onClick={() => handlePeriodChange(period.value)}
-                  size="sm"
-                >
-                  {period.label}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Period Selector */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Time Period
+          </label>
+          <div className="flex gap-2">
+            {TIME_PERIODS.map((period) => (
+              <Button
+                key={period.value}
+                variant={selectedPeriod === period.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handlePeriodChange(period.value)}
+                className={
+                  selectedPeriod === period.value
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : ''
+                }
+              >
+                {period.label}
+              </Button>
+            ))}
+          </div>
+        </div>
 
-        {/* Metrics Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Deals</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Average
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{calculatedMetrics.totalDeals}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Average Duration</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {calculatedMetrics.average.toFixed(1)} days
+              <div className="text-2xl font-bold text-blue-600">
+                {calculatedMetrics.average > 0
+                  ? `${calculatedMetrics.average} days`
+                  : 'No data'}
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Min Duration</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Best (Fastest)
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {calculatedMetrics.best.toFixed(1)} days
+              <div className="text-2xl font-bold text-green-600">
+                {calculatedMetrics.best > 0
+                  ? `${calculatedMetrics.best} days`
+                  : 'No data'}
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Max Duration</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Worst (Slowest)
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {calculatedMetrics.worst.toFixed(1)} days
+              <div className="text-2xl font-bold text-red-600">
+                {calculatedMetrics.worst > 0
+                  ? `${calculatedMetrics.worst} days`
+                  : 'No data'}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Total Deals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">
+                {calculatedMetrics.totalDeals}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex gap-2 mb-6">
+        {/* View Toggle */}
+        <div className="mb-4 flex gap-2">
           <Button
             variant={viewMode === 'chart' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setViewMode('chart')}
           >
             Chart View
           </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setViewMode('list')}
           >
             List View
@@ -186,14 +219,10 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
         {/* Data Visualization */}
         {calculatedMetrics.totalDeals > 0 ? (
           viewMode === 'chart' ? (
-            <LeadTimeChart 
-              deals={deals.map(deal => ({
-                ...deal,
-                deal_id: deal.deal_id.toString()
-              }))} 
-              metricTitle={config?.display_title || 'Flow Metric'}
-              canonicalStage="Unknown"
-            />
+            {/* <LeadTimeChart data={deals} /> TODO: Create this component */}
+            <div className="p-8 text-center text-gray-500">
+              Chart component coming soon...
+            </div>
           ) : (
             <Card>
               <CardHeader>
@@ -211,12 +240,18 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {deals.map((deal) => (
-                        <tr key={deal.deal_id} className="border-b">
-                          <td className="p-2 font-mono text-xs">{deal.deal_id}</td>
-                          <td className="p-2">{new Date(deal.start_date).toLocaleDateString()}</td>
-                          <td className="p-2">{new Date(deal.end_date).toLocaleDateString()}</td>
-                          <td className="p-2">{(deal.duration_seconds / 86400).toFixed(1)}</td>
+                      {deals.map((deal, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="p-2">{deal.deal_id}</td>
+                          <td className="p-2">
+                            {new Date(deal.start_date).toLocaleDateString()}
+                          </td>
+                          <td className="p-2">
+                            {new Date(deal.end_date).toLocaleDateString()}
+                          </td>
+                          <td className="p-2">
+                            {Math.round((deal.duration_seconds / 86400) * 100) / 100}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -227,10 +262,12 @@ export default function FlowMetricDetailPage({ params }: PageProps) {
           )
         ) : (
           <Card>
-            <CardContent className="py-16 text-center">
-              <div className="text-gray-500">
+            <CardContent className="py-12">
+              <div className="text-center text-gray-500">
                 <p className="text-lg font-medium mb-2">No data available</p>
-                <p className="text-sm">No deals found for the selected time period.</p>
+                <p className="text-sm">
+                  No deals found for this metric in the selected time period.
+                </p>
               </div>
             </CardContent>
           </Card>

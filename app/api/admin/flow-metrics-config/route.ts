@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFlowMetricsConfig, createFlowMetricConfig } from '../../../../lib/db';
+import { FlowMetricsRepository } from '../../../../lib/database/repositories/flow-metrics-repository';
 import { logError, logInfo } from '../../../../lib/log';
 import { ensureDatabaseInitialized } from '../../../../lib/database/init';
 
@@ -10,11 +10,16 @@ export async function GET() {
   try {
     logInfo('GET /api/admin/flow-metrics-config - Fetching flow metrics configuration');
     
-    const config = await getFlowMetricsConfig();
+    const repository = new FlowMetricsRepository();
+    const result = await repository.findAll();
+    
+    if (!result.success) {
+      throw new Error(result.error?.message || 'Failed to fetch metrics');
+    }
     
     return NextResponse.json({
       success: true,
-      data: config
+      data: result.data
     });
   } catch (error) {
     logError('Error fetching flow metrics configuration', { error: error instanceof Error ? error.message : String(error) });
@@ -96,13 +101,20 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    const newConfig = await createFlowMetricConfig({
-      metric_key,
-      display_title,
+    const repository = new FlowMetricsRepository();
+    const result = await repository.create({
+      metricKey: metric_key,
+      displayTitle: display_title,
       config: config, // Store JSONB config with cross-pipeline support
-      sort_order: sort_order || 0,
-      is_active: is_active !== false
+      sortOrder: sort_order || 0,
+      isActive: is_active !== false
     });
+    
+    if (!result.success) {
+      throw new Error(result.error?.message || 'Failed to create metric');
+    }
+    
+    const newConfig = result.data;
     
     return NextResponse.json({
       success: true,

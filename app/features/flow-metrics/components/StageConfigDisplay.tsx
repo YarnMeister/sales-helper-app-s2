@@ -10,7 +10,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
-import { isCrossPipelineMetric, type StageSelection } from '../utils';
+import { isCrossPipelineMetric } from '../utils';
+import type { StageSelection } from '../types';
 
 interface StageConfigDisplayProps {
   startStage: StageSelection | null;

@@ -60,10 +60,7 @@ export default function FlowMetricsReportPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Common Header */}
-      <CommonHeader
-        currentPage="Flow Metrics Report"
-        onNavigateHome={() => router.push('/')}
-      />
+      <CommonHeader title="Flow Metrics Report" />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">

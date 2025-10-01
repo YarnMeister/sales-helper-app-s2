@@ -11,7 +11,7 @@ import { BaseRepository, BaseRepositoryImpl } from '../core/base-repository';
 import { RepositoryResult } from '../../../types/shared/repository';
 
 export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig> implements BaseRepository<FlowMetricsConfig> {
-  protected tableName = 'flow_metrics';
+  protected tableName = 'flow_metrics_config';
   protected db = db;
 
   async create(data: NewFlowMetricsConfig): Promise<RepositoryResult<FlowMetricsConfig>> {

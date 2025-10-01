@@ -5,8 +5,8 @@ import { relations } from 'drizzle-orm';
 export const requestStatusEnum = pgEnum('request_status', ['draft', 'submitted', 'approved', 'rejected']);
 
 // Base tables
-export const flowMetricsConfig = pgTable('flow_metrics', {
-  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+export const flowMetricsConfig = pgTable('flow_metrics_config', {
+  id: uuid('id').primaryKey().defaultRandom(),
   metricKey: text('metric_key').notNull().unique(),
   displayTitle: text('display_title').notNull(),
   config: jsonb('config').notNull().default('{}'), // JSONB configuration (startStage, endStage, thresholds)
@@ -19,7 +19,7 @@ export const flowMetricsConfig = pgTable('flow_metrics', {
   sortOrderIdx: index('idx_fmc_sort_order').on(table.sortOrder),
   isActiveIdx: index('idx_fmc_is_active').on(table.isActive),
   configGinIdx: index('idx_fmc_config_gin').on(table.config), // GIN index for JSONB queries
-  createdAtIdx: index('idx_fmc_created_at').on(table.createdAt), // Test migration - Oct 2025
+  createdAtIdx: index('idx_fmc_created_at').on(table.createdAt),
 }));
 
 // Removed: canonical_stage_mappings table (replaced with JSONB config in flow_metrics_config)

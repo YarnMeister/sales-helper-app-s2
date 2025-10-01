@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateFlowMetricConfig, deleteFlowMetricConfig } from '../../../../../lib/db';
+import { FlowMetricsRepository } from '../../../../../lib/database/repositories/flow-metrics-repository';
 import { logError, logInfo } from '../../../../../lib/log';
 import { ensureDatabaseInitialized } from '../../../../../lib/database/init';
 
@@ -14,17 +14,19 @@ export async function PATCH(
     const body = await request.json();
     logInfo('PATCH /api/admin/flow-metrics-config/[id] - Updating flow metric configuration', { id: params.id, body });
     
-    const updatedConfig = await updateFlowMetricConfig(params.id, {
-      display_title: body.display_title,
-      canonical_stage: body.canonical_stage,
-      sort_order: body.sort_order,
-      is_active: body.is_active,
-      start_stage_id: body.start_stage_id ? Number(body.start_stage_id) : undefined,
-      end_stage_id: body.end_stage_id ? Number(body.end_stage_id) : undefined,
-      avg_min_days: body.avg_min_days !== undefined ? Number(body.avg_min_days) : undefined,
-      avg_max_days: body.avg_max_days !== undefined ? Number(body.avg_max_days) : undefined,
-      metric_comment: body.metric_comment
+    const repository = new FlowMetricsRepository();
+    const result = await repository.update(params.id, {
+      displayTitle: body.display_title,
+      config: body.config, // JSONB config object
+      sortOrder: body.sort_order,
+      isActive: body.is_active,
     });
+    
+    if (!result.success) {
+      throw new Error(result.error?.message || 'Failed to update metric');
+    }
+    
+    const updatedConfig = result.data;
     
     if (!updatedConfig) {
       return NextResponse.json(
@@ -56,14 +58,20 @@ export async function DELETE(
   try {
     logInfo('DELETE /api/admin/flow-metrics-config/[id] - Deleting flow metric configuration', { id: params.id });
     
-    const deletedConfig = await deleteFlowMetricConfig(params.id);
+    const repository = new FlowMetricsRepository();
+    const result = await repository.delete(params.id);
     
-    if (!deletedConfig) {
-      return NextResponse.json(
-        { success: false, error: 'Flow metric configuration not found' },
-        { status: 404 }
-      );
+    if (!result.success) {
+      if (result.error?.code === 'not_found') {
+        return NextResponse.json(
+          { success: false, error: 'Flow metric configuration not found' },
+          { status: 404 }
+        );
+      }
+      throw new Error(result.error?.message || 'Failed to delete metric');
     }
+    
+    const deletedConfig = result.data;
     
     return NextResponse.json({
       success: true,
