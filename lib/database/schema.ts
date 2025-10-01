@@ -112,6 +112,26 @@ export const pipedriveMetricData = pgTable('pipedrive_metric_data', {
   statusIdx: index('idx_pipedrive_metric_data_status').on(table.status),
 }));
 
+export const dealFlowSyncStatus = pgTable('deal_flow_sync_status', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  syncType: text('sync_type').notNull(), // 'full' | 'incremental'
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  status: text('status').notNull(), // 'running' | 'completed' | 'failed'
+  totalDeals: integer('total_deals'),
+  processedDeals: integer('processed_deals'),
+  successfulDeals: integer('successful_deals'),
+  failedDeals: jsonb('failed_deals'), // Array of deal IDs
+  errors: jsonb('errors'), // Array of error messages
+  duration: integer('duration_ms'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  syncTypeIdx: index('idx_deal_flow_sync_status_sync_type').on(table.syncType),
+  statusIdx: index('idx_deal_flow_sync_status_status').on(table.status),
+  startedAtIdx: index('idx_deal_flow_sync_status_started_at').on(table.startedAt),
+  completedAtIdx: index('idx_deal_flow_sync_status_completed_at').on(table.completedAt),
+}));
+
 // flow_metrics table removed - doesn't exist in production
 
 // kv_cache table removed - doesn't exist in production

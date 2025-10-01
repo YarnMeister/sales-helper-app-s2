@@ -1,11 +1,11 @@
 {
-  "id": "e52d68e2-55a9-41bc-bc00-08571684d9fb",
-  "prevId": "da5b24c5-4864-463f-b754-3173cbcedb68",
+  "id": "b02a4359-810a-42f1-b2d3-5608f6bb6bf2",
+  "prevId": "8d8672d3-bb80-48e4-8b77-860368b0af49",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.canonical_stage_mappings": {
-      "name": "canonical_stage_mappings",
+    "public.deal_flow_sync_status": {
+      "name": "deal_flow_sync_status",
       "schema": "",
       "columns": {
         "id": {
@@ -15,283 +15,134 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "metric_config_id": {
-          "name": "metric_config_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "canonical_stage": {
-          "name": "canonical_stage",
+        "sync_type": {
+          "name": "sync_type",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "start_stage": {
-          "name": "start_stage",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "end_stage": {
-          "name": "end_stage",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "start_stage_id": {
-          "name": "start_stage_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "end_stage_id": {
-          "name": "end_stage_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "avg_min_days": {
-          "name": "avg_min_days",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "avg_max_days": {
-          "name": "avg_max_days",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metric_comment": {
-          "name": "metric_comment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_csm_canonical_stage": {
-          "name": "idx_csm_canonical_stage",
-          "columns": [
-            {
-              "expression": "canonical_stage",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
-        "idx_csm_start_stage": {
-          "name": "idx_csm_start_stage",
-          "columns": [
-            {
-              "expression": "start_stage",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
-        "idx_csm_end_stage": {
-          "name": "idx_csm_end_stage",
-          "columns": [
-            {
-              "expression": "end_stage",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
-        "idx_csm_start_stage_id": {
-          "name": "idx_csm_start_stage_id",
-          "columns": [
-            {
-              "expression": "start_stage_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
-        "idx_csm_end_stage_id": {
-          "name": "idx_csm_end_stage_id",
-          "columns": [
-            {
-              "expression": "end_stage_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
-        "idx_csm_metric_config_id": {
-          "name": "idx_csm_metric_config_id",
-          "columns": [
-            {
-              "expression": "metric_config_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        }
-      },
-      "foreignKeys": {
-        "canonical_stage_mappings_metric_config_id_flow_metrics_config_id_fk": {
-          "name": "canonical_stage_mappings_metric_config_id_flow_metrics_config_id_fk",
-          "tableFrom": "canonical_stage_mappings",
-          "columnsFrom": [
-            "metric_config_id"
-          ],
-          "tableTo": "flow_metrics_config",
-          "columnsTo": [
-            "id"
-          ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.flow_metrics": {
-      "name": "flow_metrics",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "metric_key": {
-          "name": "metric_key",
-          "type": "text",
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         },
-        "start_date": {
-          "name": "start_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "end_date": {
-          "name": "end_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "avg_duration_days": {
-          "name": "avg_duration_days",
-          "type": "integer",
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         },
         "total_deals": {
           "name": "total_deals",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": false
+        },
+        "processed_deals": {
+          "name": "processed_deals",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "successful_deals": {
+          "name": "successful_deals",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failed_deals": {
+          "name": "failed_deals",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "errors": {
+          "name": "errors",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_ms": {
+          "name": "duration_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
         }
       },
       "indexes": {
-        "idx_flow_metrics_metric_key": {
-          "name": "idx_flow_metrics_metric_key",
+        "idx_deal_flow_sync_status_sync_type": {
+          "name": "idx_deal_flow_sync_status_sync_type",
           "columns": [
             {
-              "expression": "metric_key",
+              "expression": "sync_type",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
-        "idx_flow_metrics_start_date": {
-          "name": "idx_flow_metrics_start_date",
+        "idx_deal_flow_sync_status_status": {
+          "name": "idx_deal_flow_sync_status_status",
           "columns": [
             {
-              "expression": "start_date",
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
-        "idx_flow_metrics_end_date": {
-          "name": "idx_flow_metrics_end_date",
+        "idx_deal_flow_sync_status_started_at": {
+          "name": "idx_deal_flow_sync_status_started_at",
           "columns": [
             {
-              "expression": "end_date",
+              "expression": "started_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
+        },
+        "idx_deal_flow_sync_status_completed_at": {
+          "name": "idx_deal_flow_sync_status_completed_at",
+          "columns": [
+            {
+              "expression": "completed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -324,11 +175,12 @@
           "primaryKey": false,
           "notNull": true
         },
-        "canonical_stage": {
-          "name": "canonical_stage",
-          "type": "text",
+        "config": {
+          "name": "config",
+          "type": "jsonb",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'{}'"
         },
         "sort_order": {
           "name": "sort_order",
@@ -346,16 +198,16 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "now()"
         }
       },
@@ -371,9 +223,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_fmc_sort_order": {
           "name": "idx_fmc_sort_order",
@@ -386,9 +238,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_fmc_is_active": {
           "name": "idx_fmc_is_active",
@@ -401,224 +253,27 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "flow_metrics_config_metric_key_unique": {
-          "name": "flow_metrics_config_metric_key_unique",
-          "columns": [
-            "metric_key"
-          ],
-          "nullsNotDistinct": false
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.kv_cache": {
-      "name": "kv_cache",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "with": {}
         },
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "value": {
-          "name": "value",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_kv_cache_key": {
-          "name": "idx_kv_cache_key",
+        "idx_fmc_config_gin": {
+          "name": "idx_fmc_config_gin",
           "columns": [
             {
-              "expression": "key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
-        "idx_kv_cache_expires_at": {
-          "name": "idx_kv_cache_expires_at",
-          "columns": [
-            {
-              "expression": "expires_at",
+              "expression": "config",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "kv_cache_key_unique": {
-          "name": "kv_cache_key_unique",
-          "columns": [
-            "key"
-          ],
-          "nullsNotDistinct": false
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.mock_requests": {
-      "name": "mock_requests",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "with": {}
         },
-        "request_id": {
-          "name": "request_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "request_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'draft'"
-        },
-        "salesperson_first_name": {
-          "name": "salesperson_first_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "salesperson_selection": {
-          "name": "salesperson_selection",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mine_group": {
-          "name": "mine_group",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mine_name": {
-          "name": "mine_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contact": {
-          "name": "contact",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "line_items": {
-          "name": "line_items",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'"
-        },
-        "comment": {
-          "name": "comment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "pipedrive_deal_id": {
-          "name": "pipedrive_deal_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_mock_requests_request_id": {
-          "name": "idx_mock_requests_request_id",
-          "columns": [
-            {
-              "expression": "request_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
-        "idx_mock_requests_created_at": {
-          "name": "idx_mock_requests_created_at",
+        "idx_fmc_created_at": {
+          "name": "idx_fmc_created_at",
           "columns": [
             {
               "expression": "created_at",
@@ -628,35 +283,20 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
-        },
-        "idx_mock_requests_status": {
-          "name": "idx_mock_requests_status",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "mock_requests_request_id_unique": {
-          "name": "mock_requests_request_id_unique",
+        "flow_metrics_config_metric_key_unique": {
+          "name": "flow_metrics_config_metric_key_unique",
+          "nullsNotDistinct": false,
           "columns": [
-            "request_id"
-          ],
-          "nullsNotDistinct": false
+            "metric_key"
+          ]
         }
       },
       "policies": {},
@@ -680,6 +320,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "pipeline_id": {
+          "name": "pipeline_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "stage_id": {
           "name": "stage_id",
           "type": "integer",
@@ -692,24 +338,43 @@
           "primaryKey": false,
           "notNull": true
         },
-        "event_id": {
-          "name": "event_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "timestamp": {
-          "name": "timestamp",
-          "type": "timestamp",
+        "entered_at": {
+          "name": "entered_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         },
+        "left_at": {
+          "name": "left_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_seconds": {
+          "name": "duration_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "pipedrive_event_id": {
+          "name": "pipedrive_event_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {
@@ -724,9 +389,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_pipedrive_deal_flow_data_stage_id": {
           "name": "idx_pipedrive_deal_flow_data_stage_id",
@@ -739,29 +404,52 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
-        "idx_pipedrive_deal_flow_data_timestamp": {
-          "name": "idx_pipedrive_deal_flow_data_timestamp",
+        "idx_pipedrive_deal_flow_data_pipeline_id": {
+          "name": "idx_pipedrive_deal_flow_data_pipeline_id",
           "columns": [
             {
-              "expression": "timestamp",
+              "expression": "pipeline_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
+        },
+        "idx_pipedrive_deal_flow_data_entered_at": {
+          "name": "idx_pipedrive_deal_flow_data_entered_at",
+          "columns": [
+            {
+              "expression": "entered_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "pipedrive_deal_flow_data_pipedrive_event_id_unique": {
+          "name": "pipedrive_deal_flow_data_pipedrive_event_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "pipedrive_event_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -772,121 +460,94 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "deal_id": {
-          "name": "deal_id",
           "type": "integer",
-          "primaryKey": false,
+          "primaryKey": true,
           "notNull": true
         },
-        "metric_key": {
-          "name": "metric_key",
+        "title": {
+          "name": "title",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "start_stage_id": {
-          "name": "start_stage_id",
+        "pipeline_id": {
+          "name": "pipeline_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "end_stage_id": {
-          "name": "end_stage_id",
+        "stage_id": {
+          "name": "stage_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "start_timestamp": {
-          "name": "start_timestamp",
-          "type": "timestamp",
+        "status": {
+          "name": "status",
+          "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "end_timestamp": {
-          "name": "end_timestamp",
-          "type": "timestamp",
+        "first_fetched_at": {
+          "name": "first_fetched_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "now()"
         },
-        "duration_days": {
-          "name": "duration_days",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+        "last_fetched_at": {
+          "name": "last_fetched_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
         }
       },
       "indexes": {
-        "idx_pipedrive_metric_data_deal_id": {
-          "name": "idx_pipedrive_metric_data_deal_id",
+        "idx_pipedrive_metric_data_pipeline_id": {
+          "name": "idx_pipedrive_metric_data_pipeline_id",
           "columns": [
             {
-              "expression": "deal_id",
+              "expression": "pipeline_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
-        "idx_pipedrive_metric_data_metric_key": {
-          "name": "idx_pipedrive_metric_data_metric_key",
+        "idx_pipedrive_metric_data_stage_id": {
+          "name": "idx_pipedrive_metric_data_stage_id",
           "columns": [
             {
-              "expression": "metric_key",
+              "expression": "stage_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
-        "idx_pipedrive_metric_data_start_stage_id": {
-          "name": "idx_pipedrive_metric_data_start_stage_id",
+        "idx_pipedrive_metric_data_status": {
+          "name": "idx_pipedrive_metric_data_status",
           "columns": [
             {
-              "expression": "start_stage_id",
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
-        },
-        "idx_pipedrive_metric_data_end_stage_id": {
-          "name": "idx_pipedrive_metric_data_end_stage_id",
-          "columns": [
-            {
-              "expression": "end_stage_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -923,20 +584,20 @@
           "name": "simulated_deal_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "now()"
         }
       },
@@ -952,9 +613,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_pipedrive_submissions_simulated_deal_id": {
           "name": "idx_pipedrive_submissions_simulated_deal_id",
@@ -967,9 +628,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -1055,41 +716,17 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "contact_person_id_int": {
-          "name": "contact_person_id_int",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contact_org_id_int": {
-          "name": "contact_org_id_int",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contact_mine_group": {
-          "name": "contact_mine_group",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contact_mine_name": {
-          "name": "contact_mine_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1104,9 +741,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_requests_created_at": {
           "name": "idx_requests_created_at",
@@ -1119,9 +756,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_requests_status": {
           "name": "idx_requests_status",
@@ -1134,69 +771,39 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_requests_mine_group": {
           "name": "idx_requests_mine_group",
           "columns": [
             {
-              "expression": "contact_mine_group",
+              "expression": "mine_group",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_requests_mine_name": {
           "name": "idx_requests_mine_name",
           "columns": [
             {
-              "expression": "contact_mine_name",
+              "expression": "mine_name",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
-        },
-        "idx_requests_person_id": {
-          "name": "idx_requests_person_id",
-          "columns": [
-            {
-              "expression": "contact_person_id_int",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
-        "idx_requests_org_id": {
-          "name": "idx_requests_org_id",
-          "columns": [
-            {
-              "expression": "contact_org_id_int",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_requests_salesperson": {
           "name": "idx_requests_salesperson",
@@ -1209,9 +816,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_requests_line_items_gin": {
           "name": "idx_requests_line_items_gin",
@@ -1224,9 +831,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_requests_contact_gin": {
           "name": "idx_requests_contact_gin",
@@ -1239,9 +846,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -1249,10 +856,10 @@
       "uniqueConstraints": {
         "requests_request_id_unique": {
           "name": "requests_request_id_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "request_id"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -1302,181 +909,105 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "request_id": {
-          "name": "request_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "visit_date": {
-          "name": "visit_date",
+        "date": {
+          "name": "date",
           "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "salesperson": {
+          "name": "salesperson",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "salesperson_first_name": {
-          "name": "salesperson_first_name",
+        "planned_mines": {
+          "name": "planned_mines",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "main_purpose": {
+          "name": "main_purpose",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "salesperson_selection": {
-          "name": "salesperson_selection",
+        "availability": {
+          "name": "availability",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "mine_group": {
-          "name": "mine_group",
+        "comments": {
+          "name": "comments",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mine_name": {
-          "name": "mine_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contact": {
-          "name": "contact",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "line_items": {
-          "name": "line_items",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'"
-        },
-        "comment": {
-          "name": "comment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "submit_mode": {
-          "name": "submit_mode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'mock'"
-        },
-        "pipedrive_deal_id": {
-          "name": "pipedrive_deal_id",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": false
         }
       },
       "indexes": {
-        "idx_site_visits_request_id": {
-          "name": "idx_site_visits_request_id",
+        "idx_site_visits_date": {
+          "name": "idx_site_visits_date",
           "columns": [
             {
-              "expression": "request_id",
+              "expression": "date",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
-        },
-        "idx_site_visits_visit_date": {
-          "name": "idx_site_visits_visit_date",
-          "columns": [
-            {
-              "expression": "visit_date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_site_visits_salesperson": {
           "name": "idx_site_visits_salesperson",
           "columns": [
             {
-              "expression": "salesperson_selection",
+              "expression": "salesperson",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
-        "idx_site_visits_mine_group": {
-          "name": "idx_site_visits_mine_group",
+        "idx_site_visits_created_at": {
+          "name": "idx_site_visits_created_at",
           "columns": [
             {
-              "expression": "mine_group",
+              "expression": "created_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
-        },
-        "idx_site_visits_mine_name": {
-          "name": "idx_site_visits_mine_name",
-          "columns": [
-            {
-              "expression": "mine_name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
-      "foreignKeys": {
-        "site_visits_request_id_requests_request_id_fk": {
-          "name": "site_visits_request_id_requests_request_id_fk",
-          "tableFrom": "site_visits",
-          "columnsFrom": [
-            "request_id"
-          ],
-          "tableTo": "requests",
-          "columnsTo": [
-            "request_id"
-          ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -1491,15 +1022,16 @@
       "values": [
         "draft",
         "submitted",
-        "failed"
+        "approved",
+        "rejected"
       ]
     }
   },
   "schemas": {},
-  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

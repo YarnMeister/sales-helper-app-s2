@@ -107,26 +107,73 @@ export const fetchPipedriveStages = async () => {
   // First get all pipelines
   const pipelinesResponse = await callPipedriveAPI('/pipelines');
   const pipelines = pipelinesResponse.data || [];
-  
+
   // Then get stages for each pipeline
   const allStages: any[] = [];
-  
+
   for (const pipeline of pipelines) {
     try {
       const stagesResponse = await callPipedriveAPI(`/stages?pipeline_id=${pipeline.id}`);
       const stages = stagesResponse.data || [];
-      
+
       // Add pipeline info to each stage
       const stagesWithPipeline = stages.map((stage: any) => ({
         ...stage,
         pipeline_name: pipeline.name
       }));
-      
+
       allStages.push(...stagesWithPipeline);
     } catch (error) {
       console.warn(`Failed to fetch stages for pipeline ${pipeline.id}:`, error);
     }
   }
-  
+
   return allStages;
+};
+
+export const fetchDealsWithFilters = async (filters: {
+  status?: 'won' | 'lost' | 'open' | 'deleted';
+  start_date?: string;
+  update_time?: string;
+  limit?: number;
+  start?: number;
+}) => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      params.append(key, value.toString());
+    }
+  });
+
+  const response = await callPipedriveAPI(`/deals?${params.toString()}`);
+  return response.data || [];
+};
+
+export const fetchAllDealsUpdatedSince = async (days: number) => {
+  const sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - days);
+
+  let allDeals = [];
+  let start = 0;
+  const limit = 500;
+
+  while (true) {
+    const deals = await fetchDealsWithFilters({
+      status: 'won',
+      update_time: `>${sinceDate.toISOString()}`,
+      limit,
+      start
+    });
+
+    if (deals.length === 0) break;
+    allDeals.push(...deals);
+    start += limit;
+
+    // Rate limiting: 40 requests per 2 seconds
+    if (start % (40 * limit) === 0) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  return allDeals;
 };
