@@ -75,14 +75,6 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      // Inject legacy top-level pipeline for backward-compat DB constraint
-      if (!config.pipeline) {
-        config.pipeline = {
-          id: config.startStage.pipelineId,
-          name: config.startStage.pipelineName
-        };
-      }
-      
       // Validate same stage
       if (config.startStage.id === config.endStage.id) {
         return NextResponse.json(
@@ -107,15 +99,9 @@ export async function POST(request: NextRequest) {
     const newConfig = await createFlowMetricConfig({
       metric_key,
       display_title,
-      canonical_stage: config?.startStage?.name || 'default', // Legacy field - use start stage name
-      config: config, // Store JSONB config
+      config: config, // Store JSONB config with cross-pipeline support
       sort_order: sort_order || 0,
-      is_active: is_active !== false,
-      start_stage_id: config?.startStage?.id,
-      end_stage_id: config?.endStage?.id,
-      avg_min_days: config?.thresholds?.minDays,
-      avg_max_days: config?.thresholds?.maxDays,
-      metric_comment: config?.comment || undefined
+      is_active: is_active !== false
     });
     
     return NextResponse.json({

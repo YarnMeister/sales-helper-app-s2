@@ -580,15 +580,9 @@ export const getFlowMetricConfig = async (metricKey: string) => {
 export const createFlowMetricConfig = async (data: {
   metric_key: string;
   display_title: string;
-  canonical_stage: string;
   config?: any; // JSONB config
   sort_order?: number;
   is_active?: boolean;
-  start_stage_id?: number;
-  end_stage_id?: number;
-  avg_min_days?: number;
-  avg_max_days?: number;
-  metric_comment?: string;
 }) => {
   return withDbErrorHandling(async () => {
     logInfo('Creating flow metric configuration', { metricKey: data.metric_key });
@@ -598,14 +592,12 @@ export const createFlowMetricConfig = async (data: {
       INSERT INTO flow_metrics (
         metric_key, 
         display_title, 
-        canonical_stage, 
         config,
         sort_order, 
         is_active
       ) VALUES (
         ${data.metric_key},
         ${data.display_title},
-        ${data.canonical_stage},
         ${data.config ? JSON.stringify(data.config) : '{}'}::jsonb,
         ${data.sort_order || 0},
         ${data.is_active !== false}
@@ -613,46 +605,8 @@ export const createFlowMetricConfig = async (data: {
       RETURNING *
     `;
     
-    const config = configResult[0];
-    
-    // Insert mapping if stage IDs are provided
-    if (data.start_stage_id && data.end_stage_id) {
-      await sql`
-        INSERT INTO canonical_stage_mappings (
-          metric_config_id,
-          canonical_stage,
-          start_stage_id,
-          end_stage_id,
-          avg_min_days,
-          avg_max_days,
-          metric_comment
-        ) VALUES (
-          ${config.id},
-          ${data.canonical_stage},
-          ${data.start_stage_id},
-          ${data.end_stage_id},
-          ${data.avg_min_days || null},
-          ${data.avg_max_days || null},
-          ${data.metric_comment || null}
-        )
-      `;
-    }
-    
-    // Return the config with mapping data
-    const result = await sql`
-      SELECT 
-        fmc.*,
-        csm.start_stage_id,
-        csm.end_stage_id,
-        csm.avg_min_days,
-        csm.avg_max_days,
-        csm.metric_comment
-      FROM flow_metrics fmc
-      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
-      WHERE fmc.id = ${config.id}
-    `;
-    
-    return result[0];
+    // Return the created config
+    return configResult[0];
   }, 'createFlowMetricConfig');
 };
 
