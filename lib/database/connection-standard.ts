@@ -1,30 +1,39 @@
 /**
  * Database Connection Standard
- * 
+ *
  * This module enforces consistent database connections across the entire application.
  * ALL database operations must use this module to prevent connection method splits.
+ *
+ * DRIVER: WebSocket (Neon Pool)
+ * - Supports multi-statement SQL
+ * - Full PostgreSQL transaction support
+ * - Required for Drizzle migrations
  */
 
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool, neonConfig } from '@neondatabase/serverless';
 import { sql } from 'drizzle-orm';
 import { config } from 'dotenv';
 import { resolve } from 'path';
+import ws from 'ws';
 
 // Load environment variables
 config({ path: resolve(process.cwd(), '.env.local') });
 config({ path: resolve(process.cwd(), '.env') });
 
+// Configure WebSocket for Neon
+neonConfig.webSocketConstructor = ws as any;
+
 /**
  * Standard database connection configuration
  */
 const CONNECTION_CONFIG = {
-  // Always use neon-http for consistency
-  driver: 'neon-http' as const,
-  
+  // Always use WebSocket driver for consistency
+  driver: 'neon-websocket' as const,
+
   // Connection string priority
   url: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL,
-  
+
   // Connection options
   options: {
     // Add any standard connection options here
@@ -56,12 +65,12 @@ function validateConnection() {
  */
 export function createStandardConnection() {
   validateConnection();
-  
-  const sqlClient = neon(CONNECTION_CONFIG.url!);
-  const db = drizzle(sqlClient);
-  
+
+  const pool = new Pool({ connectionString: CONNECTION_CONFIG.url! });
+  const db = drizzle(pool);
+
   return {
-    sqlClient,
+    pool,
     db,
     connectionString: CONNECTION_CONFIG.url!
   };
@@ -96,5 +105,5 @@ export async function verifyConnection() {
 
 // Re-export sql and drizzle for convenience
 export { sql } from 'drizzle-orm';
-export { drizzle } from 'drizzle-orm/neon-http';
-export { neon } from '@neondatabase/serverless';
+export { drizzle } from 'drizzle-orm/neon-serverless';
+export { Pool, neonConfig } from '@neondatabase/serverless';
