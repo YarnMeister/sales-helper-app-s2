@@ -16,12 +16,18 @@ npm run test:watch             # Run tests in watch mode
 
 ### Database Management
 ```bash
-npm run db:migrate             # Run database migrations
+npm run db:migrate             # Run database migrations (WebSocket driver)
 npm run db:generate            # Generate Drizzle migrations
-npm run db:push                # Push schema changes to database
+npm run db:push                # DISABLED - use db:migrate instead
 npm run db:studio              # Open Drizzle Studio
 npm run env:check              # Validate environment configuration
 ```
+
+**Migration System**: Uses WebSocket-only approach with Drizzle ORM
+- **Single folder**: `lib/database/migrations/`
+- **Single runner**: `scripts/migrate-websocket.ts`
+- **Tracking table**: `drizzle.__drizzle_migrations` (Drizzle's standard)
+- **See**: `.augment/rules/DATABASE_MIGRATIONS.md` for complete guide
 
 ### Neon Database Branch Management
 ```bash
@@ -52,10 +58,11 @@ The application uses **separate database instances** for development and product
 - **Configuration**: `DATABASE_URL` environment variable determines which database to use
 
 ### Database Architecture
-- **Primary Tables**: `requests`, `site_visits`, `flow_metrics_config`, `pipedrive_deal_flow_data`
+- **Primary Tables**: `requests`, `site_visits`, `flow_metrics_config`, `pipedrive_deal_flow_data`, `deal_flow_sync_status`
 - **ORM**: Drizzle ORM with TypeScript schema definitions in `lib/database/schema.ts`
-- **Migrations**: Located in `migrations/` directory, managed through custom migration system
+- **Migrations**: Located in `lib/database/migrations/` directory, managed through WebSocket migration system
 - **Repository Pattern**: Core repository classes in `lib/database/core/` with typed interfaces
+- **Migration Driver**: Neon WebSocket Pool (supports multi-statement SQL)
 
 ### API Routes Structure
 Key API endpoints:

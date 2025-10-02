@@ -282,8 +282,15 @@ describe('Request API', () => {
 
 1. **Cross-feature integration tests** - Test module communication
 2. **Authentication integration** - Test protected routes
-3. **Database migration tests** - Validate schema changes
+3. **Database migration tests** - Validate schema changes with WebSocket system
 4. **Performance regression tests** - Monitor feature impact
+
+**Migration Testing Strategy**
+- Test migrations in isolated test database
+- Verify idempotency (can run multiple times safely)
+- Test rollback scenarios manually
+- Validate tracking in `drizzle.__drizzle_migrations` table
+- See `.augment/rules/DATABASE_MIGRATIONS.md` for migration guidelines
 
 ## Enforcement and Validation
 

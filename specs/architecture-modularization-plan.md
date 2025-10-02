@@ -37,9 +37,13 @@ This document outlines the comprehensive plan to restructure the Sales Helper Ap
 
 ## Proposed Architecture Restructure
 
-> **⚠️ IMPORTANT**: This document describes the FUTURE target architecture.
-> **Current State (as of Oct 2025)**: Migrations are in root `migrations/` folder per `drizzle.config.ts`.
-> **Future State**: Per-feature migrations in `lib/database/features/*/migrations/` (not yet implemented).
+> **✅ MIGRATION SYSTEM UPDATED (Oct 2025)**:
+> **Current State**: WebSocket-only migration system implemented
+> - **Location**: `lib/database/migrations/` (single source of truth)
+> - **Runner**: `scripts/migrate-websocket.ts` (WebSocket driver)
+> - **Tracking**: `drizzle.__drizzle_migrations` table (Drizzle standard)
+> - **Command**: `npm run db:migrate` (single command)
+> **Future State**: Per-feature migrations may be considered later (not yet implemented)
 
 ### 1. Feature-Based Module Organization
 
@@ -256,8 +260,9 @@ lib/
 ├── database/
 │   ├── core/                    # Base database utilities
 │   │   ├── connection.ts        # Database connection management
-│   │   ├── connection-standard.ts # Standard connection module (enforced)
+│   │   ├── connection-standard.ts # Standard connection module (WebSocket Pool)
 │   │   ├── repository.ts        # Base repository pattern
+│   │   ├── repository-factory.ts # Repository factory pattern
 │   │   ├── types.ts            # Core database types
 │   │   └── utils.ts            # Database utilities
 │   ├── features/
@@ -267,23 +272,22 @@ lib/
 │   │   └── flow-metrics/
 │   │       ├── repository.ts    # Metrics CRUD operations (FlowMetricsRepository)
 │   │       └── types.ts        # Metrics-specific types
+│   ├── migrations/              # Single migration folder (WebSocket system)
+│   │   ├── 0000_mighty_reaper.sql
+│   │   ├── 0001_add_flow_metrics_created_at_index.sql
+│   │   └── meta/
+│   │       └── _journal.json    # Migration metadata (Drizzle managed)
+│   ├── schema.ts               # Single source of truth for database schema
 │   └── shared/
-│       ├── base-repository.ts   # Common repository methods
-│       └── common-types.ts     # Shared database types
-│
-migrations/                      # Root migrations folder (Drizzle: out: './migrations')
-├── 022_flow_metrics_cross_pipeline_support.sql
-├── 023_flow_metrics_inline_jsonb_check.sql
-├── 024_flow_metrics_force_drop_old_check.sql
-├── 025_flow_metrics_drop_and_replace_check.sql
-└── 026_flow_metrics_clean_rebuild.sql
-│
-scripts/
-└── unified-migrate.js           # Unified migration system (uses migrations/ folder)
 │       ├── base-repository.ts   # Common repository methods
 │       ├── common-types.ts     # Shared database types
 │       ├── transaction.ts      # Transaction management
 │       └── validation.ts       # Database validation
+
+scripts/
+└── migrate-websocket.ts         # WebSocket migration runner (single runner)
+
+drizzle.config.ts                # Points to lib/database/migrations/
 ```
 
 ### 3. API Route Organization
