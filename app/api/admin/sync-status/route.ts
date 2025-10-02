@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FlowMetricsRepository } from '@/lib/database/features/flow-metrics/repository';
 import { logInfo, logError } from '@/lib/log';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 /**
  * Get sync status and data statistics
  * Provides overview of sync operations and data health
