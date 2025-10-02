@@ -98,49 +98,13 @@ export const pipedriveDealFlowData = pgTable('pipedrive_deal_flow_data', {
   enteredAtIdx: index('idx_pipedrive_deal_flow_data_entered_at').on(table.enteredAt),
 }));
 
-export const pipedriveMetricData = pgTable('pipedrive_metric_data', {
-  id: integer('id').primaryKey().notNull(),
-  title: text('title').notNull(),
-  pipelineId: integer('pipeline_id').notNull(),
-  stageId: integer('stage_id').notNull(),
-  status: text('status').notNull(),
-  firstFetchedAt: timestamp('first_fetched_at', { withTimezone: true }).defaultNow(),
-  lastFetchedAt: timestamp('last_fetched_at', { withTimezone: true }).defaultNow(),
-}, (table) => ({
-  pipelineIdIdx: index('idx_pipedrive_metric_data_pipeline_id').on(table.pipelineId),
-  stageIdIdx: index('idx_pipedrive_metric_data_stage_id').on(table.stageId),
-  statusIdx: index('idx_pipedrive_metric_data_status').on(table.status),
-}));
-
-export const dealFlowSyncStatus = pgTable('deal_flow_sync_status', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  syncType: text('sync_type').notNull(), // 'full' | 'incremental'
-  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
-  completedAt: timestamp('completed_at', { withTimezone: true }),
-  status: text('status').notNull(), // 'running' | 'completed' | 'failed'
-  totalDeals: integer('total_deals'),
-  processedDeals: integer('processed_deals'),
-  successfulDeals: integer('successful_deals'),
-  failedDeals: jsonb('failed_deals'), // Array of deal IDs
-  errors: jsonb('errors'), // Array of error messages
-  duration: integer('duration_ms'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-}, (table) => ({
-  syncTypeIdx: index('idx_deal_flow_sync_status_sync_type').on(table.syncType),
-  statusIdx: index('idx_deal_flow_sync_status_status').on(table.status),
-  startedAtIdx: index('idx_deal_flow_sync_status_started_at').on(table.startedAt),
-  completedAtIdx: index('idx_deal_flow_sync_status_completed_at').on(table.completedAt),
-}));
+// Removed: pipedrive_metric_data table - doesn't exist in production
+// Removed: deal_flow_sync_status table - doesn't exist in production
 
 // flow_metrics table removed - doesn't exist in production
 
 // kv_cache table removed - doesn't exist in production
-
-export const schemaMigrations = pgTable('schema_migrations', {
-  version: integer('version').primaryKey(),
-  name: text('name').notNull(),
-  executedAt: timestamp('executed_at').notNull().defaultNow(),
-});
+// schema_migrations table removed - legacy system table, not part of application schema
 
 // Relations
 // Removed: flowMetricsConfig and canonicalStageMappings relations (canonical_stage_mappings table dropped)

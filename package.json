@@ -19,6 +19,7 @@
     "db:push": "echo '❌ db:push is disabled. Use db:migrate instead.' && exit 1",
     "db:studio": "drizzle-kit studio",
     "db:bootstrap-websocket": "tsx scripts/run-websocket-migrations.ts",
+    "db:verify-schema": "tsx scripts/verify-schema-matches-production.ts",
     "db:reset-dev": "node scripts/recreate-dev-db.js && npm run db:migrate --sync-only",
     "db:sync": "node scripts/unified-migrate.js --sync-only",
     "env:check": "node scripts/env-check.js",
