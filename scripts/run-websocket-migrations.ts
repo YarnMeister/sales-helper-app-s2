@@ -31,12 +31,14 @@ const __dirname = path.dirname(__filename);
 
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 const MIGRATION_FILES = [
-  '022_flow_metrics_cross_pipeline_support.sql',
-  '023_flow_metrics_inline_jsonb_check.sql',
+  // Skip 022 and 023 - they assume table already has JSONB structure
+  // In production, the table doesn't have the config column yet
+  // '022_flow_metrics_cross_pipeline_support.sql',
+  // '023_flow_metrics_inline_jsonb_check.sql',
   // Skip 024 and 025 - they're redundant with 023 and conflict with 026
   // '024_flow_metrics_force_drop_old_check.sql',
   // '025_flow_metrics_drop_and_replace_check.sql',
-  '026_flow_metrics_clean_rebuild.sql', // Clean rebuild - supersedes 024 and 025
+  '026_flow_metrics_clean_rebuild.sql', // Clean rebuild - creates table from scratch
 ];
 
 interface MigrationRecord {
