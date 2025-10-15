@@ -1,7 +1,8 @@
 /**
  * useMetricDetail Hook
- * 
+ *
  * Fetches detailed data for a specific metric including deals and configuration
+ * Updated to use metric_key instead of metricId
  */
 
 'use client';
@@ -18,7 +19,7 @@ interface UseMetricDetailReturn {
 }
 
 export function useMetricDetail(
-  metricId: string,
+  metricKey: string,
   period: string
 ): UseMetricDetailReturn {
   const [deals, setDeals] = useState<DealData[]>([]);
@@ -31,19 +32,19 @@ export function useMetricDetail(
       setLoading(true);
       setError(null);
 
-      // Fetch metric configuration
-      const configResponse = await fetch(`/api/flow/canonical-stage-deals?metricId=${metricId}`);
+      // Fetch metric configuration from flow/config API
+      const configResponse = await fetch(`/api/flow/config?metric_key=${metricKey}`);
       const configResult = await configResponse.json();
 
       if (!configResult.success) {
         throw new Error(configResult.error || 'Failed to fetch metric configuration');
       }
 
-      setConfig(configResult.metricConfig);
+      setConfig(configResult.data);
 
-      // Fetch deals for this metric
+      // Fetch deals for this metric using metricKey
       const dealsResponse = await fetch(
-        `/api/flow/canonical-stage-deals?metricId=${metricId}&period=${period}`
+        `/api/flow/canonical-stage-deals?metricKey=${metricKey}&period=${period}`
       );
       const dealsResult = await dealsResponse.json();
 
@@ -61,7 +62,7 @@ export function useMetricDetail(
     } finally {
       setLoading(false);
     }
-  }, [metricId, period]);
+  }, [metricKey, period]);
 
   useEffect(() => {
     fetchDetail();

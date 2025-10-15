@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getActiveFlowMetricsConfig, getDealsForCanonicalStage } from '@/lib/db';
+import { getActiveFlowMetricsConfig, getDealsForMetric } from '@/lib/db';
 import { logInfo, logError } from '@/lib/log';
 
 // Force dynamic rendering for this route
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // Get all active metrics configuration
     const activeMetrics = await getActiveFlowMetricsConfig();
-    
+
     if (!activeMetrics || activeMetrics.length === 0) {
       return NextResponse.json({
         success: true,
@@ -23,28 +23,32 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Calculate metrics for each canonical stage
+    // Calculate metrics for each metric using metric_key
     const calculatedMetrics = await Promise.all(
       activeMetrics.map(async (metric) => {
         try {
-          // Get deals for this canonical stage with period filtering
-          const deals = await getDealsForCanonicalStage(metric.canonical_stage, period);
-          
+          // Get deals for this metric with period filtering
+          const deals = await getDealsForMetric(metric.metric_key, period);
+
+          // Extract thresholds from JSONB config
+          const thresholds = metric.config?.thresholds || {};
+          const metricComment = metric.config?.comment || '';
+
           if (!deals || deals.length === 0) {
             return {
               id: metric.id,
               title: metric.display_title,
-              canonicalStage: metric.canonical_stage,
+              metricKey: metric.metric_key,
               mainMetric: '0',
               totalDeals: 0,
-              avg_min_days: metric.avg_min_days,
-              avg_max_days: metric.avg_max_days,
-              metric_comment: metric.metric_comment,
+              avg_min_days: thresholds.minDays,
+              avg_max_days: thresholds.maxDays,
+              metric_comment: metricComment,
             };
           }
 
           // Calculate metrics using the same logic as the detail page
-          const durationsInDays = deals.map(deal => 
+          const durationsInDays = deals.map(deal =>
             Math.round((deal.duration_seconds / 86400) * 100) / 100
           );
 
@@ -56,28 +60,31 @@ export async function GET(request: NextRequest) {
           return {
             id: metric.id,
             title: metric.display_title,
-            canonicalStage: metric.canonical_stage,
+            metricKey: metric.metric_key,
             mainMetric: Math.round(average).toString(),
             totalDeals: deals.length,
-            avg_min_days: metric.avg_min_days,
-            avg_max_days: metric.avg_max_days,
-            metric_comment: metric.metric_comment,
+            avg_min_days: thresholds.minDays,
+            avg_max_days: thresholds.maxDays,
+            metric_comment: metricComment,
           };
         } catch (error) {
-          logError('Error calculating metrics for canonical stage', {
-            canonicalStage: metric.canonical_stage,
+          logError('Error calculating metrics for metric', {
+            metricKey: metric.metric_key,
             error: error instanceof Error ? error.message : String(error)
           });
-          
+
+          const thresholds = metric.config?.thresholds || {};
+          const metricComment = metric.config?.comment || '';
+
           return {
             id: metric.id,
             title: metric.display_title,
-            canonicalStage: metric.canonical_stage,
+            metricKey: metric.metric_key,
             mainMetric: 'N/A',
             totalDeals: 0,
-            avg_min_days: metric.avg_min_days,
-            avg_max_days: metric.avg_max_days,
-            metric_comment: metric.metric_comment,
+            avg_min_days: thresholds.minDays,
+            avg_max_days: thresholds.maxDays,
+            metric_comment: metricComment,
           };
         }
       })
