@@ -2,6 +2,9 @@ import { logInfo, logError } from './log';
 import { AppError } from './errors';
 import { getRequestsTableName } from './db-utils';
 import { getDatabaseConnection, withDbErrorHandling } from './database/core/connection';
+import { createStandardConnection } from './database/connection-standard';
+import { flowMetricsConfig } from './database/schema';
+import { eq, asc } from 'drizzle-orm';
 
 // Get database connection from core infrastructure
 const sql = getDatabaseConnection() as any;
@@ -455,17 +458,29 @@ export const getActiveFlowMetricsConfig = async (): Promise<any[]> => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching active flow metrics configuration');
 
-    // Get active metrics - use explicit column list instead of *
-    const result = await sql`
-      SELECT id, metric_key, display_title, config, sort_order, is_active, created_at, updated_at
-      FROM flow_metrics_config
-      WHERE is_active = true
-      ORDER BY sort_order, display_title
-    `;
+    // Use Drizzle ORM instead of raw SQL to avoid HTTP driver truncation issues
+    const { db } = createStandardConnection();
+    const result = await db
+      .select()
+      .from(flowMetricsConfig)
+      .where(eq(flowMetricsConfig.isActive, true))
+      .orderBy(asc(flowMetricsConfig.sortOrder), asc(flowMetricsConfig.displayTitle));
+
+    // Convert camelCase to snake_case for backward compatibility
+    const formattedResult = result.map((m: any) => ({
+      id: m.id,
+      metric_key: m.metricKey,
+      display_title: m.displayTitle,
+      config: m.config,
+      sort_order: m.sortOrder,
+      is_active: m.isActive,
+      created_at: m.createdAt,
+      updated_at: m.updatedAt
+    }));
 
     logInfo('Active flow metrics configuration result', {
-      totalCount: result.length,
-      metrics: result.map((m: any) => ({
+      totalCount: formattedResult.length,
+      metrics: formattedResult.map((m: any) => ({
         id: m.id,
         title: m.display_title,
         metric_key: m.metric_key,
@@ -474,7 +489,7 @@ export const getActiveFlowMetricsConfig = async (): Promise<any[]> => {
       }))
     });
 
-    return result;
+    return formattedResult;
   }, 'getActiveFlowMetricsConfig');
 };
 

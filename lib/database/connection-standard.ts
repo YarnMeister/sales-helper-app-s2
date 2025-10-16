@@ -4,18 +4,19 @@
  * This module enforces consistent database connections across the entire application.
  * ALL database operations must use this module to prevent connection method splits.
  *
- * IMPORTANT: Uses WebSocket driver (Pool) instead of HTTP driver (neon)
- * Reason: HTTP driver has result set limitations that cause silent truncation
+ * IMPORTANT: Uses HTTP driver (neon) for raw SQL queries (stateless, no caching)
+ * Uses WebSocket driver (Pool) only for Drizzle ORM operations
  */
 
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon } from '@neondatabase/serverless';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { sql } from 'drizzle-orm';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import ws from 'ws';
 
-// Configure WebSocket for Node.js environment
+// Configure WebSocket for Node.js environment (for Pool)
 neonConfig.webSocketConstructor = ws;
 
 // Load environment variables
@@ -26,11 +27,11 @@ config({ path: resolve(process.cwd(), '.env') });
  * Standard database connection configuration
  */
 const CONNECTION_CONFIG = {
-  // Use WebSocket driver (Pool) for full query support
-  driver: 'neon-websocket' as const,
+  // Use HTTP driver for raw SQL (stateless, no caching issues)
+  driver: 'neon-http' as const,
 
-  // Connection string priority (use pooled connection for WebSocket)
-  url: process.env.DATABASE_URL,
+  // Connection string priority
+  url: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL,
 
   // Connection options
   options: {
@@ -60,16 +61,16 @@ function validateConnection() {
 /**
  * Create standard database connection
  * This is the ONLY way to create database connections in this application
- * Uses WebSocket Pool for full query support (no result set limitations)
+ * Uses HTTP driver (neon) for raw SQL - stateless, no caching
  */
 export function createStandardConnection() {
   validateConnection();
 
-  const pool = new Pool({ connectionString: CONNECTION_CONFIG.url! });
-  const db = drizzle(pool);
+  const sqlClient = neon(CONNECTION_CONFIG.url!);
+  const db = drizzle(sqlClient);
 
   return {
-    sqlClient: pool,
+    sqlClient,
     db,
     connectionString: CONNECTION_CONFIG.url!
   };
@@ -104,5 +105,5 @@ export async function verifyConnection() {
 
 // Re-export sql and drizzle for convenience
 export { sql } from 'drizzle-orm';
-export { drizzle } from 'drizzle-orm/neon-serverless';
-export { Pool } from '@neondatabase/serverless';
+export { drizzle } from 'drizzle-orm/neon-http';
+export { neon } from '@neondatabase/serverless';
