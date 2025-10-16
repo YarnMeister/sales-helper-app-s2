@@ -76,7 +76,9 @@ export async function GET(request: NextRequest) {
         } catch (error) {
           logError('Error calculating metrics for metric', {
             metricKey: metric.metric_key,
-            error: error instanceof Error ? error.message : String(error)
+            metricId: metric.id,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
           });
 
           const thresholds = metric.config?.thresholds || {};
