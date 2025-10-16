@@ -1,15 +1,23 @@
 /**
  * Database Connection Standard
- * 
+ *
  * This module enforces consistent database connections across the entire application.
  * ALL database operations must use this module to prevent connection method splits.
+ *
+ * IMPORTANT: Uses HTTP driver (neon) for raw SQL queries (stateless, no caching)
+ * Uses WebSocket driver (Pool) only for Drizzle ORM operations
  */
 
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
+import { Pool, neonConfig } from '@neondatabase/serverless';
 import { sql } from 'drizzle-orm';
 import { config } from 'dotenv';
 import { resolve } from 'path';
+import ws from 'ws';
+
+// Configure WebSocket for Node.js environment (for Pool)
+neonConfig.webSocketConstructor = ws;
 
 // Load environment variables
 config({ path: resolve(process.cwd(), '.env.local') });
@@ -19,12 +27,12 @@ config({ path: resolve(process.cwd(), '.env') });
  * Standard database connection configuration
  */
 const CONNECTION_CONFIG = {
-  // Always use neon-http for consistency
+  // Use HTTP driver for raw SQL (stateless, no caching issues)
   driver: 'neon-http' as const,
-  
+
   // Connection string priority
   url: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL,
-  
+
   // Connection options
   options: {
     // Add any standard connection options here
@@ -53,13 +61,14 @@ function validateConnection() {
 /**
  * Create standard database connection
  * This is the ONLY way to create database connections in this application
+ * Uses HTTP driver (neon) for raw SQL - stateless, no caching
  */
 export function createStandardConnection() {
   validateConnection();
-  
+
   const sqlClient = neon(CONNECTION_CONFIG.url!);
   const db = drizzle(sqlClient);
-  
+
   return {
     sqlClient,
     db,

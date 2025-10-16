@@ -3,6 +3,7 @@
 ## Golden Rules
 1. **Never commit to `main`.** Always create or use a feature branch.
 2. **Production deploys require explicit permission.** Feature branches run locally; only merge to `main` with approval.
+3. **Always use Drizzle ORM for database queries.** Never use raw SQL queries (see Database section below).
 
 ---
 
@@ -22,6 +23,43 @@
 - Do a comprehensive review of the change to check if any new tests should be added for this commit, then do it
 - Include any changes to `project_config.md` or `/specs/*` in the commit.
 - Update README.md for any new major features or technical changes
+
+---
+
+## Database Access Pattern
+
+**ALWAYS USE DRIZZLE ORM - NEVER USE RAW SQL**
+
+All database queries MUST use Drizzle ORM. Raw SQL queries cause type mismatches and silent truncation issues with the Neon driver.
+
+**Correct Pattern:**
+```typescript
+import { createStandardConnection } from '@/lib/database/connection-standard';
+import { flowMetricsConfig } from '@/lib/database/schema';
+import { eq, asc } from 'drizzle-orm';
+
+const { db } = createStandardConnection();
+const result = await db
+  .select()
+  .from(flowMetricsConfig)
+  .where(eq(flowMetricsConfig.isActive, true))
+  .orderBy(asc(flowMetricsConfig.sortOrder));
+```
+
+**Incorrect Pattern (DO NOT USE):**
+```typescript
+// WRONG - causes type mismatches and truncation
+const result = await sql`SELECT * FROM flow_metrics_config WHERE is_active = true`;
+```
+
+**Why Drizzle ORM?**
+- Type-safe queries with full TypeScript support
+- Prevents SQL injection attacks
+- Handles type mapping correctly (UUID, JSONB, etc.)
+- No silent truncation issues
+- Better error messages
+
+**Legacy Code:** `lib/db.ts` contains 595 lines of raw SQL that should be migrated to Drizzle ORM over time. Do NOT add new raw SQL queries.
 
 ---
 

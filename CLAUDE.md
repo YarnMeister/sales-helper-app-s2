@@ -2,6 +2,39 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL DATABASE RULE
+
+**ALWAYS USE DRIZZLE ORM - NEVER USE RAW SQL**
+
+- ✅ **DO**: Use Drizzle ORM for ALL database queries
+  ```typescript
+  import { createStandardConnection } from '@/lib/database/connection-standard';
+  import { flowMetricsConfig } from '@/lib/database/schema';
+  import { eq } from 'drizzle-orm';
+
+  const { db } = createStandardConnection();
+  const result = await db
+    .select()
+    .from(flowMetricsConfig)
+    .where(eq(flowMetricsConfig.isActive, true));
+  ```
+
+- ❌ **DON'T**: Use raw SQL queries (tagged templates)
+  ```typescript
+  // WRONG - causes type mismatches and truncation issues
+  const result = await sql`SELECT * FROM flow_metrics_config WHERE is_active = true`;
+  ```
+
+**Why?**
+- Raw SQL with Neon HTTP driver silently truncates results
+- Type mismatches between database and schema cause silent failures
+- Drizzle ORM handles type mapping correctly
+- ORM provides type safety and prevents SQL injection
+
+**Exception**: Only use raw SQL for complex queries that Drizzle cannot express (very rare)
+
+**Legacy Code**: `lib/db.ts` contains 595 lines of raw SQL that should be migrated to Drizzle ORM over time
+
 ## Essential Commands
 
 ### Development

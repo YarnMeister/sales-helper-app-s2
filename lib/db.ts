@@ -2,6 +2,9 @@ import { logInfo, logError } from './log';
 import { AppError } from './errors';
 import { getRequestsTableName } from './db-utils';
 import { getDatabaseConnection, withDbErrorHandling } from './database/core/connection';
+import { createStandardConnection } from './database/connection-standard';
+import { flowMetricsConfig } from './database/schema';
+import { eq, asc } from 'drizzle-orm';
 
 // Get database connection from core infrastructure
 const sql = getDatabaseConnection() as any;
@@ -334,70 +337,55 @@ export const getDealFlowData = async (dealId?: number) => {
 
 
 
-// Canonical Stage Mappings Functions
-export const getCanonicalStageMappings = async () => {
+/**
+ * Get deals for a specific metric based on flow_metrics_config
+ *
+ * This function replaces the old canonical stage mapping approach.
+ * It uses the JSONB config in flow_metrics_config table to determine
+ * start and end stages, then calculates lead times from pipedrive_deal_flow_data.
+ *
+ * @param metricKey - The metric_key from flow_metrics_config table
+ * @param period - Time period filter: '7d', '14d', '1m', '3m'
+ * @returns Array of deals with start_date, end_date, and duration_seconds
+ */
+export const getDealsForMetric = async (metricKey: string, period?: string) => {
   return withDbErrorHandling(async () => {
-    logInfo('Fetching canonical stage mappings');
-    const result = await sql`
-      SELECT 
-        id,
-        canonical_stage,
-        start_stage,
-        end_stage,
-        start_stage_id,
-        end_stage_id,
-        created_at,
-        updated_at
-      FROM canonical_stage_mappings 
-      ORDER BY canonical_stage
-    `;
-    return result;
-  }, 'getCanonicalStageMappings');
-};
+    logInfo('Fetching deals for metric', { metricKey, period });
 
-export const getCanonicalStageMapping = async (canonicalStage: string) => {
-  return withDbErrorHandling(async () => {
-    logInfo('Fetching canonical stage mapping', { canonicalStage });
-    const result = await sql`
-      SELECT 
-        id,
-        canonical_stage,
-        start_stage,
-        end_stage,
-        start_stage_id,
-        end_stage_id,
-        created_at,
-        updated_at
-      FROM canonical_stage_mappings 
-      WHERE canonical_stage = ${canonicalStage}
-      ORDER BY updated_at DESC
+    // Get the metric config (JSONB contains start/end stage info)
+    const metricConfigResult = await sql`
+      SELECT config
+      FROM flow_metrics_config
+      WHERE metric_key = ${metricKey}
+      AND is_active = true
       LIMIT 1
     `;
-    return result[0] || null;
-  }, 'getCanonicalStageMapping');
-};
 
-export const getDealsForCanonicalStage = async (canonicalStage: string, period?: string) => {
-  return withDbErrorHandling(async () => {
-    logInfo('Fetching deals for canonical stage', { canonicalStage, period });
-    
-    // Get the mapping for this canonical stage
-    const mapping = await getCanonicalStageMapping(canonicalStage);
-    if (!mapping) {
-      logInfo('No mapping found for canonical stage', { canonicalStage });
+    if (!metricConfigResult || metricConfigResult.length === 0) {
+      logInfo('No active config found for metric', { metricKey });
       return [];
     }
-    
-    // Use stage IDs if available, otherwise fall back to stage names
-    const startStageFilter = mapping.start_stage_id 
-      ? sql`stage_id = ${mapping.start_stage_id}` 
-      : sql`stage_name = ${mapping.start_stage}`;
-    
-    const endStageFilter = mapping.end_stage_id 
-      ? sql`stage_id = ${mapping.end_stage_id}` 
-      : sql`stage_name = ${mapping.end_stage}`;
-    
-    // Calculate cutoff date based on period
+
+    const config = metricConfigResult[0].config;
+
+    // Validate config structure
+    if (!config?.startStage?.id || !config?.endStage?.id) {
+      logInfo('Invalid config structure for metric', { metricKey, config });
+      return [];
+    }
+
+    const startStageId = config.startStage.id;
+    const endStageId = config.endStage.id;
+
+    logInfo('Using stage IDs from config', {
+      metricKey,
+      startStageId,
+      endStageId,
+      startStageName: config.startStage.name,
+      endStageName: config.endStage.name
+    });
+
+    // Calculate period cutoff (filter by end_date - when deal completed the stage)
     let cutoffDateFilter = sql``;
     if (period) {
       const days = period === '7d' ? 7 : period === '14d' ? 14 : period === '1m' ? 30 : period === '3m' ? 90 : 0;
@@ -405,34 +393,34 @@ export const getDealsForCanonicalStage = async (canonicalStage: string, period?:
       if (days > 0) {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - days);
-        cutoffDateFilter = sql`AND s.start_date >= ${cutoffDate.toISOString()}`;
+        cutoffDateFilter = sql`AND e.end_date >= ${cutoffDate.toISOString()}`;
       }
     }
-    
+
     // Get all deals that have both start and end stages
-    // Use entered_at for both start and end dates (not left_at)
+    // Use entered_at for both start and end dates (when deal entered each stage)
     const result = await sql`
       WITH deal_stages AS (
-        SELECT 
+        SELECT
           deal_id,
           stage_id,
           stage_name,
           entered_at,
           ROW_NUMBER() OVER (PARTITION BY deal_id, stage_id ORDER BY entered_at) as rn
         FROM pipedrive_deal_flow_data
-        WHERE (${startStageFilter}) OR (${endStageFilter})
+        WHERE stage_id IN (${startStageId}, ${endStageId})
       ),
       start_stages AS (
         SELECT deal_id, entered_at as start_date
-        FROM deal_stages 
-        WHERE (${startStageFilter}) AND rn = 1
+        FROM deal_stages
+        WHERE stage_id = ${startStageId} AND rn = 1
       ),
       end_stages AS (
         SELECT deal_id, entered_at as end_date
-        FROM deal_stages 
-        WHERE (${endStageFilter}) AND rn = 1
+        FROM deal_stages
+        WHERE stage_id = ${endStageId} AND rn = 1
       )
-      SELECT 
+      SELECT
         s.deal_id,
         s.start_date,
         e.end_date,
@@ -441,85 +429,25 @@ export const getDealsForCanonicalStage = async (canonicalStage: string, period?:
       JOIN end_stages e ON s.deal_id = e.deal_id
       WHERE e.end_date > s.start_date
       ${cutoffDateFilter}
-      ORDER BY s.start_date DESC
+      ORDER BY e.end_date DESC
     `;
-    
+
+    logInfo('Deals fetched for metric', {
+      metricKey,
+      dealCount: result.length,
+      period
+    });
+
     return result as any[];
-  }, 'getDealsForCanonicalStage');
+  }, 'getDealsForMetric');
 };
 
-// New functions for stage ID-based canonical stage mappings
-export const updateCanonicalStageMapping = async (
-  id: string,
-  data: {
-    canonical_stage?: string;
-    start_stage_id?: number | null;
-    end_stage_id?: number | null;
-    start_stage?: string;
-    end_stage?: string;
-  }
-) => {
-  return withDbErrorHandling(async () => {
-    logInfo('Updating canonical stage mapping', { id, data });
-    
-    const result = await sql`
-      UPDATE canonical_stage_mappings 
-      SET 
-        canonical_stage = COALESCE(${data.canonical_stage}, canonical_stage),
-        start_stage_id = ${data.start_stage_id},
-        end_stage_id = ${data.end_stage_id},
-        start_stage = COALESCE(${data.start_stage}, start_stage),
-        end_stage = COALESCE(${data.end_stage}, end_stage),
-        updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *
-    `;
-    
-    if (result.length === 0) {
-      throw new Error('Canonical stage mapping not found');
-    }
-    
-    return result[0];
-  }, 'updateCanonicalStageMapping');
-};
-
-export const createCanonicalStageMapping = async (data: {
-  canonical_stage: string;
-  start_stage_id?: number | null;
-  end_stage_id?: number | null;
-  start_stage?: string;
-  end_stage?: string;
-}) => {
-  return withDbErrorHandling(async () => {
-    logInfo('Creating canonical stage mapping', { data });
-    
-    const result = await sql`
-      INSERT INTO canonical_stage_mappings (
-        canonical_stage,
-        start_stage_id,
-        end_stage_id,
-        start_stage,
-        end_stage
-      ) VALUES (
-        ${data.canonical_stage},
-        ${data.start_stage_id},
-        ${data.end_stage_id},
-        ${data.start_stage || ''},
-        ${data.end_stage || ''}
-      )
-      RETURNING *
-    `;
-    
-    return result[0];
-  }, 'createCanonicalStageMapping');
-};
-
-// Enhanced Flow Metrics Configuration Functions
+// Flow Metrics Configuration Functions
 export const getFlowMetricsConfig = async () => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching flow metrics configuration');
     const result = await sql`
-      SELECT * FROM flow_metrics
+      SELECT * FROM flow_metrics_config
       ORDER BY sort_order, display_title
     `;
     return result;
@@ -529,32 +457,52 @@ export const getFlowMetricsConfig = async () => {
 export const getActiveFlowMetricsConfig = async (): Promise<any[]> => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching active flow metrics configuration');
-    
-    const result = await sql`
-      SELECT * FROM flow_metrics
-      WHERE is_active = true
-      ORDER BY sort_order, display_title
-    `;
-    
-    logInfo('Active flow metrics configuration result', { 
-      totalCount: result.length,
-      metrics: result.map((m: any) => ({ 
-        id: m.id, 
+
+    // Use Drizzle ORM instead of raw SQL to avoid HTTP driver truncation issues
+    const { db } = createStandardConnection();
+    const result = await db
+      .select()
+      .from(flowMetricsConfig)
+      .where(eq(flowMetricsConfig.isActive, true))
+      .orderBy(asc(flowMetricsConfig.sortOrder), asc(flowMetricsConfig.displayTitle));
+
+    // Convert camelCase to snake_case for backward compatibility
+    const formattedResult = result.map((m: any) => ({
+      id: m.id,
+      metric_key: m.metricKey,
+      display_title: m.displayTitle,
+      config: m.config,
+      sort_order: m.sortOrder,
+      is_active: m.isActive,
+      created_at: m.createdAt,
+      updated_at: m.updatedAt
+    }));
+
+    logInfo('Active flow metrics configuration result', {
+      totalCount: formattedResult.length,
+      metrics: formattedResult.map((m: any) => ({
+        id: m.id,
         title: m.display_title,
-        metric_key: m.metric_key
+        metric_key: m.metric_key,
+        is_active: m.is_active,
+        sort_order: m.sort_order
       }))
     });
-    
-    return result;
+
+    return formattedResult;
   }, 'getActiveFlowMetricsConfig');
 };
 
-export const getFlowMetricConfig = async (metricKey: string) => {
+export const getFlowMetricConfig = async (metricKeyOrId: string) => {
   return withDbErrorHandling(async () => {
-    logInfo('Fetching flow metric configuration', { metricKey });
+    logInfo('Fetching flow metric configuration', { metricKeyOrId });
+
+    // Check if it's a UUID (id) or a metric_key
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(metricKeyOrId);
+
     const result = await sql`
-      SELECT * FROM flow_metrics
-      WHERE metric_key = ${metricKey}
+      SELECT * FROM flow_metrics_config
+      WHERE ${isUuid ? sql`id = ${metricKeyOrId}` : sql`metric_key = ${metricKeyOrId}`}
       LIMIT 1
     `;
     return result[0] || null;
@@ -570,14 +518,14 @@ export const createFlowMetricConfig = async (data: {
 }) => {
   return withDbErrorHandling(async () => {
     logInfo('Creating flow metric configuration', { metricKey: data.metric_key });
-    
+
     // Insert the config with JSONB support
     const configResult = await sql`
-      INSERT INTO flow_metrics (
-        metric_key, 
-        display_title, 
+      INSERT INTO flow_metrics_config (
+        metric_key,
+        display_title,
         config,
-        sort_order, 
+        sort_order,
         is_active
       ) VALUES (
         ${data.metric_key},
@@ -588,14 +536,14 @@ export const createFlowMetricConfig = async (data: {
       )
       RETURNING *
     `;
-    
+
     // Return the created config
     return configResult[0];
   }, 'createFlowMetricConfig');
 };
 
 export const updateFlowMetricConfig = async (
-  id: string, 
+  id: string,
   data: {
     display_title?: string;
     config?: any;
@@ -605,10 +553,10 @@ export const updateFlowMetricConfig = async (
 ) => {
   return withDbErrorHandling(async () => {
     logInfo('Updating flow metric configuration', { id });
-    
+
     await sql`
-      UPDATE flow_metrics 
-      SET 
+      UPDATE flow_metrics_config
+      SET
         display_title = COALESCE(${data.display_title}, display_title),
         config = COALESCE(${data.config ? JSON.stringify(data.config) : null}::jsonb, config),
         sort_order = COALESCE(${data.sort_order}, sort_order),
@@ -616,14 +564,14 @@ export const updateFlowMetricConfig = async (
         updated_at = NOW()
       WHERE id = ${id}
     `;
-    
+
     // Return the updated record
     const result = await sql`
-      SELECT * FROM flow_metrics
+      SELECT * FROM flow_metrics_config
       WHERE id = ${id}
       LIMIT 1
     `;
-    
+
     return result[0];
   }, 'updateFlowMetricConfig');
 };
@@ -631,14 +579,14 @@ export const updateFlowMetricConfig = async (
 export const deleteFlowMetricConfig = async (id: string) => {
   return withDbErrorHandling(async () => {
     logInfo('Deleting flow metric configuration', { id });
-    
+
     // Delete the config
     const result = await sql`
-      DELETE FROM flow_metrics 
+      DELETE FROM flow_metrics_config
       WHERE id = ${id}
       RETURNING *
     `;
-    
+
     return result[0];
   }, 'deleteFlowMetricConfig');
 };
@@ -646,66 +594,16 @@ export const deleteFlowMetricConfig = async (id: string) => {
 export const reorderFlowMetrics = async (reorderData: Array<{ id: string; sort_order: number }>) => {
   return withDbErrorHandling(async () => {
     logInfo('Reordering flow metrics', { count: reorderData.length });
-    
+
     // Update sort orders in batch
     for (const item of reorderData) {
       await sql`
-        UPDATE flow_metrics 
+        UPDATE flow_metrics_config
         SET sort_order = ${item.sort_order}
         WHERE id = ${item.id}
       `;
     }
-    
+
     return { success: true, updated: reorderData.length };
   }, 'reorderFlowMetrics');
-};
-
-export const updateFlowMetricComment = async (id: string, comment: string) => {
-  return withDbErrorHandling(async () => {
-    logInfo('Updating flow metric comment', { id, commentLength: comment.length });
-    
-    // Check if mapping exists
-    const existingMapping = await sql`
-      SELECT id FROM canonical_stage_mappings WHERE metric_config_id = ${id}
-    `;
-    
-    if (existingMapping.length > 0) {
-      // Update existing mapping
-      await sql`
-        UPDATE canonical_stage_mappings 
-        SET metric_comment = ${comment}
-        WHERE metric_config_id = ${id}
-      `;
-    } else {
-      // Create new mapping with just the comment
-      await sql`
-        INSERT INTO canonical_stage_mappings (
-          metric_config_id,
-          canonical_stage,
-          metric_comment
-        ) VALUES (
-          ${id},
-          (SELECT canonical_stage FROM flow_metrics WHERE id = ${id}),
-          ${comment}
-        )
-      `;
-    }
-    
-    // Return the updated record
-    const result = await sql`
-      SELECT 
-        fmc.*,
-        csm.start_stage_id,
-        csm.end_stage_id,
-        csm.avg_min_days,
-        csm.avg_max_days,
-        csm.metric_comment
-      FROM flow_metrics fmc
-      LEFT JOIN canonical_stage_mappings csm ON csm.metric_config_id = fmc.id
-      WHERE fmc.id = ${id}
-      LIMIT 1
-    `;
-    
-    return result[0];
-  }, 'updateFlowMetricComment');
 };

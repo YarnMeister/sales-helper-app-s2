@@ -89,3 +89,14 @@ export const getConnectionStatus = () => {
     hasDatabaseUrl: !!process.env.DATABASE_URL
   };
 };
+
+/**
+ * Reset the database connection (force reconnect)
+ * Useful after schema changes or migrations
+ */
+export const resetDatabaseConnection = () => {
+  sqlClient = null;
+  logInfo('Database connection reset', {
+    context: 'database-connection-reset'
+  });
+};

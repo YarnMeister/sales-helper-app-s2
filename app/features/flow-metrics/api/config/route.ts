@@ -3,12 +3,56 @@ import { FlowMetricsRepository } from '@/lib/database/features/flow-metrics/repo
 import { logError, logInfo } from '@/lib/log';
 import { ensureDatabaseInitialized } from '@/lib/database/init';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   // Ensure repository system is initialized
   ensureDatabaseInitialized();
 
   try {
-    logInfo('GET /api/admin/flow-metrics-config - Fetching flow metrics configuration');
+    const { searchParams } = new URL(request.url);
+    const metricKey = searchParams.get('metric_key');
+
+    // If metric_key is provided, fetch single metric
+    if (metricKey) {
+      logInfo('GET /api/flow/config - Fetching single metric configuration', { metricKey });
+
+      const repository = new FlowMetricsRepository();
+      const result = await repository.getByKey(metricKey);
+
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to fetch metric');
+      }
+
+      if (!result.data) {
+        return NextResponse.json(
+          { success: false, error: 'Metric not found' },
+          { status: 404 }
+        );
+      }
+
+      // Transform camelCase to snake_case for UI compatibility
+      const transformedData = {
+        id: result.data.id,
+        metric_key: result.data.metricKey,
+        display_title: result.data.displayTitle,
+        config: result.data.config,
+        sort_order: result.data.sortOrder,
+        is_active: result.data.isActive,
+        created_at: result.data.createdAt,
+        updated_at: result.data.updatedAt,
+        // Extract threshold values from config for display
+        avg_min_days: result.data.config?.thresholds?.minDays,
+        avg_max_days: result.data.config?.thresholds?.maxDays,
+        metric_comment: result.data.config?.comment,
+      };
+
+      return NextResponse.json({
+        success: true,
+        data: transformedData
+      });
+    }
+
+    // Otherwise, fetch all metrics
+    logInfo('GET /api/flow/config - Fetching all flow metrics configuration');
 
     const repository = new FlowMetricsRepository();
     const result = await repository.findAll();
