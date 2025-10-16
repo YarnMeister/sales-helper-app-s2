@@ -26,22 +26,13 @@ export function useMetrics(period: string): UseMetricsReturn {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/admin/flow-metrics-config');
+      // Use the flow metrics API that calculates actual metrics from deals
+      const response = await fetch(`/api/flow/metrics?period=${period}`);
       const result = await response.json();
 
       if (result.success) {
-        // Convert API response to FlowMetricData format
-        const formattedMetrics = result.data.map((metric: any) => ({
-          id: metric.id,
-          title: metric.displayTitle,
-          mainMetric: `${metric.config?.thresholds?.minDays || 0}-${metric.config?.thresholds?.maxDays || 0} days`,
-          totalDeals: 0, // Will be calculated from actual data
-          avg_min_days: metric.config?.thresholds?.minDays,
-          avg_max_days: metric.config?.thresholds?.maxDays,
-          metric_comment: metric.config?.comment,
-        }));
-
-        setMetrics(formattedMetrics);
+        // The API already returns data in the correct format
+        setMetrics(result.data || []);
       } else {
         console.error('Failed to fetch metrics:', result.error);
         setError(result.error || 'Failed to fetch metrics');
