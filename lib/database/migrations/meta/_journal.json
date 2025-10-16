@@ -15,6 +15,13 @@
       "when": 1756872000000,
       "tag": "0001_add_flow_metrics_created_at_index",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1760588718039,
+      "tag": "0002_fix_flow_metrics_id_to_uuid",
+      "breakpoints": true
     }
   ]
 }
