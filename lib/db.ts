@@ -455,8 +455,22 @@ export const getActiveFlowMetricsConfig = async (): Promise<any[]> => {
   return withDbErrorHandling(async () => {
     logInfo('Fetching active flow metrics configuration');
 
+    // First, check ALL metrics with ID to debug
+    const allMetrics = await sql`SELECT id, metric_key, is_active, sort_order FROM flow_metrics_config ORDER BY sort_order`;
+    logInfo('ALL metrics in table (debug)', {
+      metrics: allMetrics.map((m: any) => ({
+        id: m.id,
+        id_type: typeof m.id,
+        metric_key: m.metric_key,
+        is_active: m.is_active,
+        sort_order: m.sort_order
+      }))
+    });
+
+    // Then get active ones - use explicit column list instead of *
     const result = await sql`
-      SELECT * FROM flow_metrics_config
+      SELECT id, metric_key, display_title, config, sort_order, is_active, created_at, updated_at
+      FROM flow_metrics_config
       WHERE is_active = true
       ORDER BY sort_order, display_title
     `;
@@ -466,7 +480,9 @@ export const getActiveFlowMetricsConfig = async (): Promise<any[]> => {
       metrics: result.map((m: any) => ({
         id: m.id,
         title: m.display_title,
-        metric_key: m.metric_key
+        metric_key: m.metric_key,
+        is_active: m.is_active,
+        sort_order: m.sort_order
       }))
     });
 

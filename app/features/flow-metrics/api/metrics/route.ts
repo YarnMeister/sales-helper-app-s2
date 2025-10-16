@@ -15,6 +15,11 @@ export async function GET(request: NextRequest) {
     // Get all active metrics configuration
     const activeMetrics = await getActiveFlowMetricsConfig();
 
+    logInfo('Active metrics fetched', {
+      count: activeMetrics?.length || 0,
+      metricKeys: activeMetrics?.map(m => m.metric_key) || []
+    });
+
     if (!activeMetrics || activeMetrics.length === 0) {
       return NextResponse.json({
         success: true,
@@ -26,6 +31,7 @@ export async function GET(request: NextRequest) {
     // Calculate metrics for each metric using metric_key
     const calculatedMetrics = await Promise.all(
       activeMetrics.map(async (metric) => {
+        logInfo('Processing metric', { metricKey: metric.metric_key });
         try {
           // Get deals for this metric with period filtering
           const deals = await getDealsForMetric(metric.metric_key, period);
