@@ -6,12 +6,12 @@ interface CommonHeaderProps {
   showDivider?: boolean;
 }
 
-export const CommonHeader: React.FC<CommonHeaderProps> = ({ 
-  title, 
-  showDivider = true 
+export const CommonHeader: React.FC<CommonHeaderProps> = ({
+  title,
+  showDivider = true
 }) => {
   return (
-    <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <div className="sticky top-0 z-10 bg-white border-b border-gray-200" data-testid="common-header">
       <div className="px-4 py-4">
         {/* Header with RTSE Logo and Title */}
         <div className="flex items-center gap-3 mb-2">
