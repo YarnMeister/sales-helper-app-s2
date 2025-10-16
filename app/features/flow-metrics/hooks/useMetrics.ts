@@ -27,7 +27,7 @@ export function useMetrics(period: string): UseMetricsReturn {
       setError(null);
 
       // Use the flow metrics API that calculates actual metrics from deals
-      const response = await fetch(`/api/flow/metrics?period=${period}`);
+      const response = await fetch(`/features/flow-metrics/api/metrics?period=${period}`);
       const result = await response.json();
 
       if (result.success) {
