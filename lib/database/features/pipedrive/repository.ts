@@ -1,4 +1,4 @@
-import { eq, desc, sql as drizzleSql } from 'drizzle-orm';
+import { eq, desc, sql as drizzleSql, and } from 'drizzle-orm';
 import { db } from '../../connection';
 import { 
   pipedriveDealFlowData,
@@ -132,8 +132,10 @@ export class PipedriveDealFlowRepository extends BaseRepositoryImpl<PipedriveDea
       const [metricConfigResult] = await db
         .select({ config: flowMetricsConfig.config })
         .from(flowMetricsConfig)
-        .where(eq(flowMetricsConfig.metricKey, metricKey))
-        .where(eq(flowMetricsConfig.isActive, true))
+        .where(and(
+          eq(flowMetricsConfig.metricKey, metricKey),
+          eq(flowMetricsConfig.isActive, true)
+        ))
         .limit(1);
 
       if (!metricConfigResult) {
