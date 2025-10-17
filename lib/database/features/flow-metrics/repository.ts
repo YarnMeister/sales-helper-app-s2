@@ -1,26 +1,14 @@
 import { BaseRepositoryImpl } from '../../core/base-repository';
-import { RepositoryResult, RepositoryError, RepositoryErrorType } from '../../../../types/shared/repository';
-import { db } from '../../drizzle-db';
-
-// Create a concrete RepositoryError class
-class ConcreteRepositoryError extends Error implements RepositoryError {
-  constructor(
-    message: string,
-    public type: RepositoryErrorType,
-    public originalError?: any,
-    public code?: string,
-    public details?: any
-  ) {
-    super(message);
-    this.name = 'RepositoryError';
-  }
-}
+import { RepositoryResult } from '../../../../types/shared/repository';
+import { db } from '../../connection';
+import { createStandardConnection } from '../../connection-standard';
 import { 
   flowMetricsConfig, 
   dealFlowSyncStatus, 
   pipedriveDealFlowData 
 } from '../../schema';
-import { eq, desc, lt, and, sql } from 'drizzle-orm';
+import { eq, desc, lt, and, sql, asc } from 'drizzle-orm';
+import { logInfo, logError } from '../../../log';
 
 // Types for the repository
 export interface FlowMetricsConfig {
@@ -92,7 +80,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
       const [result] = await this.db.insert(flowMetricsConfig).values(data).returning();
       return RepositoryResult.success(result as FlowMetricsConfig);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to create metric config', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to create metric config', 'unknown_error', error));
     }
   }
 
@@ -106,7 +94,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
       
       return RepositoryResult.success(result[0] as FlowMetricsConfig || null);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to find metric config', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to find metric config', 'unknown_error', error));
     }
   }
 
@@ -119,21 +107,88 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 
       return RepositoryResult.success(result as FlowMetricsConfig[]);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to find metric configs', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to find metric configs', 'unknown_error', error));
     }
   }
 
   async getActive(): Promise<RepositoryResult<FlowMetricsConfig[]>> {
     try {
-      const result = await this.db
+      logInfo('Fetching active flow metrics configuration');
+      
+      const { db: standardDb } = createStandardConnection();
+      const result = await standardDb
         .select()
         .from(flowMetricsConfig)
         .where(eq(flowMetricsConfig.isActive, true))
-        .orderBy(flowMetricsConfig.sortOrder);
+        .orderBy(asc(flowMetricsConfig.sortOrder), asc(flowMetricsConfig.displayTitle));
+
+      logInfo('Active flow metrics configuration result', {
+        totalCount: result.length,
+        metrics: result.map((m: any) => ({
+          id: m.id,
+          title: m.displayTitle,
+          metricKey: m.metricKey,
+          isActive: m.isActive,
+          sortOrder: m.sortOrder
+        }))
+      });
 
       return RepositoryResult.success(result as FlowMetricsConfig[]);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to get active metrics', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to get active metrics', 'unknown_error', error));
+    }
+  }
+
+  async reorderMetrics(reorderData: Array<{ id: string; sortOrder: number }>): Promise<RepositoryResult<boolean>> {
+    try {
+      logInfo('Reordering flow metrics', { count: reorderData.length });
+
+      for (const item of reorderData) {
+        await db.update(flowMetricsConfig)
+          .set({ sortOrder: item.sortOrder, updatedAt: new Date() })
+          .where(eq(flowMetricsConfig.id, item.id));
+      }
+
+      return RepositoryResult.success(true);
+    } catch (error) {
+      return RepositoryResult.error(this.createError('Failed to reorder flow metrics', 'unknown_error', error));
+    }
+  }
+
+  async updateComment(id: string, comment: string): Promise<RepositoryResult<FlowMetricsConfig | null>> {
+    try {
+      logInfo('Updating flow metric comment', { id });
+
+      const getResult = await this.findById(id);
+      if (getResult.isError() || !getResult.getData()) {
+        return RepositoryResult.error(
+          this.createError('Flow metric config not found', 'not_found', new Error('Config not found'))
+        );
+      }
+
+      const currentConfig = getResult.getData();
+      if (!currentConfig) {
+        return RepositoryResult.error(
+          this.createError('Flow metric config not found', 'not_found', new Error('Config not found'))
+        );
+      }
+
+      const updatedConfig = {
+        ...(currentConfig.config as any),
+        comment
+      };
+
+      const [result] = await db.update(flowMetricsConfig)
+        .set({ 
+          config: updatedConfig as any,
+          updatedAt: new Date() 
+        })
+        .where(eq(flowMetricsConfig.id, id))
+        .returning();
+
+      return RepositoryResult.success(result as FlowMetricsConfig || null);
+    } catch (error) {
+      return RepositoryResult.error(this.createError('Failed to update flow metric comment', 'unknown_error', error));
     }
   }
 
@@ -147,7 +202,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 
       return RepositoryResult.success(result[0] as FlowMetricsConfig || null);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to find metric by key', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to find metric by key', 'unknown_error', error));
     }
   }
 
@@ -169,7 +224,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
       
       return RepositoryResult.success(result as FlowMetricsConfig);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to create metric with config', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to create metric with config', 'unknown_error', error));
     }
   }
 
@@ -183,7 +238,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 
       return RepositoryResult.success(result as FlowMetricsConfig || null);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to update config', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to update config', 'unknown_error', error));
     }
   }
 
@@ -193,7 +248,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
       const [result] = await this.db.insert(dealFlowSyncStatus).values(status as any).returning();
       return RepositoryResult.success(result as DealFlowSyncStatus);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to record sync status', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to record sync status', 'unknown_error', error));
     }
   }
 
@@ -207,7 +262,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 
       return RepositoryResult.success(result as DealFlowSyncStatus || null);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to update sync status', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to update sync status', 'unknown_error', error));
     }
   }
 
@@ -223,7 +278,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
       const timestamp = result[0]?.completedAt?.getTime() || 0;
       return RepositoryResult.success(timestamp);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to get last sync timestamp', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to get last sync timestamp', 'unknown_error', error));
     }
   }
 
@@ -237,7 +292,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 
       return RepositoryResult.success(result as DealFlowSyncStatus[]);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to get sync history', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to get sync history', 'unknown_error', error));
     }
   }
 
@@ -268,7 +323,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 
       return RepositoryResult.success(insertedCount);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to upsert deal flow data', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to upsert deal flow data', 'unknown_error', error));
     }
   }
 
@@ -283,7 +338,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 
       return RepositoryResult.success(result.rowCount || 0);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to cleanup old flow data', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to cleanup old flow data', 'unknown_error', error));
     }
   }
 
@@ -319,7 +374,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
         lastSyncTime: syncResult?.lastSync || undefined
       });
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to get flow data stats', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to get flow data stats', 'unknown_error', error));
     }
   }
 
@@ -338,7 +393,7 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
 
       return RepositoryResult.success(result as FlowMetricsConfig || null);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to update metric', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to update metric', 'unknown_error', error));
     }
   }
 
@@ -350,12 +405,12 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
         .returning();
 
       if (!result) {
-        return RepositoryResult.error(new ConcreteRepositoryError('Flow metric configuration not found', 'not_found'));
+        return RepositoryResult.error(this.createError('Flow metric configuration not found', 'not_found'));
       }
 
       return RepositoryResult.success(true);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to delete metric', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to delete metric', 'unknown_error', error));
     }
   }
 
@@ -367,12 +422,12 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
         .returning();
 
       if (!result) {
-        return RepositoryResult.error(new ConcreteRepositoryError('Flow metric configuration not found', 'not_found'));
+        return RepositoryResult.error(this.createError('Flow metric configuration not found', 'not_found'));
       }
 
       return RepositoryResult.success(result as FlowMetricsConfig);
     } catch (error) {
-      return RepositoryResult.error(new ConcreteRepositoryError('Failed to delete metric', 'unknown_error', error));
+      return RepositoryResult.error(this.createError('Failed to delete metric', 'unknown_error', error));
     }
   }
 
