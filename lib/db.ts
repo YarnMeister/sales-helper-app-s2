@@ -307,4 +307,4 @@ export const getDatabaseConnection = () => {
   throw new Error('getDatabaseConnection is deprecated. Use repositories instead.');
 };
 
-export const sql = null;
+export { sql } from './database/connection';
