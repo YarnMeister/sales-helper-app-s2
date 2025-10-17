@@ -209,7 +209,7 @@ export const getDealsForMetric = async (metricKey: string, period?: string) => {
 export const getFlowMetricsConfig = async () => {
   return withDbErrorHandling(async () => {
     const repo = getTypedRepository('flowMetricsConfig');
-    const result = await repo.findAll(true);
+    const result = await repo.findAll();
     if (result.isError()) throw new Error(result.getError().message);
     return result.getData().map((c: any) => ({
       id: c.id, metric_key: c.metricKey, display_title: c.displayTitle, config: c.config,
