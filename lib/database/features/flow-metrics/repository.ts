@@ -167,6 +167,12 @@ export class FlowMetricsRepository extends BaseRepositoryImpl<FlowMetricsConfig>
       }
 
       const currentConfig = getResult.getData();
+      if (!currentConfig) {
+        return RepositoryResult.error(
+          this.createError('Flow metric config not found', 'not_found', new Error('Config not found'))
+        );
+      }
+
       const updatedConfig = {
         ...(currentConfig.config as any),
         comment
