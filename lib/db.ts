@@ -60,12 +60,14 @@ export const addLineItemAtomic = async (requestId: string, newItem: any) => {
     const getResult = await repo.findById(requestId);
     if (getResult.isError() || !getResult.getData()) throw new Error('Request not found');
     const currentRequest = getResult.getData();
-    const updatedLineItems = [...(currentRequest.lineItems || []), newItem];
+    if (!currentRequest) throw new Error('Request not found');
+    const currentLineItems = Array.isArray(currentRequest.lineItems) ? currentRequest.lineItems : [];
+    const updatedLineItems = [...currentLineItems, newItem];
     const updateResult = await repo.update(requestId, { lineItems: updatedLineItems });
     if (updateResult.isError()) throw new Error(updateResult.getError().message);
     const updated = updateResult.getData();
     if (!updated) throw new Error('Request not found');
-    logInfo('Line item added successfully', { requestId, newLineItemsCount: updated.lineItems?.length || 0 });
+    logInfo('Line item added successfully', { requestId, newLineItemsCount: Array.isArray(updated.lineItems) ? updated.lineItems.length : 0 });
     return {
       id: updated.id, request_id: updated.requestId, salesperson_first_name: updated.salespersonFirstName,
       salesperson_selection: updated.salespersonSelection, mine_group: updated.mineGroup, mine_name: updated.mineName,
