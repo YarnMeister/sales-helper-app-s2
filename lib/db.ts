@@ -140,6 +140,7 @@ export const deleteRequest = async (id: string) => {
     const getResult = await repo.findById(id);
     if (getResult.isError() || !getResult.getData()) return null;
     const requestToDelete = getResult.getData();
+    if (!requestToDelete) return null;
     const result = await repo.delete(id);
     if (result.isError()) throw new Error(result.getError().message);
     return {
@@ -285,6 +286,7 @@ export const deleteFlowMetricConfig = async (id: string) => {
     const getResult = await repo.findById(id);
     if (getResult.isError() || !getResult.getData()) throw new Error('Flow metric config not found');
     const configToDelete = getResult.getData();
+    if (!configToDelete) throw new Error('Flow metric config not found');
     const result = await repo.delete(id);
     if (result.isError()) throw new Error(result.getError().message);
     return {
