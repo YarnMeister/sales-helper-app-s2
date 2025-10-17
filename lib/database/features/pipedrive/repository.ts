@@ -285,7 +285,7 @@ export class PipedriveDealFlowRepository extends BaseRepositoryImpl<PipedriveDea
   }
 }
 
-export class PipedriveMetricDataRepository extends BaseRepositoryImpl<PipedriveMetricData> {
+export class PipedriveMetricDataRepository extends BaseRepositoryImpl<PipedriveMetricData, NewPipedriveMetricData, Partial<NewPipedriveMetricData>> {
   protected tableName = 'pipedrive_metric_data';
   protected db = db;
 
