@@ -104,8 +104,9 @@ export class PipedriveDealFlowRepository extends BaseRepositoryImpl<PipedriveDea
     }
   }
 
-  async findAll(limit?: number): Promise<RepositoryResult<PipedriveDealFlowData[]>> {
+  async findAll(filters?: Record<string, any>): Promise<RepositoryResult<PipedriveDealFlowData[]>> {
     try {
+      const limit = filters?.limit as number | undefined;
       logInfo('Fetching all deal flow data', { limit });
 
       let query = db

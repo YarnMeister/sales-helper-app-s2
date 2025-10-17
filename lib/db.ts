@@ -184,7 +184,7 @@ export const insertDealMetadata = async (dealMetadata: any) => {
 export const getDealFlowData = async (dealId?: number) => {
   return withDbErrorHandling(async () => {
     const repo = getTypedRepository('pipedriveDealFlow');
-    const result = dealId ? await repo.findByDealId(dealId) : await repo.findAll();
+    const result = dealId ? await repo.findByDealId(dealId) : await repo.findAll({});
     if (result.isError()) throw new Error(result.getError().message);
     return result.getData().map((r: any) => ({
       id: r.id, pipedrive_event_id: r.pipedriveEventId, deal_id: r.dealId, pipeline_id: r.pipelineId,
