@@ -39,9 +39,6 @@ const QuerySchema = z.object({
     ),
 });
 
-const startOfDayUtc = (value: string) => new Date(`${value}T00:00:00.000Z`);
-const endOfDayUtc = (value: string) => new Date(`${value}T23:59:59.999Z`);
-
 export async function GET(req: NextRequest) {
   const authResponse = requireBearer(req);
   if (authResponse) {
@@ -62,11 +59,11 @@ export async function GET(req: NextRequest) {
     const filters: SQL[] = [];
 
     if (query.from) {
-      filters.push(gte(siteVisits.date, startOfDayUtc(query.from)));
+      filters.push(gte(siteVisits.date, query.from));
     }
 
     if (query.to) {
-      filters.push(lte(siteVisits.date, endOfDayUtc(query.to)));
+      filters.push(lte(siteVisits.date, query.to));
     }
 
     if (query.salesperson) {

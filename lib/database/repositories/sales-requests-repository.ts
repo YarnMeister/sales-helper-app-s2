@@ -14,6 +14,8 @@ import {
 import { BaseRepository, BaseRepositoryImpl } from '../core/base-repository';
 import { RepositoryResult } from '../../../types/shared/repository';
 
+const formatDate = (date: Date) => date.toISOString().slice(0, 10);
+
 export class SalesRequestsRepository extends BaseRepositoryImpl<Request> implements BaseRepository<Request> {
   protected tableName = 'requests';
   protected db = db;
@@ -288,7 +290,7 @@ export class SiteVisitsRepository extends BaseRepositoryImpl<SiteVisit> implemen
   async findByDate(date: Date): Promise<RepositoryResult<SiteVisit[]>> {
     try {
       const result = await db.select().from(siteVisits)
-        .where(eq(siteVisits.date, date))
+        .where(eq(siteVisits.date, formatDate(date)))
         .orderBy(desc(siteVisits.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {
@@ -299,7 +301,7 @@ export class SiteVisitsRepository extends BaseRepositoryImpl<SiteVisit> implemen
   async findBySalespersonAndDate(salesperson: string, date: Date): Promise<RepositoryResult<SiteVisit[]>> {
     try {
       const result = await db.select().from(siteVisits)
-        .where(and(eq(siteVisits.salesperson, salesperson), eq(siteVisits.date, date)))
+        .where(and(eq(siteVisits.salesperson, salesperson), eq(siteVisits.date, formatDate(date))))
         .orderBy(desc(siteVisits.createdAt));
       return RepositoryResult.success(result);
     } catch (error) {

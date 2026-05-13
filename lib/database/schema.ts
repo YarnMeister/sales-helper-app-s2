@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, pgEnum, index, uniqueIndex, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, boolean, timestamp, date, jsonb, pgEnum, index, uniqueIndex, primaryKey } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -53,7 +53,7 @@ export const requests = pgTable('requests', {
 
 export const siteVisits = pgTable('site_visits', {
   id: uuid('id').primaryKey().defaultRandom(),
-  date: timestamp('date', { mode: 'date' }).notNull().defaultNow(),
+  date: date('date').notNull().defaultNow(),
   salesperson: text('salesperson').notNull(),
   plannedMines: text('planned_mines').array().notNull(),
   mainPurpose: text('main_purpose').notNull(),

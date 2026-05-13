@@ -31,6 +31,8 @@ const formatMonth = (date: Date) => {
   return `${year}-${month}`;
 };
 
+const formatDate = (date: Date) => date.toISOString().slice(0, 10);
+
 const parseMonthStart = (month: string) => {
   const [year, monthNumber] = month.split('-').map(Number);
   return new Date(Date.UTC(year, monthNumber - 1, 1));
@@ -81,8 +83,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const fromDate = parseMonthStart(fromMonth);
-  const toExclusiveDate = addMonths(parseMonthStart(toMonth), 1);
+  const fromDate = formatDate(parseMonthStart(fromMonth));
+  const toExclusiveDate = formatDate(addMonths(parseMonthStart(toMonth), 1));
   const monthExpression = sql<Date>`date_trunc('month', ${siteVisits.date})`;
   const filters = [
     gte(siteVisits.date, fromDate),
