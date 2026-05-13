@@ -4,7 +4,7 @@
       "main": true
     }
   },
-  "buildCommand": "npm run db:migrate && npm run build:debug",
+  "buildCommand": "if [ -z \"$DATABASE_URL\" ]; then npm run build:debug; else npm run db:migrate && npm run build:debug; fi",
   "installCommand": "npm install",
   "framework": "nextjs",
   "ignoreCommand": "echo 'Preview deployments disabled' && exit 1",
