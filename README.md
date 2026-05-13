@@ -270,6 +270,30 @@ export const generateQRId = (): string => {
 
 ## API Reference
 
+## Public API (for MCP / external consumers)
+
+The public API v1 is read-only, covers site visits only, and is consumed by the Pipedrive MCP server maintained in a separate repository.
+
+Authenticate requests with the configured bearer token:
+
+```http
+Authorization: Bearer $PUBLIC_API_TOKEN
+```
+
+Fetch site visits:
+
+```bash
+curl -H "Authorization: Bearer $PUBLIC_API_TOKEN" \
+  "http://localhost:3000/api/public/site-visits"
+```
+
+Fetch monthly site-visit frequency:
+
+```bash
+curl -H "Authorization: Bearer $PUBLIC_API_TOKEN" \
+  "http://localhost:3000/api/public/site-visits/monthly-frequency"
+```
+
 ### Core API Endpoints
 
 #### 1. `/api/submit` (POST)
@@ -1035,4 +1059,3 @@ The application has successfully completed Phase 1 of the modularization plan:
 ---
 
 This comprehensive documentation provides a complete overview of the Sales Helper App's architecture, implementation details, and operational characteristics. The application demonstrates a well-structured, mobile-first approach to sales workflow management with robust testing, caching, and deployment practices, enhanced by manual cache refresh capabilities for improved data synchronization.
-
